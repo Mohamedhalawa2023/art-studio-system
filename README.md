@@ -1,121 +1,142 @@
-# 🎨 نظام إدارة أكاديمية ومرسم الفنان التشكيلي (Atelier Art Studio & Academy)
-### نظام سحابي وديناميكي متكامل (SaaS) لإدارة المقرات والفروع • واجهة مضيئة وسهلة الاستخدام • تطبيق سطح المكتب
+# 🎨 Atelier: Art Studio & Academy Management System
+
+> **A 100% Offline-First Desktop Management System designed specifically for fine arts studios, ateliers, and independent academies.**
 
 ---
 
-## 🌟 نظرة عامة
-تم بناء هذا النظام خصيصاً كخدمة متكاملة ومرنة تلبي كافة احتياجات الفنان التشكيلي وإدارته، دون أي تقييد بكود ثابت.
-- **واجهة مستخدم مريحة ومضيئة تماماً (Light & Clean UI)**: تم إلغاء الوضع الليلي أو الأسود بالكامل لتقديم واجهة ناصعة البياض وواضحة ومريحة للعين، سهلة الاستخدام لأي شخص دون خبرة تقنية.
-- **معمارية SaaS ديناميكية 100%**: لا يوجد اسم فرع أو كورس أو سعر أو عملة أو عنوان مكتوب بشكل ثابت في الكود، كل شيء قابل للتعديل والإضافة والحذف مباشرة من داخل لوحة التحكم.
-- **تطبيق سطح مكتب ويندوز (Windows Desktop Application)**: يعمل محلياً من أيقونة سطح المكتب المباشرة بدون شريط متصفح وبسرعة فائقة.
+## 📌 Project Overview
+
+**Atelier** is an offline desktop administrative platform tailored to the unique workflow of fine art studios and ateliers. It is built strictly for **the studio manager, master artist, and reception gate**, requiring **zero student login** and **zero internet connectivity**. 
+
+The system digitizes studio operations, introduces smart QR entrance scanning for incoming students, manages workshop financials, and produces museum-grade **A4 Art Mastery Diplomas & Growth Evaluations**.
 
 ---
 
-## 🏢 كيف تغيّر وتعدّل اسم أي فرع أو بياناته؟
-سؤال متكرر: **"لو عوزت أغير.. بيغيّر إزاي في اسم فرع أو أي حاجة؟"**
-الإجابة: **بضغطة زر واحدة ومن داخل الواجهة مباشرة وبدون أي تعديل في الكود:**
+## 🏛️ Core System Pillars (Foundations)
 
-1. **لتعديل أي فرع موجود:**
-   - ادخل على تبويب **"الفروع والمقرات"** من القائمة العلوية.
-   - ستجد كارت خاص بكل فرع، اضغط على زر **"تعديل بيانات الفرع"**.
-   - ستفتح لك نافذة فورية لتغيير:
-     - **اسم الفرع** (مثل: فرع برج البرلس، فرع بلطيم، فرع المعادي، فرع التجمع، أو أي اسم تختاره).
-     - **المدينة والمحافظة**.
-     - **رقم الهاتف والواتساب**.
-     - **العنوان التفصيلي**.
-     - **اسم المشرف المسؤول**.
-     - **عدد القاعات والسعة القصوى**.
-   - اضغط **"حفظ التعديلات فوراً"** — في نفس اللحظة يتغير اسم الفرع في:
-     - القائمة المنسدلة العلوية للفرع النشط.
-     - نماذج تسجيل الطلاب الجديدة.
-     - كشوف الحضور وجداول الحصص.
-     - إيصالات الدفع والطباعة الرسمية.
-     - موقع الطلاب العام.
-
-2. **لإضافة فرع جديد:**
-   - اضغط على زر **"إضافة فرع أو مقر جديد"** بأعلى صفحة الفروع.
-   - اكتب بيانات الفرع وسيتم تفعيله فوراً في النظام.
-
-3. **لتعديل الكورسات والورش:**
-   - ادخل على تبويب **"الكورسات والورش"** واضغط **"تعديل"** على أي كورس لتغيير العنوان، السعر، المحتوى، والمدرب، أو الفروع المتاح بها.
-
-4. **لتعديل المواعيد والمجموعات:**
-   - ادخل على تبويب **"المواعيد وسعة المقاعد"** واضغط **"تعديل"** لتغيير الأيام، التوقيت، القاعة، أو سعة المقاعد.
-
-5. **لتعديل هوية الأكاديمية والعملة والشعار:**
-   - ادخل على تبويب **"إعدادات النظام"** لتعديل اسم الأكاديمية الرسمي، الشعار المختصر، العملة (ج.م، ر.س، $)، رقم التواصل، والنبذة التعريفية.
-
----
-
-## 🏛️ أقسام وإمكانيات النظام:
-
-### 1. 📊 لوحة المؤشرات والنظرة العامة (Overview)
-- إجمالي عدد الطلاب المسجلين لحظياً.
-- نسبة إشغال المقاعد والقاعات الحية مع شريط بصري ملون.
-- إجمالي الإيرادات المحصلة، المتبقيات المستحقة، والمصروفات.
-- صافي الأرباح المحققة بدقة.
-- جدول أحدث طلبات الاشتراك وإمكانية طباعة إيصال فوري.
-
-### 2. 🏢 إدارة الفروع والمقرات (Multi-Branch SaaS)
-- متابعة مستقلة لكل فرع، أو متابعة مركزية مجمعة لكل الفروع بضغطة زر.
-- إضافة وتعديل وحذف الفروع.
-
-### 3. 🎨 دليل الكورسات الفنية (Courses & Workshops)
-- إدارة الكورسات المتخصصة (رسم زيتي، بورتريه وتشريح الوجه بالفحم، ألوان مائية، رسم رقمي، أكاديمية الأطفال، أكريليك).
-- تحديد مستويات الورش، الأسعار، المناهج، وتخصيص توافرها بكل فرع.
-
-### 4. 📅 إدارة الجداول وسعة المقاعد الحية (Live Seats Capacity)
-- متابعة دقيقة للمقاعد الشاغرة في كل مجموعة وقاعة.
-- منع الحجز الزائد تلقائياً عند امتلاء المقاعد مع إظهار شارات "مكتمل" واضحة.
-
-### 5. 👥 سجل الطلاب والاشتراكات وسداد الأقساط (Students & Payments)
-- تسجيل سريع للطلاب مع الربط بالفرع والمجموعة.
-- تتبع حالة الدفع (مدفوع بالكامل، متبقي جزء، غير مدفوع).
-- زر **"تحصيل دفعة جديدة"** لسداد المتبقي بضغطة زر وتحديث الرصيد.
-- **طباعة إيصال رسمي فوري (Official Printable Receipt)** يوضح بيانات الطالب والورشة والمبالغ المسددة والمتبقية ومجهز لختم وتوقيع الإدارة.
-
-### 6. ✅ كشف الحضور والغياب (Attendance Tracker)
-- كشف حضور يومي ذكي لكل ورشة وحصة.
-- خيارات سريعة: (حاضر / غائب / معتذر)، مع زر "تحضير الجميع (حاضر)".
-- حقل لتدوين ملاحظات المعلم عن أداء وتطور الطالب الفني خلال الحصة.
-
-### 7. 💰 المالية والمصروفات وصافي الأرباح (Finances & Accounting)
-- تسجيل سندات الصرف لمستلزمات الرسم (ألوان، كانفاس، صيانة، إيجارات، ضيافة).
-- حساب تلقائي لصافي الأرباح (الإيرادات - المصروفات).
-
-### 8. 🖼️ إدارة معرض اللوحات (Art Gallery Management)
-- إدارة لوحات الفنان المعروضة للبيع أو الاقتناء أو العرض فقط.
-- تفاصيل الخامة، الأبعاد، السعر، والمقر المعروضة به.
-
-### 9. 🌐 موقع الطلاب ومعرض اللوحات الأونلاين (Student Portal)
-- واجهة عامة للطلاب والجمهور بتصميم فني راقٍ وواضح.
-- **استعراض الكورسات والمقاعد الشاغرة**.
-- **نموذج حجز فوري أونلاين**: يسجل الطالب بياناته وتصل مباشرة للإدارة.
-- **معرض لوحات الفنان**: استعراض الأعمال الفنية وطلب اقتنائها.
-- **استعلام الطالب برقم الهاتف**: يدخل الطالب رقم هاتفه لمعرفة جدول حصصه، القاعة، واسم المدرب والمبلغ المتبقي عليه.
-
-### 10. 💾 النسخ الاحتياطي وتصدير البيانات (Backup & Export)
-- نسخ احتياطي تلقائي ومحلي في مجلد `backups/`.
-- زر أخذ نسخة احتياطية فورية في أي لحظة.
-- إمكانية تصدير ملف البيانات بصيغة JSON لنقله أو الاحتفاظ به خارج الجهاز.
-
----
-
-## 🚀 كيفية تشغيل واستخدام النظام:
-
-### 1. من سطح المكتب مباشرة (الأسهل):
-- ستجد اختصاراً على سطح المكتب باسم: **`Art_Studio_System.lnk`**.
-- اضغط عليه مرتين لتفتح نافذة التطبيق فوراً.
-
-### 2. من مجلد المشروع:
-- مسار المشروع:
-  `C:\Users\assa\.gemini\antigravity\scratch\art_studio_system`
-- اضغط مرتين على: **`run_art_studio.bat`**.
-
-### 3. من سطر الأوامر (Terminal):
-```powershell
-cd "C:\Users\assa\.gemini\antigravity\scratch\art_studio_system"
-node server.js
 ```
-ثم فتح الرابط في المتصفح:
-`http://localhost:3000`
+┌────────────────────────────────────────────────────────────────────────┐
+│                        ATELIER ART STUDIO SYSTEM                      │
+└────────────────────────────────────────────────────────────────────────┘
+          │                   │                   │                   │
+          ▼                   ▼                   ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+│   1. OPERATIONS  │ │  2. SMART GATE   │ │  3. ART DIPLOMA  │ │ 4. ART GALLERY   │
+│   & FINANCIALS   │ │   & ATTENDANCE   │ │   & EVALUATION   │ │   & INVENTORY    │
+├──────────────────┤ ├──────────────────┤ ├──────────────────┤ ├──────────────────┤
+│ • Student Roster │ │ • QR ID Badges   │ │ • Algorithmic    │ │ • Artwork Catalog│
+│ • Course Tracks  │ │ • Webcam / Laser │ │   Skill Ratings  │ │ • Medium & Size  │
+│ • Schedule Times │ │ • Arabic Voice & │ │ • A4 Print Frame │ │ • Pricing & Sale │
+│ • Fees & Dues    │ │   Audio Chimes   │ │ • Live Editing   │ │ • Artist Share   │
+│ • Materials Exp. │ │ • 4s Auto-Reset  │ │ • 4 Royal Themes │ │ • Exhibitions    │
+└──────────────────┘ └──────────────────┘ └──────────────────┘ └──────────────────┘
+```
+
+### 1. Operations, Schedules & Financials
+* **Student Directory:** Comprehensive student profiles, contact channels, artistic interests, and workshop history.
+* **Masterclass & Course Tracks:** Categorized by medium (Oil Painting, Charcoal & Portraiture, Watercolor Flow, Children's Fine Arts Academy).
+* **Schedule & Room Assignment:** Studio room allocation, instructor scheduling, weekly group capacities, and remaining seat counts.
+* **Financial Ledger:** Tracking course fees, installments, discounts, remaining balances, and studio operational expenses (canvases, pigments, brushes, studio lighting).
+
+### 2. Smart Reception Gate & Kiosk Mode
+* **Instant Entry Scanning:** Students scan their physical ID card / QR code upon arrival at the studio door.
+* **Hardware Agnostic:** Supports standard USB laser barcode guns (HID keyboard emulation), integrated webcams, or fast manual lookups.
+* **Automated Reception Greeting:**
+  * Synthesizes warm harmonic chords via the browser's Web Audio API.
+  * Speaks a polite Arabic voice welcome using local Web Speech synthesis.
+  * Displays a full-screen welcome card indicating student name, workshop, assigned room, and remaining session balance.
+  * 4-second linear countdown bar resets the kiosk automatically for the next incoming student.
+* **Duplicate Detection:** Prevents accidental double check-ins on the same day with friendly reminder notifications.
+
+### 3. Masterclass Art Evaluation & Luxury A4 Diploma
+* **Offline Algorithmic Assessment:** Evaluates students across 4 core academic artistic competencies:
+  1. **Brushwork Technique & Stroke Control (التحكم في الفرشاة والخامة)**
+  2. **Composition, Proportion & Perspective (التكوين والنسب البصرية)**
+  3. **Chiaroscuro & Value Range (إدراك النور والظلال)**
+  4. **Color Harmony & Palette Mixing (تناغم وانسجام الألوان)**
+* **Tailored Academic Art Critique:** Automatic descriptive critiques customized to the workshop category (Oil, Portrait, Watercolor, Kids).
+* **Museum-Grade A4 Diploma Frame:**
+  * Vector baroque corner filigree ornaments and gold guilloche borders.
+  * 3D embossed gold medallion seal with satin ribbon tails.
+  * Electronic QR verification stamp.
+  * 4 luxury themes: **Royal Gold**, **Imperial Emerald**, **Sapphire Navy**, and **Aristocratic Burgundy**.
+* **Anytime Customization (Live In-Place Editing):**
+  * Studio directors can click on any text directly on the certificate to edit student names, grades, critiques, dates, or signatures.
+  * Collapsible customizer drawer with skill sliders and quick presets.
+  * Permanent local persistence with one-click reset to calculated defaults.
+
+### 4. Art Gallery & Artwork Inventory
+* Tracks finished paintings and sculptures exhibited at the studio.
+* Manages artwork dimensions, medium, creation year, price, sale status, and artist attribution.
+
+---
+
+## 🛠️ Required Technologies & Architecture
+
+| Layer | Recommended Technology | Purpose & Rationale |
+| :--- | :--- | :--- |
+| **Runtime** | **Node.js (v18+ LTS)** | Cross-platform, fast local execution without external dependencies. |
+| **Packaging (Optional)** | **Electron / Bat Runner** | Wraps the application into an offline desktop `.exe` or one-click Windows launch script. |
+| **Backend Framework** | **Express.js (v4.x / v5.x)** | Ultra-lightweight REST API server handling business logic and file persistence. |
+| **Database** | **Embedded JSON Engine** | 100% offline file-based storage (`data_store.json`) with atomic writes and timestamped snapshots. Zero database server installation needed. |
+| **Frontend UI** | **Vanilla HTML5 / Modern CSS** | Clean light mode aesthetic (warm parchment, gold, ivory, emerald). Zero client build step needed for maximum offline durability. |
+| **Icons & Visuals** | **Lucide Icons (Local SVG)** | Lightweight, modern icon set bundled locally. |
+| **QR Generation & Scan** | **`qrcode` (Node) & `html5-qrcode`** | Offline QR generation for student ID cards and webcam barcode reading. |
+| **Audio & Speech** | **Web Audio API & Web Speech API** | Offline audio synthesis for welcome chimes and native OS Arabic voice synthesis. |
+| **Printing Engine** | **CSS3 `@media print` (A4)** | Pixel-perfect print isolation for student ID cards and museum-grade A4 certificates. |
+
+---
+
+## 📁 Starter Project Structure
+
+```text
+art-studio-system/
+├── src/                          # Backend source code
+│   ├── config/                   # Studio settings & defaults
+│   ├── database/                 # JSON DB engine & models
+│   ├── routes/                   # API endpoints (students, courses, attendance, certs)
+│   └── server.js                 # Server entry point
+├── public/                       # Frontend assets & web UI
+│   ├── assets/                   # Offline icons & images
+│   ├── js/                       # Client app, kiosk & certificate logic
+│   ├── css/                      # Custom styles, themes & print rules
+│   └── index.html                # Main administrative interface
+├── docs/                         # Documentation & specifications
+├── .gitignore                    # Git exclusion rules
+├── package.json                  # Dependencies & scripts
+└── README.md                     # Project blueprint & guide
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+* **Node.js** (v18.x, v20.x or higher) installed on the Windows machine.
+* A standard modern browser (Chrome, Edge, Brave, or Firefox) or Electron runtime.
+
+### 2. Installation
+```bash
+# Clone the repository
+git clone https://github.com/Mohamedhalawa2023/art-studio-system.git
+
+# Enter project directory
+cd art-studio-system
+
+# Install dependencies
+npm install
+```
+
+### 3. Launching
+```bash
+# Start the local offline server
+npm start
+
+# For development with auto-reload
+npm run dev
+```
+
+---
+
+## 📜 License
+This project is open-source and available under the [MIT License](LICENSE).
