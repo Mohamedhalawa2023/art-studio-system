@@ -1,0 +1,389 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #eef2ff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --bg-page: #f8fafc;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  direction: rtl;
+  text-align: right;
+  background-color: var(--bg-page) !important;
+  color: var(--text-main) !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Crisp Clean Header */
+.app-header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Clean Cards & Panels */
+.clean-card {
+  background-color: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.clean-card:hover {
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.08);
+}
+
+/* Tabs */
+.nav-tab-btn {
+  color: #475569;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+.nav-tab-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.nav-tab-btn.active {
+  background-color: #eef2ff !important;
+  color: #4338ca !important;
+  border: 1px solid #c7d2fe !important;
+}
+
+/* Clean Inputs & Forms */
+input, select, textarea {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  border-radius: 0.75rem !important;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Modals */
+.modal-overlay {
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+.modal-content {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Clean Table Styles */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0;
+}
+td {
+  border-bottom: 1px solid #f1f5f9;
+}
+tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #4f46e5;
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+.btn-primary:hover {
+  background-color: #4338ca;
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Laser Scanner Animation */
+@keyframes scanLaser {
+  0% { top: 5%; opacity: 0.5; }
+  50% { top: 92%; opacity: 1; }
+  100% { top: 5%; opacity: 0.5; }
+}
+
+.scan-laser-line {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0) 0%, #10b981 50%, rgba(16, 185, 129, 0) 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+  animation: scanLaser 2.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Official Print Styles (Receipt & Student Badge Card) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  /* 1. Receipt Print */
+  body.printing-receipt #printReceiptArea,
+  body.printing-receipt #printReceiptArea * {
+    visibility: visible;
+  }
+  body.printing-receipt #printReceiptArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* 2. Student Card Print */
+  body.printing-card #printStudentCardArea,
+  body.printing-card #printStudentCardArea * {
+    visibility: visible;
+  }
+  body.printing-card #printStudentCardArea {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px !important;
+    height: 240px !important;
+    margin: 0 auto;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 3. Master Art Certificate Print */
+  body.printing-certificate #printCertificateArea,
+  body.printing-certificate #printCertificateArea * {
+    visibility: visible;
+  }
+  body.printing-certificate #printCertificateArea {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-inside: avoid;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  body.printing-certificate .cert-live-edit-active [contenteditable="true"] {
+    outline: none !important;
+    background-color: transparent !important;
+  }
+  body.printing-certificate .no-print {
+    display: none !important;
+  }
+}
+
+/* Masterpiece Certificate Guilloche & Gold Frame Suite */
+.certificate-frame {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  min-height: 650px;
+}
+
+/* 1. Theme: Royal Gold */
+.certificate-frame.theme-gold {
+  border: 14px double #b45309;
+  box-shadow: inset 0 0 0 4px #fde68a, inset 0 0 0 7px #78350f, 0 15px 35px -5px rgba(180, 83, 9, 0.15);
+  background: radial-gradient(circle at center, #ffffff 65%, #fefcf0 100%);
+  color: #1e293b;
+}
+.certificate-frame.theme-gold .cert-theme-border { border-color: rgba(180, 83, 9, 0.3); }
+.certificate-frame.theme-gold .cert-theme-text { color: #b45309; }
+.certificate-frame.theme-gold .cert-theme-bg { background-color: rgba(254, 243, 199, 0.55); }
+.certificate-frame.theme-gold .cert-corner { color: #b45309; }
+.certificate-frame.theme-gold .cert-bar-fill { background: linear-gradient(90deg, #d97706, #b45309); }
+
+/* 2. Theme: Imperial Emerald */
+.certificate-frame.theme-emerald {
+  border: 14px double #065f46;
+  box-shadow: inset 0 0 0 4px #a7f3d0, inset 0 0 0 7px #047857, 0 15px 35px -5px rgba(6, 95, 70, 0.15);
+  background: radial-gradient(circle at center, #ffffff 65%, #f0fdf4 100%);
+  color: #1e293b;
+}
+.certificate-frame.theme-emerald .cert-theme-border { border-color: rgba(6, 95, 70, 0.3); }
+.certificate-frame.theme-emerald .cert-theme-text { color: #065f46; }
+.certificate-frame.theme-emerald .cert-theme-bg { background-color: rgba(209, 250, 229, 0.55); }
+.certificate-frame.theme-emerald .cert-corner { color: #047857; }
+.certificate-frame.theme-emerald .cert-bar-fill { background: linear-gradient(90deg, #10b981, #065f46); }
+
+/* 3. Theme: Sapphire Navy */
+.certificate-frame.theme-sapphire {
+  border: 14px double #1e3a8a;
+  box-shadow: inset 0 0 0 4px #bfdbfe, inset 0 0 0 7px #1d4ed8, 0 15px 35px -5px rgba(30, 58, 138, 0.15);
+  background: radial-gradient(circle at center, #ffffff 65%, #f8fafc 100%);
+  color: #1e293b;
+}
+.certificate-frame.theme-sapphire .cert-theme-border { border-color: rgba(30, 58, 138, 0.3); }
+.certificate-frame.theme-sapphire .cert-theme-text { color: #1e3a8a; }
+.certificate-frame.theme-sapphire .cert-theme-bg { background-color: rgba(219, 234, 254, 0.55); }
+.certificate-frame.theme-sapphire .cert-corner { color: #1d4ed8; }
+.certificate-frame.theme-sapphire .cert-bar-fill { background: linear-gradient(90deg, #3b82f6, #1e3a8a); }
+
+/* 4. Theme: Aristocratic Burgundy */
+.certificate-frame.theme-burgundy {
+  border: 14px double #881337;
+  box-shadow: inset 0 0 0 4px #fecdd3, inset 0 0 0 7px #be123c, 0 15px 35px -5px rgba(136, 19, 55, 0.15);
+  background: radial-gradient(circle at center, #ffffff 65%, #fff1f2 100%);
+  color: #1e293b;
+}
+.certificate-frame.theme-burgundy .cert-theme-border { border-color: rgba(136, 19, 55, 0.3); }
+.certificate-frame.theme-burgundy .cert-theme-text { color: #881337; }
+.certificate-frame.theme-burgundy .cert-theme-bg { background-color: rgba(255, 228, 230, 0.55); }
+.certificate-frame.theme-burgundy .cert-corner { color: #be123c; }
+.certificate-frame.theme-burgundy .cert-bar-fill { background: linear-gradient(90deg, #f43f5e, #881337); }
+
+/* Corner Filigree Vector Ornaments */
+.cert-corner {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.cert-corner-tl { top: 10px; left: 10px; }
+.cert-corner-tr { top: 10px; right: 10px; transform: scaleX(-1); }
+.cert-corner-bl { bottom: 10px; left: 10px; transform: scaleY(-1); }
+.cert-corner-br { bottom: 10px; right: 10px; transform: scale(-1); }
+
+/* 3D Embossed Medallion Seal */
+.certificate-seal {
+  position: relative;
+  background: radial-gradient(circle, #fef08a 0%, #eab308 45%, #b45309 100%);
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.35), inset 0 0 4px rgba(255, 255, 255, 0.8);
+  border: 2px solid #ffffff;
+}
+
+/* Ribbon tails under the seal */
+.certificate-seal-tails {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin-top: -6px;
+  z-index: 1;
+}
+.seal-tail {
+  width: 12px;
+  height: 20px;
+  background: linear-gradient(180deg, #b45309 0%, #78350f 100%);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 75%, 0% 100%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+/* Live Edit Indicators */
+.cert-live-edit-active [contenteditable="true"] {
+  outline: 1.5px dashed #d97706 !important;
+  border-radius: 4px;
+  background-color: rgba(254, 243, 199, 0.4);
+  cursor: text;
+  transition: background-color 0.2s;
+  padding: 1px 4px;
+}
+.cert-live-edit-active [contenteditable="true"]:hover {
+  background-color: rgba(254, 243, 199, 0.8);
+}
+.cert-live-edit-active [contenteditable="true"]:focus {
+  outline: 2px solid #b45309 !important;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
+}
+
+/* Smart Gate Kiosk Styles */
+@keyframes countdownProgress {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+.countdown-bar-active {
+  animation: countdownProgress 4s linear forwards;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.pulse-entry-badge {
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+/* Kiosk Fullscreen Container Mode */
+.kiosk-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100 !important;
+  background-color: #f8fafc !important;
+  padding: 1.5rem !important;
+  overflow-y: auto !important;
+  max-width: 100% !important;
+}
+
