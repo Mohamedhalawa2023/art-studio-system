@@ -1,0 +1,24 @@
+{
+  "name": "مرسم - نظام إدارة المرسم",
+  "short_name": "مرسم",
+  "description": "نظام متكامل لإدارة مرسم تعليمي وحجز الكورسات ومتابعة الطلاب",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090816",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/globe.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/globe.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
