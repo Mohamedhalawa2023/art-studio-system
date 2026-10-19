@@ -15,7 +15,31 @@ namespace MarsamDesktopApp
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            string projectPath = @"C:\Users\assa\.gemini\antigravity\scratch\art_studio_system";
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+            string projectPath = baseDir;
+
+            // Search for project root (where package.json exists)
+            if (!File.Exists(Path.Combine(projectPath, "package.json")))
+            {
+                string parentDir = Directory.GetParent(baseDir) != null ? Directory.GetParent(baseDir).FullName : "";
+                if (!string.IsNullOrEmpty(parentDir) && File.Exists(Path.Combine(parentDir, "package.json")))
+                {
+                    projectPath = parentDir;
+                }
+                else if (File.Exists(@"C:\MarsamApp\package.json"))
+                {
+                    projectPath = @"C:\MarsamApp";
+                }
+                else if (File.Exists(@"D:\MarsamApp\package.json"))
+                {
+                    projectPath = @"D:\MarsamApp";
+                }
+                else if (File.Exists(@"C:\Users\assa\.gemini\antigravity\scratch\art_studio_system\package.json"))
+                {
+                    projectPath = @"C:\Users\assa\.gemini\antigravity\scratch\art_studio_system";
+                }
+            }
+
             string appUrl = "http://localhost:3000";
 
             // 1. Verify if background server is active on port 3000
