@@ -4,6 +4,20 @@ const http = require('http');
 const { spawn } = require('child_process');
 const fs = require('fs');
 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  // If an instance is already running, exit immediately
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    // Someone tried to run a second instance, focus our existing window
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
 let mainWindow = null;
 let serverProcess = null;
 const PORT = 3000;
