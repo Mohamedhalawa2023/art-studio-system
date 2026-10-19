@@ -1,6 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMarsam } from '@/lib/store';
+import { useAsyncAction } from '@/hooks/useAsyncAction';
+import { Pagination } from '@/components/common/Pagination';
 import {
   CreditCard, Plus, CheckCircle, Clock, AlertCircle, Banknote,
   Smartphone, ArrowRightLeft, X, Printer, Search, Calendar, ShieldCheck
@@ -32,6 +34,10 @@ export default function PaymentsPage() {
   const [payMethod, setPayMethod] = useState<'cash' | 'instapay' | 'vodafone' | 'transfer'>('cash');
   const [payNotes, setPayNotes] = useState('');
   const [search, setSearch] = useState('');
+  const [receiptPage, setReceiptPage] = useState(1);
+  const RECEIPTS_PER_PAGE = 15;
+
+  const { isSubmitting, execute: executeRecordPayment } = useAsyncAction();
 
   // Receipt Modal
   const [currentReceipt, setCurrentReceipt] = useState<any>(null);
@@ -40,34 +46,41 @@ export default function PaymentsPage() {
   const pendingInstallmentsCount = installments.filter(i => i.status === 'pending').length;
   const overdueInstallmentsCount = installments.filter(i => i.status === 'overdue').length;
 
+  const paginatedPayments = useMemo(() => {
+    const start = (receiptPage - 1) * RECEIPTS_PER_PAGE;
+    return payments.slice(start, start + RECEIPTS_PER_PAGE);
+  }, [payments, receiptPage]);
+
   const handleRecordPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEnrollmentId || payAmount <= 0) return;
 
-    const enr = enrollments.find(e => e.id === selectedEnrollmentId);
-    const student = students.find(s => s.id === enr?.studentId);
-    const group = groups.find(g => g.id === enr?.groupId);
-    const course = courses.find(c => c.id === group?.courseId);
+    executeRecordPayment(() => {
+      const enr = enrollments.find(e => e.id === selectedEnrollmentId);
+      const student = students.find(s => s.id === enr?.studentId);
+      const group = groups.find(g => g.id === enr?.groupId);
+      const course = courses.find(c => c.id === group?.courseId);
 
-    const newPay = addCoursePayment({
-      enrollmentId: selectedEnrollmentId,
-      amount: payAmount,
-      method: payMethod,
-      notes: payNotes || 'سداد رسوم كورس'
-    });
+      const newPay = addCoursePayment({
+        enrollmentId: selectedEnrollmentId,
+        amount: payAmount,
+        method: payMethod,
+        notes: payNotes || 'سداد رسوم كورس'
+      });
 
-    setShowAddPayment(false);
-    setPayNotes('');
+      setShowAddPayment(false);
+      setPayNotes('');
 
-    setCurrentReceipt({
-      receiptNumber: newPay.receiptNumber,
-      date: newPay.date,
-      studentName: student?.name || 'الطالب',
-      courseName: course?.name || 'دورة تدريبية',
-      amount: newPay.amount,
-      remaining: Math.max(0, (enr?.totalAmount || 0) - ((enr?.totalPaid || 0) + payAmount)),
-      method: newPay.method,
-      notes: newPay.notes
+      setCurrentReceipt({
+        receiptNumber: newPay.receiptNumber,
+        date: newPay.date,
+        studentName: student?.name || 'الطالب',
+        courseName: course?.name || 'دورة تدريبية',
+        amount: newPay.amount,
+        remaining: Math.max(0, (enr?.totalAmount || 0) - ((enr?.totalPaid || 0) + payAmount)),
+        method: newPay.method,
+        notes: newPay.notes
+      });
     });
   };
 
@@ -77,10 +90,10 @@ export default function PaymentsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <CreditCard size={26} className="text-emerald-400" />
+            <CreditCard size={26} className="text-blue-600" />
             ماليات الكورسات والأقساط
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-500 text-sm mt-1">
             متابعة مدفوعات اشتراكات الكورسات، وجداول الأقساط، وإصدار الإيصالات الرسمية
           </p>
         </div>
@@ -91,7 +104,7 @@ export default function PaymentsPage() {
             }
             setShowAddPayment(true);
           }}
-          className="btn btn-primary flex items-center gap-2 shadow-lg shadow-violet-600/30"
+          className="btn btn-primary flex items-center gap-2 shadow-md shadow-blue-600/20"
         >
           <Plus size={18} />
           تسجيل دفعة كورس جديدة
@@ -100,37 +113,37 @@ export default function PaymentsPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass p-5 rounded-2xl border-r-4 border-emerald-500">
-          <p className="text-xs text-slate-400">إجمالي رسوم الكورسات المحصلة</p>
-          <p className="text-2xl font-black text-emerald-400 mt-1">{totalCollected.toLocaleString()} ج</p>
-          <p className="text-xs text-slate-500 mt-1">خزينة الكورسات والتدريب</p>
+        <div className="glass p-5 rounded-2xl border-r-4 border-blue-600 bg-white">
+          <p className="text-xs text-slate-500 font-semibold">إجمالي رسوم الكورسات المحصلة</p>
+          <p className="text-2xl font-black text-blue-700 mt-1">{totalCollected.toLocaleString()} ج</p>
+          <p className="text-xs text-slate-400 mt-1">خزينة الكورسات والتدريب</p>
         </div>
-        <div className="glass p-5 rounded-2xl border-r-4 border-amber-500">
-          <p className="text-xs text-slate-400">أقساط معلقة (مستحقة قريباً)</p>
-          <p className="text-2xl font-black text-amber-400 mt-1">{pendingInstallmentsCount} أقساط</p>
-          <p className="text-xs text-slate-500 mt-1">مجدولة للشهر القادم</p>
+        <div className="glass p-5 rounded-2xl border-r-4 border-blue-400 bg-white">
+          <p className="text-xs text-slate-500 font-semibold">أقساط معلقة (مستحقة قريباً)</p>
+          <p className="text-2xl font-black text-blue-600 mt-1">{pendingInstallmentsCount} أقساط</p>
+          <p className="text-xs text-slate-400 mt-1">مجدولة للشهر القادم</p>
         </div>
-        <div className="glass p-5 rounded-2xl border-r-4 border-red-500">
-          <p className="text-xs text-slate-400">أقساط متأخرة عن موعدها</p>
-          <p className="text-2xl font-black text-red-400 mt-1">{overdueInstallmentsCount} أقساط</p>
-          <p className="text-xs text-slate-500 mt-1">تتطلب تنبيه ولي الأمر</p>
+        <div className="glass p-5 rounded-2xl border-r-4 border-slate-300 bg-white">
+          <p className="text-xs text-slate-500 font-semibold">أقساط متأخرة عن موعدها</p>
+          <p className="text-2xl font-black text-slate-800 mt-1">{overdueInstallmentsCount} أقساط</p>
+          <p className="text-xs text-slate-400 mt-1">تتطلب تنبيه ولي الأمر</p>
         </div>
-        <div className="glass p-5 rounded-2xl border-r-4 border-violet-500">
-          <p className="text-xs text-slate-400">عدد إيصالات الدفع المصدرة</p>
-          <p className="text-2xl font-black text-violet-400 mt-1">{payments.length} إيصال</p>
-          <p className="text-xs text-slate-500 mt-1">ترقيم CRS-2026</p>
+        <div className="glass p-5 rounded-2xl border-r-4 border-blue-500 bg-white">
+          <p className="text-xs text-slate-500 font-semibold">عدد إيصالات الدفع المصدرة</p>
+          <p className="text-2xl font-black text-blue-800 mt-1">{payments.length} إيصال</p>
+          <p className="text-xs text-slate-400 mt-1">ترقيم CRS-2026</p>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6">
         {/* Installments Table (3 Cols) */}
-        <div className="lg:col-span-3 glass p-5 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
-              <Clock size={18} className="text-amber-400" />
+        <div className="lg:col-span-3 glass p-5 rounded-2xl space-y-4 bg-white border border-slate-200">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+              <Clock size={18} className="text-blue-600" />
               جدول الأقساط واستحقاقات الطلاب
             </h3>
-            <span className="badge badge-purple text-xs font-mono">{installments.length} قسط</span>
+            <span className="badge badge-blue text-xs font-mono">{installments.length} قسط</span>
           </div>
 
           <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
@@ -143,28 +156,28 @@ export default function PaymentsPage() {
               return (
                 <div
                   key={inst.id}
-                  className="p-3.5 rounded-xl border border-white/5 bg-white/5 flex items-center justify-between text-xs hover:border-white/15 transition-all"
+                  className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-blue-50/40 hover:border-blue-200 flex items-center justify-between text-xs transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                      inst.status === 'paid' ? 'bg-emerald-500/20 text-emerald-400' :
-                      inst.status === 'overdue' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+                      inst.status === 'paid' ? 'bg-blue-100 text-blue-600' :
+                      inst.status === 'overdue' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'
                     }`}>
                       {inst.status === 'paid' ? <CheckCircle size={18} /> : inst.status === 'overdue' ? <AlertCircle size={18} /> : <Clock size={18} />}
                     </div>
                     <div>
-                      <p className="font-bold text-sm text-slate-200">{student?.name || 'طالب'}</p>
-                      <p className="text-[11px] text-slate-400">
-                        {course?.name} • الاستحقاق: <strong className="font-mono text-slate-300">{inst.dueDate}</strong>
+                      <p className="font-bold text-sm text-slate-800">{student?.name || 'طالب'}</p>
+                      <p className="text-[11px] text-slate-500">
+                        {course?.name} • الاستحقاق: <strong className="font-mono text-slate-700">{inst.dueDate}</strong>
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <p className="font-bold text-sm text-slate-100 font-mono">{inst.amount} ج</p>
+                      <p className="font-bold text-sm text-slate-900 font-mono">{inst.amount} ج</p>
                       <span className={`badge text-[10px] mt-0.5 ${
-                        inst.status === 'paid' ? 'badge-success' : inst.status === 'overdue' ? 'badge-danger' : 'badge-warning'
+                        inst.status === 'paid' ? 'badge-blue' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'
                       }`}>
                         {inst.status === 'paid' ? 'تم السداد' : inst.status === 'overdue' ? 'متأخر ⚠️' : 'قيد الانتظار'}
                       </span>
@@ -190,35 +203,35 @@ export default function PaymentsPage() {
         </div>
 
         {/* Payments History (2 Cols) */}
-        <div className="lg:col-span-2 glass p-5 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
-              <CreditCard size={18} className="text-violet-400" />
+        <div className="lg:col-span-2 glass p-5 rounded-2xl space-y-4 bg-white border border-slate-200">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+              <CreditCard size={18} className="text-blue-600" />
               سجل إيصالات السداد (CRS)
             </h3>
-            <span className="text-xs text-slate-400">{payments.length} إيصال</span>
+            <span className="text-xs text-slate-500">{payments.length} إيصال</span>
           </div>
 
           <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
-            {payments.map(pay => {
+            {paginatedPayments.map(pay => {
               const enr = enrollments.find(e => e.id === pay.enrollmentId);
               const student = students.find(s => s.id === enr?.studentId);
               const group = groups.find(g => g.id === enr?.groupId);
               const course = courses.find(c => c.id === group?.courseId);
 
               return (
-                <div key={pay.id} className="p-3 rounded-xl bg-white/5 border border-white/5 text-xs space-y-2">
+                <div key={pay.id} className="p-3 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/30 text-xs space-y-2 transition-all">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded text-[11px]">
+                      <span className="font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded text-[11px]">
                         {pay.receiptNumber}
                       </span>
-                      <strong className="text-slate-200 mr-2">{student?.name}</strong>
+                      <strong className="text-slate-800 mr-2">{student?.name}</strong>
                     </div>
-                    <span className="font-black text-sm text-emerald-400 font-mono">{pay.amount} ج</span>
+                    <span className="font-black text-sm text-blue-700 font-mono">{pay.amount} ج</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                  <div className="flex items-center justify-between text-slate-500 text-[11px]">
                     <span>{course?.name} • {pay.date}</span>
                     <button
                       onClick={() => setCurrentReceipt({
@@ -231,7 +244,7 @@ export default function PaymentsPage() {
                         method: pay.method,
                         notes: pay.notes
                       })}
-                      className="text-violet-400 hover:text-violet-300 flex items-center gap-1 font-semibold"
+                      className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold"
                     >
                       <Printer size={12} /> طباعة الإيصال
                     </button>
@@ -240,26 +253,34 @@ export default function PaymentsPage() {
               );
             })}
           </div>
+
+          <Pagination
+            currentPage={receiptPage}
+            totalItems={payments.length}
+            pageSize={RECEIPTS_PER_PAGE}
+            onPageChange={setReceiptPage}
+            className="pt-2 border-t border-slate-100"
+          />
         </div>
       </div>
 
       {/* ================= MODAL: ADD PAYMENT ================= */}
       {showAddPayment && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="glass p-6 rounded-2xl max-w-md w-full space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
-                <CreditCard size={20} className="text-emerald-400" />
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <CreditCard size={20} className="text-blue-600" />
                 تسجيل دفعة رسوم دورة تدريبية
               </h3>
-              <button onClick={() => setShowAddPayment(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowAddPayment(false)} className="text-slate-400 hover:text-slate-700">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleRecordPayment} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-400 mb-1">اختر الطالب / الكورس:</label>
+                <label className="block text-slate-700 font-semibold mb-1">اختر الطالب / الكورس:</label>
                 <select
                   className="input text-xs"
                   value={selectedEnrollmentId}
@@ -281,10 +302,10 @@ export default function PaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">المبلغ المطلوب سداده الآن (ج):</label>
+                <label className="block text-slate-700 font-semibold mb-1">المبلغ المطلوب سداده الآن (ج):</label>
                 <input
                   type="number"
-                  className="input text-base font-bold text-emerald-400"
+                  className="input text-base font-bold text-blue-700"
                   required
                   value={payAmount}
                   onChange={e => setPayAmount(Number(e.target.value))}
@@ -292,7 +313,7 @@ export default function PaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">طريقة الدفع:</label>
+                <label className="block text-slate-700 font-semibold mb-1">طريقة الدفع:</label>
                 <select
                   className="input text-xs"
                   value={payMethod}
@@ -306,7 +327,7 @@ export default function PaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">ملاحظات على الإيصال:</label>
+                <label className="block text-slate-700 font-semibold mb-1">ملاحظات على الإيصال:</label>
                 <input
                   className="input text-xs"
                   placeholder="مثال: سداد القسط الثاني نقداً"
@@ -315,9 +336,13 @@ export default function PaymentsPage() {
                 />
               </div>
 
-              <div className="pt-3 border-t border-white/10 flex gap-2">
-                <button type="submit" className="btn btn-primary flex-1 py-2.5 font-bold">
-                  إصدار الإيصال وطباعته
+              <div className="pt-3 border-t border-slate-100 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn btn-primary flex-1 py-2.5 font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+                >
+                  {isSubmitting ? 'جاري إصدار الإيصال...' : 'إصدار الإيصال وطباعته'}
                 </button>
                 <button type="button" onClick={() => setShowAddPayment(false)} className="btn btn-secondary">
                   إلغاء
@@ -330,8 +355,8 @@ export default function PaymentsPage() {
 
       {/* ================= MODAL: PRINTABLE RECEIPT ================= */}
       {currentReceipt && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-200">
             <button
               onClick={() => setCurrentReceipt(null)}
               className="absolute top-4 left-4 text-slate-400 hover:text-slate-800"
@@ -344,12 +369,12 @@ export default function PaymentsPage() {
                 <h2 className="text-xl font-black text-slate-900">{settings.name}</h2>
                 <p className="text-xs text-slate-500 mt-0.5">إيصال سداد رسوم دورة تدريبية</p>
                 <p className="text-xs text-slate-400">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-slate-100 px-3 py-1 rounded text-xs font-mono font-bold text-violet-800 border">
+                <div className="mt-2 inline-block bg-blue-50 px-3 py-1 rounded text-xs font-mono font-bold text-blue-700 border border-blue-200">
                   إيصال رقم: {currentReceipt.receiptNumber}
                 </div>
               </div>
 
-              <div className="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border">
+              <div className="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div className="flex justify-between">
                   <span>اسم الطالب:</span>
                   <strong className="text-slate-900">{currentReceipt.studentName}</strong>
@@ -376,7 +401,7 @@ export default function PaymentsPage() {
 
               <div className="border-t border-b py-3 flex justify-between items-center">
                 <span className="font-black text-sm text-slate-900">المبلغ المدفوع:</span>
-                <span className="font-black text-2xl text-emerald-600">{currentReceipt.amount} ج</span>
+                <span className="font-black text-2xl text-blue-700 font-mono">{currentReceipt.amount} ج</span>
               </div>
 
               <div className="flex justify-between text-xs text-slate-600">

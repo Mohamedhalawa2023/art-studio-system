@@ -43,3 +43,8 @@ next-env.d.ts
 # electron
 dist/
 
+# logs and runtime backups
+/logs
+/backups
+/data/backups
+*.tmp.json

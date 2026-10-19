@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/store';
 import AppShell from '@/components/layout/AppShell';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { GlobalErrorHandler } from '@/components/common/GlobalErrorHandler';
 
 export const metadata: Metadata = {
   title: 'مرسم | نظام إدارة المرسم',
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0f0d2a',
+  themeColor: '#1d4ed8',
   width: 'device-width',
   initialScale: 1,
 };
@@ -25,9 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <AuthProvider>
-          <AppShell>{children}</AppShell>
-        </AuthProvider>
+        <GlobalErrorHandler />
+        <ErrorBoundary>
+          <AuthProvider>
+            <AppShell>{children}</AppShell>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

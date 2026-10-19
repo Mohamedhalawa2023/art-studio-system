@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useMarsam } from '@/lib/store';
 import {
   Settings, Bell, Lock, FileText, Database, Palette,
-  Download, Upload, RefreshCw, CheckCircle, Save
+  Download, Upload, RefreshCw, CheckCircle, Save, HardDrive
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -38,7 +38,7 @@ export default function SettingsPage() {
       if (content) {
         const success = importDatabase(content);
         if (success) {
-          alert('✅ تم استعادة قاعدة البيانات بنجاح!');
+          alert('✅ تم استعادة قاعدة البيانات بنجاح ومزامنتها مع القرص الصلب!');
           window.location.reload();
         } else {
           alert('❌ فشل استعادة الملف. تأكد من صحة ملف النسخة الاحتياطية.');
@@ -50,18 +50,18 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Settings size={26} className="text-amber-400" />
+            <Settings size={26} className="text-blue-600" />
             إعدادات النظام والنسخ الاحتياطي
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            إدارة بيانات المرسم، بنود وثائق التعاقد، والنسخ الاحتياطي لقاعدة البيانات
+          <p className="text-slate-500 text-sm mt-1">
+            إدارة بيانات المرسم، بنود وثائق التعاقد، ومزامنة الملفات وقاعدة البيانات المحلية
           </p>
         </div>
         {saveSuccess && (
-          <span className="badge badge-success text-xs py-1.5 px-3 flex items-center gap-1 shadow-lg">
+          <span className="badge badge-blue text-xs py-1.5 px-3 flex items-center gap-1 shadow-sm">
             <CheckCircle size={14} /> تم حفظ الإعدادات بنجاح
           </span>
         )}
@@ -69,14 +69,14 @@ export default function SettingsPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Studio Info */}
-        <div className="glass p-5 rounded-2xl space-y-4">
-          <h3 className="font-bold text-slate-100 flex items-center gap-2 pb-2 border-b border-white/10">
-            <Palette size={18} className="text-amber-400" />
-            بيانات المرسم (تظهر على الفواتير والعقود)
+        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
+          <h3 className="font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
+            <Palette size={18} className="text-blue-600" />
+            بيانات المرسم (تظهر على الشهادات، الفواتير، والعقود)
           </h3>
           <div className="space-y-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1">اسم المرسم / الأكاديمية:</label>
+              <label className="block text-slate-700 font-bold mb-1">اسم المرسم / الأكاديمية:</label>
               <input
                 className="input text-xs"
                 value={studioName}
@@ -84,7 +84,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">رقم الهاتف الرسمي (واتساب):</label>
+              <label className="block text-slate-700 font-bold mb-1">رقم الهاتف الرسمي (واتساب):</label>
               <input
                 className="input text-xs font-mono"
                 value={studioPhone}
@@ -92,7 +92,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">العنوان بالتفصيل:</label>
+              <label className="block text-slate-700 font-bold mb-1">العنوان بالتفصيل:</label>
               <input
                 className="input text-xs"
                 value={studioAddress}
@@ -101,7 +101,7 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={handleSaveStudioInfo}
-              className="btn btn-primary btn-sm flex items-center gap-1.5 mt-2"
+              className="btn btn-primary btn-sm flex items-center gap-1.5 mt-2 cursor-pointer shadow-md shadow-blue-600/20"
             >
               <Save size={14} /> حفظ بيانات المرسم
             </button>
@@ -109,27 +109,27 @@ export default function SettingsPage() {
         </div>
 
         {/* Database & Backup (Crucial Desktop feature) */}
-        <div className="glass p-5 rounded-2xl space-y-4">
-          <h3 className="font-bold text-slate-100 flex items-center gap-2 pb-2 border-b border-white/10">
-            <Database size={18} className="text-emerald-400" />
-            النسخ الاحتياطي المحلي لقاعدة البيانات
+        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
+          <h3 className="font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
+            <HardDrive size={18} className="text-blue-600" />
+            النسخ الاحتياطي ومزامنة القرص الصلب
           </h3>
-          <div className="space-y-3 text-xs text-slate-300">
-            <p className="leading-relaxed">
-              جميع بياناتك (الطلاب، العقود، الدفعات، وفواتير الأدوات) محفوظة محلياً على جهازك. يُنصح بتحميل نسخة احتياطية دورية وحفظها على فلاشة خارجية.
+          <div className="space-y-3 text-xs text-slate-800">
+            <p className="leading-relaxed text-slate-500">
+              جميع بياناتك (الطلاب، الشهادات، العقود، الدفعات، مبيعات الأدوات، وتقييمات الحصص) مخزنة ومحمية محلياً في ملف <code className="bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded text-blue-700 font-mono">data/data_store.json</code> على جهازك، وتعمل 100% بدون إنترنت.
             </p>
 
-            <div className="pt-2 space-y-2">
+            <div className="pt-2 space-y-2.5">
               <button
                 onClick={exportDatabase}
-                className="w-full btn btn-primary flex items-center justify-center gap-2 py-2.5 text-xs shadow-md shadow-violet-600/20"
+                className="w-full btn btn-primary flex items-center justify-center gap-2 py-2.5 text-xs shadow-md shadow-blue-600/20 cursor-pointer"
               >
                 <Download size={16} />
                 تصدير نسخة احتياطية فورية (Download JSON Backup)
               </button>
 
-              <label className="w-full btn btn-secondary flex items-center justify-center gap-2 py-2.5 text-xs cursor-pointer">
-                <Upload size={16} />
+              <label className="w-full btn btn-secondary flex items-center justify-center gap-2 py-2.5 text-xs cursor-pointer border border-slate-200 hover:border-blue-300">
+                <Upload size={16} className="text-blue-600" />
                 استعادة قاعدة البيانات من ملف نسخة احتياطية
                 <input
                   type="file"
@@ -143,16 +143,16 @@ export default function SettingsPage() {
         </div>
 
         {/* Contract Clauses Editor */}
-        <div className="glass p-5 rounded-2xl lg:col-span-2 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
-            <h3 className="font-bold text-slate-100 flex items-center gap-2">
-              <FileText size={18} className="text-violet-400" />
+        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white lg:col-span-2 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+              <FileText size={18} className="text-blue-600" />
               محرر بنود وثيقة التعاقد الرسمية
             </h3>
-            <span className="badge badge-purple text-xs font-mono">الإصدار v2.0 المعتمد</span>
+            <span className="badge badge-blue text-xs font-mono">الإصدار v2.0 المعتمد</span>
           </div>
 
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             هذه البنود تُدرج تلقائياً في وثائق تعاقد جميع الطلاب الجدد وتظهر عند طباعة العقد:
           </p>
 
@@ -164,12 +164,12 @@ export default function SettingsPage() {
           />
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-400">
               أي تعديل هنا سينعكس فوراً على كل العقود التي سيتم طباعتها لاحقاً.
             </p>
             <button
               onClick={handleSaveStudioInfo}
-              className="btn btn-primary btn-sm flex items-center gap-1.5"
+              className="btn btn-primary btn-sm flex items-center gap-1.5 cursor-pointer shadow-md shadow-blue-600/20"
             >
               <Save size={14} /> حفظ بنود التعاقد
             </button>

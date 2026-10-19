@@ -8,7 +8,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 720,
     title: 'مرسم — نظام إدارة المرسم ودورات الفنون',
-    backgroundColor: '#0f0d2a',
+    backgroundColor: '#ffffff',
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,

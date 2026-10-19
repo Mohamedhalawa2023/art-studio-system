@@ -1,12 +1,24 @@
 'use client';
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from 'react';
 import {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment,
-  Attendance, Progress, SupplyItem, SupplySale,
+  Attendance, Progress, SupplyItem, SupplySale, PortfolioItem,
   mockUsers, mockStudents, mockCourses, mockGroups, mockSessions,
   mockEnrollments, mockInstallments, mockPayments, mockAttendance, mockProgress,
-  mockSupplyItems, mockSupplySales
+  mockSupplyItems, mockSupplySales, mockPortfolio
 } from './mockData';
+import { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
+import { StudentService, RegisterStudentDTO } from '@/lib/services/student.service';
+import { FinanceService, RecordPaymentDTO } from '@/lib/services/finance.service';
+import { PosService, CreateSaleDTO } from '@/lib/services/pos.service';
+import { AttendanceService, BarcodeScanResult } from '@/lib/services/attendance.service';
+import { BackupService } from '@/lib/services/backup.service';
+import { logger } from '@/lib/logger/logger';
+
+export type {
+  User, Student, Course, Group, Session, Enrollment, Payment, Installment,
+  Attendance, Progress, SupplyItem, SupplySale, PortfolioItem
+};
 
 export interface AcademySettings {
   name: string;
@@ -20,7 +32,11 @@ interface MarsamContextType {
   login: (role: 'admin' | 'supervisor' | 'guardian') => void;
   logout: () => void;
   
-  // Data State
+  // Theme state (Default: light)
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
+
+  // Reactive Data State
   users: User[];
   students: Student[];
   courses: Course[];
@@ -33,62 +49,26 @@ interface MarsamContextType {
   progress: Progress[];
   supplyItems: SupplyItem[];
   supplySales: SupplySale[];
+  portfolio: PortfolioItem[];
+  customDiplomas: Record<string, any>;
   settings: AcademySettings;
   
-  // Actions
-  addStudentWithEnrollment: (params: {
-    name: string;
-    birthDate: string;
-    guardianName: string;
-    guardianPhone: string;
-    guardianEmail?: string;
-    groupId?: string;
-    totalAmount?: number;
-    initialPayment?: number;
-    paymentMethod?: Payment['method'];
-    level?: string;
-    healthNotes?: string;
-    publishConsent?: boolean;
-  }) => { student: Student; enrollment?: Enrollment; payment?: Payment };
-
-  addCoursePayment: (params: {
-    enrollmentId: string;
-    amount: number;
-    method: Payment['method'];
-    notes?: string;
-  }) => Payment;
-
-  recordStudentAttendance: (params: {
-    studentId: string;
-    sessionId: string;
-    status: 'present' | 'absent' | 'late';
-    lessonTopic?: string;
-  }) => Attendance;
-
-  processBarcodeScan: (barcode: string, sessionId: string) => {
-    success: boolean;
-    student?: Student;
-    attendance?: Attendance;
-    enrollment?: Enrollment;
-    isOverdue?: boolean;
-    remainingBalance?: number;
-    message: string;
-  };
-
+  // Domain Operations
+  addStudentWithEnrollment: (params: RegisterStudentDTO) => { student: Student; enrollment?: Enrollment; payment?: Payment };
+  addCoursePayment: (params: RecordPaymentDTO) => Payment;
+  recordStudentAttendance: (params: { studentId: string; sessionId: string; status: 'present' | 'absent' | 'late'; lessonTopic?: string }) => Attendance;
+  processBarcodeScan: (barcode: string, sessionId: string) => BarcodeScanResult;
   addSupplyItem: (item: Omit<SupplyItem, 'id'>) => SupplyItem;
+  updateSupplyItem: (id: string, updates: Partial<Omit<SupplyItem, 'id'>>) => SupplyItem;
+  deleteSupplyItem: (id: string) => void;
   updateSupplyStock: (id: string, deltaQty: number) => void;
-  
-  createSupplySale: (params: {
-    customerType: 'student' | 'walkin';
-    customerName: string;
-    customerId?: string;
-    items: Array<{ productId: string; quantity: number }>;
-    paymentMethod: Payment['method'];
-    notes?: string;
-  }) => SupplySale;
-
+  createSupplySale: (params: CreateSaleDTO) => SupplySale;
+  updateStudentProgress: (params: { studentId: string; sessionId: string; level: string; rating: number; notes?: string }) => void;
+  addPortfolioItem: (item: Omit<PortfolioItem, 'id' | 'uploadDate'>) => void;
+  updatePortfolioStatus: (id: string, status: 'approved' | 'rejected') => void;
+  saveStudentDiploma: (studentId: string, diplomaData: any) => void;
   updateSettings: (newSettings: Partial<AcademySettings>) => void;
-  exportDatabase: () => void;
+  exportDatabase: () => Promise<void>;
   importDatabase: (jsonData: string) => boolean;
   resetDatabase: () => void;
 }
@@ -96,12 +76,25 @@ interface MarsamContextType {
 const MarsamContext = createContext<MarsamContextType | null>(null);
 
 const STORAGE_KEY = 'marsam_erp_db_v1';
+const THEME_KEY = 'marsam_theme';
+
+const initialSettings: AcademySettings = {
+  name: 'مرسم الإبداع للفنون التشكيلية',
+  phone: '01012345678',
+  address: 'القاهرة — مصر الجديدة — شارع النزهة',
+  contractTerms: `بنود التعاقد مع مرسم الإبداع:
+١. يلتزم الطالب بمواعيد الحصص المحددة، وأي تأخير يتجاوز 15 دقيقة يحتسب تأخيراً.
+٢. في حال الغياب بعذر مسبق، يتم التنسيق لحصة تعويضية حسب السعة المتاحة.
+٣. سياسة الاسترداد: استرداد كامل قبل بدء أول حصة بـ 3 أيام، و50% بعد الحصة الأولى، ولا استرداد بعد ذلك.
+٤. الرسوم تُدفع وفق جدول الأقساط المتفق عليه مع إدارة المرسم.
+٥. المرسم مسؤول عن توفير بيئة تعليمية آمنة وأدوات تدريب مطابقة للمعايير الفنية.`
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Current logged in user
   const [currentUser, setCurrentUser] = useState<User | null>(mockUsers[0]);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   
-  // Core Data
+  // 1. Reactive Presentation State
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [students, setStudents] = useState<Student[]>(mockStudents);
   const [courses, setCourses] = useState<Course[]>(mockCourses);
@@ -114,64 +107,144 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<Progress[]>(mockProgress);
   const [supplyItems, setSupplyItems] = useState<SupplyItem[]>(mockSupplyItems);
   const [supplySales, setSupplySales] = useState<SupplySale[]>(mockSupplySales);
-  const [settings, setSettings] = useState<AcademySettings>({
-    name: 'مرسم الإبداع للفنون التشكيلية',
-    phone: '01012345678',
-    address: 'القاهرة — مصر الجديدة — شارع النزهة',
-    contractTerms: `بنود التعاقد مع مرسم الإبداع:
-١. يلتزم الطالب بمواعيد الحصص المحددة، وأي تأخير يتجاوز 15 دقيقة يحتسب تأخيراً.
-٢. في حال الغياب بعذر مسبق، يتم التنسيق لحصة تعويضية حسب السعة المتاحة.
-٣. سياسة الاسترداد: استرداد كامل قبل بدء أول حصة بـ 3 أيام، و50% بعد الحصة الأولى، ولا استرداد بعد ذلك.
-٤. الرسوم تُدفع وفق جدول الأقساط المتفق عليه مع إدارة المرسم.
-٥. المرسم مسؤول عن توفير بيئة تعليمية آمنة وأدوات تدريب مطابقة للمعايير الفنية.`
-  });
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>(mockPortfolio);
+  const [customDiplomas, setCustomDiplomas] = useState<Record<string, any>>({});
+  const [settings, setSettings] = useState<AcademySettings>(initialSettings);
 
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from local storage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.users) setUsers(parsed.users);
-        if (parsed.students) setStudents(parsed.students);
-        if (parsed.courses) setCourses(parsed.courses);
-        if (parsed.groups) setGroups(parsed.groups);
-        if (parsed.sessions) setSessions(parsed.sessions);
-        if (parsed.enrollments) setEnrollments(parsed.enrollments);
-        if (parsed.installments) setInstallments(parsed.installments);
-        if (parsed.payments) setPayments(parsed.payments);
-        if (parsed.attendance) setAttendance(parsed.attendance);
-        if (parsed.progress) setProgress(parsed.progress);
-        if (parsed.supplyItems) setSupplyItems(parsed.supplyItems);
-        if (parsed.supplySales) setSupplySales(parsed.supplySales);
-        if (parsed.settings) setSettings(parsed.settings);
-      }
-    } catch (e) {
-      console.error('Failed to load marsam database from localStorage', e);
-    }
-    setIsHydrated(true);
+  // 2. Initialize Core Database Engine & Domain Services
+  const dbEngine = useMemo(() => {
+    const initialState: DatabaseState = {
+      users: mockUsers,
+      students: mockStudents,
+      courses: mockCourses,
+      groups: mockGroups,
+      sessions: mockSessions,
+      enrollments: mockEnrollments,
+      installments: mockInstallments,
+      payments: mockPayments,
+      attendance: mockAttendance,
+      progress: mockProgress,
+      supplyItems: mockSupplyItems,
+      supplySales: mockSupplySales,
+      portfolio: mockPortfolio,
+      customDiplomas: {},
+      settings: initialSettings
+    };
+    return new DatabaseEngine(initialState);
   }, []);
 
-  // Save to local storage
+  const studentService = useMemo(() => new StudentService(dbEngine), [dbEngine]);
+  const financeService = useMemo(() => new FinanceService(dbEngine), [dbEngine]);
+  const posService = useMemo(() => new PosService(dbEngine), [dbEngine]);
+  const attendanceService = useMemo(() => new AttendanceService(dbEngine), [dbEngine]);
+
+  /**
+   * Unified Reactive State Sync callback from committed transactions
+   */
+  const syncFromEngine = useCallback((committedState: DatabaseState) => {
+    setUsers([...committedState.users]);
+    setStudents([...committedState.students]);
+    setCourses([...committedState.courses]);
+    setGroups([...committedState.groups]);
+    setSessions([...committedState.sessions]);
+    setEnrollments([...committedState.enrollments]);
+    setInstallments([...committedState.installments]);
+    setPayments([...committedState.payments]);
+    setAttendance([...committedState.attendance]);
+    setProgress([...committedState.progress]);
+    setSupplyItems([...committedState.supplyItems]);
+    setSupplySales([...committedState.supplySales]);
+    setPortfolio([...committedState.portfolio]);
+    setCustomDiplomas({ ...committedState.customDiplomas });
+    setSettings({ ...committedState.settings });
+  }, []);
+
+  // 3. Hydrate state from local disk storage (/api/database) or fallback to localStorage
+  useEffect(() => {
+    const savedTheme = (localStorage.getItem(THEME_KEY) as 'light' | 'dark') || 'light';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    async function hydrateDatabase() {
+      let loaded = false;
+      try {
+        const res = await fetch('/api/database');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            dbEngine.hydrate(json.data);
+            syncFromEngine(json.data);
+            loaded = true;
+            logger.info('AuthProvider', 'Database hydrated successfully from disk storage.');
+          }
+        }
+      } catch (err) {
+        logger.warn('AuthProvider', 'Failed to reach /api/database on boot, checking localStorage fallback.');
+      }
+
+      if (!loaded) {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            dbEngine.hydrate(parsed);
+            syncFromEngine(parsed);
+          }
+        } catch (e) {
+          logger.error('AuthProvider', 'Failed to parse database from localStorage', e);
+        }
+      }
+      setIsHydrated(true);
+    }
+
+    hydrateDatabase();
+  }, [dbEngine, syncFromEngine]);
+
+  // 4. Background Persistence & Snapshot Sync
   useEffect(() => {
     if (!isHydrated) return;
+
+    const currentState: DatabaseState = {
+      users, students, courses, groups, sessions,
+      enrollments, installments, payments, attendance,
+      progress, supplyItems, supplySales, portfolio,
+      customDiplomas, settings
+    };
+
+    // Keep database engine synchronized
+    dbEngine.hydrate(currentState);
+
+    // Browser localStorage mirror
     try {
-      const data = {
-        users, students, courses, groups, sessions,
-        enrollments, installments, payments, attendance,
-        progress, supplyItems, supplySales, settings
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
     } catch (e) {
-      console.error('Failed to save marsam database', e);
+      logger.warn('AuthProvider', 'LocalStorage quota exceeded or restricted.');
     }
+
+    // Debounced asynchronous server disk sync
+    const timer = setTimeout(() => {
+      fetch('/api/database', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentState)
+      }).catch(err => logger.warn('AuthProvider', 'Async background disk sync error: ' + String(err)));
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [
-    isHydrated, users, students, courses, groups, sessions,
+    isHydrated, dbEngine, users, students, courses, groups, sessions,
     enrollments, installments, payments, attendance,
-    progress, supplyItems, supplySales, settings
+    progress, supplyItems, supplySales, portfolio, customDiplomas, settings
   ]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    localStorage.setItem(THEME_KEY, nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
 
   const login = (role: 'admin' | 'supervisor' | 'guardian') => {
     const user = users.find(u => u.role === role) || users[0];
@@ -180,240 +253,150 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => setCurrentUser(null);
 
-  // ACTION: Add Student with immediate enrollment & contract
-  const addStudentWithEnrollment = (params: {
-    name: string;
-    birthDate: string;
-    guardianName: string;
-    guardianPhone: string;
-    guardianEmail?: string;
-    groupId?: string;
-    totalAmount?: number;
-    initialPayment?: number;
-    paymentMethod?: Payment['method'];
-    level?: string;
-    healthNotes?: string;
-    publishConsent?: boolean;
-  }) => {
-    // 1. Guardian
-    let guardian = users.find(u => u.phone === params.guardianPhone);
-    if (!guardian) {
-      guardian = {
-        id: 'u_' + Date.now(),
-        name: params.guardianName,
-        phone: params.guardianPhone,
-        email: params.guardianEmail || `guardian_${Date.now()}@marsam.com`,
-        role: 'guardian'
-      };
-      setUsers(prev => [...prev, guardian!]);
+  // ================= DOMAIN ACTIONS =================
+
+  /**
+   * Action 1: Register Student with Enrollment (ACID Transaction)
+   */
+  const addStudentWithEnrollment = (params: RegisterStudentDTO) => {
+    try {
+      return studentService.registerStudentWithEnrollment(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
     }
-
-    // 2. Student
-    const studentSeq = students.length + 1;
-    const barcodeCode = `STU-2026-${String(studentSeq).padStart(4, '0')}`;
-    const newStudent: Student = {
-      id: 's_' + Date.now(),
-      name: params.name,
-      birthDate: params.birthDate,
-      guardianId: guardian.id,
-      qrToken: barcodeCode,
-      healthNotes: params.healthNotes,
-      publishConsent: params.publishConsent ?? true,
-      level: params.level || 'مبتدئ'
-    };
-
-    setStudents(prev => [newStudent, ...prev]);
-
-    let newEnrollment: Enrollment | undefined;
-    let newPayment: Payment | undefined;
-
-    // 3. Enrollment if group selected
-    if (params.groupId) {
-      const totalAmount = params.totalAmount || 1200;
-      const initialPaid = params.initialPayment || 0;
-      const remaining = totalAmount - initialPaid;
-      const paymentStatus = remaining <= 0 ? 'completed' : (initialPaid > 0 ? 'partial' : 'unpaid');
-
-      newEnrollment = {
-        id: 'e_' + Date.now(),
-        studentId: newStudent.id,
-        groupId: params.groupId,
-        enrollDate: new Date().toISOString().split('T')[0],
-        contractSigned: true,
-        contractVersion: 'v2.0',
-        paymentStatus,
-        totalPaid: initialPaid,
-        totalAmount
-      };
-
-      setEnrollments(prev => [newEnrollment!, ...prev]);
-
-      // Installments
-      if (remaining > 0) {
-        const inst1: Installment = {
-          id: 'inst_' + Date.now() + '_1',
-          enrollmentId: newEnrollment.id,
-          amount: Math.round(remaining / 2),
-          dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-          status: 'pending'
-        };
-        const inst2: Installment = {
-          id: 'inst_' + Date.now() + '_2',
-          enrollmentId: newEnrollment.id,
-          amount: remaining - Math.round(remaining / 2),
-          dueDate: new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0],
-          status: 'pending'
-        };
-        setInstallments(prev => [...prev, inst1, inst2]);
-      }
-
-      // Initial Payment
-      if (initialPaid > 0) {
-        const receiptNumber = `CRS-2026-${String(payments.length + 1).padStart(4, '0')}`;
-        newPayment = {
-          id: 'pay_' + Date.now(),
-          enrollmentId: newEnrollment.id,
-          amount: initialPaid,
-          method: params.paymentMethod || 'cash',
-          receiptNumber,
-          date: new Date().toISOString().replace('T', ' ').slice(0, 16),
-          recordedBy: currentUser?.id || 'admin',
-          status: 'valid',
-          notes: 'دفعة تسجيل أولى عند التعاقد'
-        };
-        setPayments(prev => [newPayment!, ...prev]);
-      }
-    }
-
-    return { student: newStudent, enrollment: newEnrollment, payment: newPayment };
   };
 
-  // ACTION: Add Course Payment with receipt CRS-2026-XXXX
-  const addCoursePayment = (params: {
-    enrollmentId: string;
-    amount: number;
-    method: Payment['method'];
-    notes?: string;
-  }) => {
-    const receiptNumber = `CRS-2026-${String(payments.length + 1).padStart(4, '0')}`;
-    const newPayment: Payment = {
-      id: 'pay_' + Date.now(),
-      enrollmentId: params.enrollmentId,
-      amount: params.amount,
-      method: params.method,
-      receiptNumber,
-      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      recordedBy: currentUser?.id || 'admin',
-      status: 'valid',
-      notes: params.notes || 'سداد رسوم دراسية'
-    };
-
-    setPayments(prev => [newPayment, ...prev]);
-
-    // Update enrollment totalPaid & status
-    setEnrollments(prev => prev.map(e => {
-      if (e.id === params.enrollmentId) {
-        const newTotal = e.totalPaid + params.amount;
-        const newStatus = newTotal >= e.totalAmount ? 'completed' : 'partial';
-        return { ...e, totalPaid: newTotal, paymentStatus: newStatus };
-      }
-      return e;
-    }));
-
-    return newPayment;
+  /**
+   * Action 2: Add Course Payment (ACID Transaction)
+   */
+  const addCoursePayment = (params: RecordPaymentDTO) => {
+    try {
+      return financeService.addCoursePayment(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
   };
 
-  // ACTION: Record Attendance
+  /**
+   * Action 3: Process Real-time Barcode Scanner (O(1) Indexed Lookup)
+   */
+  const processBarcodeScan = (barcode: string, sessionId: string) => {
+    try {
+      return attendanceService.processBarcodeScan(barcode, sessionId, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      return { success: false, message: userMessage };
+    }
+  };
+
+  /**
+   * Action 4: Record Student Attendance manually
+   */
   const recordStudentAttendance = (params: {
     studentId: string;
     sessionId: string;
     status: 'present' | 'absent' | 'late';
     lessonTopic?: string;
-  }) => {
-    const timeNow = new Date().toTimeString().slice(0, 5);
-    const existingIndex = attendance.findIndex(
-      a => a.sessionId === params.sessionId && a.studentId === params.studentId
-    );
+  }): Attendance => {
+    const existing = attendance.find(a => a.studentId === params.studentId && a.sessionId === params.sessionId);
+    const nowTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
-    let updatedRec: Attendance;
-    if (existingIndex >= 0) {
-      updatedRec = { ...attendance[existingIndex], status: params.status };
-      setAttendance(prev => {
-        const copy = [...prev];
-        copy[existingIndex] = updatedRec;
-        return copy;
-      });
+    let updatedRecord: Attendance;
+    if (existing) {
+      updatedRecord = {
+        ...existing,
+        status: params.status,
+        checkIn: params.status === 'present' || params.status === 'late' ? existing.checkIn || nowTime : undefined
+      };
+      setAttendance(prev => prev.map(a => a.id === existing.id ? updatedRecord : a));
     } else {
-      updatedRec = {
+      updatedRecord = {
         id: 'att_' + Date.now(),
         studentId: params.studentId,
         sessionId: params.sessionId,
-        checkIn: timeNow,
-        recordedBy: currentUser?.id || 'supervisor',
-        status: params.status
+        status: params.status,
+        recordedBy: currentUser?.id || 'admin',
+        checkIn: params.status === 'present' || params.status === 'late' ? nowTime : undefined
       };
-      setAttendance(prev => [updatedRec, ...prev]);
+      setAttendance(prev => [updatedRecord, ...prev]);
     }
 
     if (params.lessonTopic && params.status === 'present') {
-      const newProgress: Progress = {
+      const progressRecord: Progress = {
         id: 'prog_' + Date.now(),
         studentId: params.studentId,
         sessionId: params.sessionId,
         level: params.lessonTopic,
         rating: 5,
-        notes: `حضر وأنجز درس: ${params.lessonTopic}`,
-        recordedBy: currentUser?.id || 'supervisor',
-        date: new Date().toISOString().split('T')[0]
+        notes: `حضر وأنجز موضوع الدرس: ${params.lessonTopic}`,
+        recordedBy: currentUser?.id || 'admin',
+        date: new Date().toISOString().slice(0, 10)
       };
-      setProgress(prev => [newProgress, ...prev]);
+      setProgress(prev => [progressRecord, ...prev]);
     }
 
-    return updatedRec;
+    return updatedRecord;
   };
 
-  // ACTION: Barcode Scanner Attendance (USB Scanner or Webcam)
-  const processBarcodeScan = (barcode: string, sessionId: string) => {
-    const clean = barcode.trim().toUpperCase();
-    const student = students.find(s => s.qrToken.toUpperCase() === clean || s.id.toUpperCase() === clean);
-
-    if (!student) {
-      return { success: false, message: 'كود الطالب غير موجود بالنظام' };
+  /**
+   * Action 5: POS Store Sale Checkout (ACID Transaction)
+   */
+  const createSupplySale = (params: CreateSaleDTO) => {
+    try {
+      return posService.createSupplySale(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
     }
-
-    // Check enrollment & overdue
-    const enrollment = enrollments.find(e => e.studentId === student.id);
-    const remainingBalance = enrollment ? Math.max(0, enrollment.totalAmount - enrollment.totalPaid) : 0;
-    const isOverdue = enrollment?.paymentStatus === 'overdue' || (remainingBalance > 0 && enrollment?.paymentStatus === 'unpaid');
-
-    const att = recordStudentAttendance({
-      studentId: student.id,
-      sessionId,
-      status: 'present'
-    });
-
-    return {
-      success: true,
-      student,
-      attendance: att,
-      enrollment,
-      isOverdue,
-      remainingBalance,
-      message: `تم تسجيل حضور: ${student.name}`
-    };
   };
 
-  // ACTION: Supplies Management
+  /**
+   * Action 6: Add Supply Item (ACID Transaction)
+   */
   const addSupplyItem = (item: Omit<SupplyItem, 'id'>) => {
-    const newItem: SupplyItem = {
-      ...item,
-      id: 'sup_' + Date.now(),
-      barcode: item.barcode || `TOOL-${Math.floor(100000 + Math.random() * 900000)}`
-    };
-    setSupplyItems(prev => [newItem, ...prev]);
-    return newItem;
+    try {
+      return posService.addSupplyItem(item, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
   };
 
+  /**
+   * Action 6b: Update Existing Supply Item (ACID Transaction)
+   */
+  const updateSupplyItem = (id: string, updates: Partial<Omit<SupplyItem, 'id'>>) => {
+    try {
+      return posService.updateSupplyItem(id, updates, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  /**
+   * Action 6c: Delete Supply Item (ACID Transaction)
+   */
+  const deleteSupplyItem = (id: string) => {
+    try {
+      return posService.deleteSupplyItem(id, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  /**
+   * Action 7: Manual Stock Adjustment
+   */
   const updateSupplyStock = (id: string, deltaQty: number) => {
     setSupplyItems(prev => prev.map(item => {
       if (item.id === id) {
@@ -423,122 +406,123 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  // ACTION: Create Supply Sale with receipt SHP-2026-XXXX & financial separation
-  const createSupplySale = (params: {
-    customerType: 'student' | 'walkin';
-    customerName: string;
-    customerId?: string;
-    items: Array<{ productId: string; quantity: number }>;
-    paymentMethod: Payment['method'];
+  /**
+   * Action 8: Update Student Progress Evaluation
+   */
+  const updateStudentProgress = (params: {
+    studentId: string;
+    sessionId: string;
+    level: string;
+    rating: number;
     notes?: string;
   }) => {
-    const saleItems = params.items.map(cartItem => {
-      const product = supplyItems.find(p => p.id === cartItem.productId);
-      const unitPrice = product?.sellPrice || 0;
-      const costPrice = product?.costPrice || 0;
-      return {
-        productId: cartItem.productId,
-        productName: product?.name || 'أداة فنية',
-        quantity: cartItem.quantity,
-        unitPrice,
-        costPrice,
-        total: unitPrice * cartItem.quantity
-      };
-    });
-
-    const totalAmount = saleItems.reduce((acc, it) => acc + it.total, 0);
-    const totalCost = saleItems.reduce((acc, it) => acc + (it.costPrice * it.quantity), 0);
-    const profit = totalAmount - totalCost;
-
-    const invoiceNumber = `SHP-2026-${String(supplySales.length + 1).padStart(4, '0')}`;
-
-    const newSale: SupplySale = {
-      id: 'sale_' + Date.now(),
-      invoiceNumber,
-      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      customerType: params.customerType,
-      customerName: params.customerName,
-      customerId: params.customerId,
-      items: saleItems,
-      totalAmount,
-      totalCost,
-      profit,
-      paymentMethod: params.paymentMethod,
-      notes: params.notes
+    const newProgress: Progress = {
+      id: 'pr_' + Date.now(),
+      studentId: params.studentId,
+      sessionId: params.sessionId,
+      level: params.level,
+      rating: params.rating,
+      notes: params.notes || '',
+      recordedBy: currentUser?.id || 'admin',
+      date: new Date().toISOString().slice(0, 10)
     };
+    setProgress(prev => [newProgress, ...prev]);
+    setStudents(prev => prev.map(s => s.id === params.studentId ? { ...s, level: params.level } : s));
+  };
 
-    // Deduct stock
-    setSupplyItems(prev => prev.map(p => {
-      const sold = params.items.find(i => i.productId === p.id);
-      if (sold) {
-        return { ...p, stockQty: Math.max(0, p.stockQty - sold.quantity) };
-      }
-      return p;
-    }));
+  /**
+   * Action 9: Portfolio operations
+   */
+  const addPortfolioItem = (item: Omit<PortfolioItem, 'id' | 'uploadDate'>) => {
+    const newItem: PortfolioItem = {
+      id: 'pf_' + Date.now(),
+      uploadDate: new Date().toISOString().slice(0, 10),
+      ...item
+    };
+    setPortfolio(prev => [newItem, ...prev]);
+  };
 
-    setSupplySales(prev => [newSale, ...prev]);
-    return newSale;
+  const updatePortfolioStatus = (id: string, status: 'approved' | 'rejected') => {
+    setPortfolio(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+  };
+
+  /**
+   * Action 10: Diploma & Settings
+   */
+  const saveStudentDiploma = (studentId: string, diplomaData: any) => {
+    setCustomDiplomas(prev => ({ ...prev, [studentId]: diplomaData }));
   };
 
   const updateSettings = (newSettings: Partial<AcademySettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
-  const exportDatabase = () => {
-    const data = {
+  /**
+   * Action 11: Non-blocking Asynchronous Export
+   */
+  const exportDatabase = async () => {
+    const state: DatabaseState = {
       users, students, courses, groups, sessions,
       enrollments, installments, payments, attendance,
-      progress, supplyItems, supplySales, settings,
-      exportedAt: new Date().toISOString()
+      progress, supplyItems, supplySales, portfolio,
+      customDiplomas, settings
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `marsam_backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    await BackupService.exportDatabaseAsync(state);
   };
 
-  const importDatabase = (jsonData: string) => {
-    try {
-      const parsed = JSON.parse(jsonData);
-      if (parsed.students && parsed.courses) {
-        if (parsed.users) setUsers(parsed.users);
-        if (parsed.students) setStudents(parsed.students);
-        if (parsed.courses) setCourses(parsed.courses);
-        if (parsed.groups) setGroups(parsed.groups);
-        if (parsed.sessions) setSessions(parsed.sessions);
-        if (parsed.enrollments) setEnrollments(parsed.enrollments);
-        if (parsed.installments) setInstallments(parsed.installments);
-        if (parsed.payments) setPayments(parsed.payments);
-        if (parsed.attendance) setAttendance(parsed.attendance);
-        if (parsed.progress) setProgress(parsed.progress);
-        if (parsed.supplyItems) setSupplyItems(parsed.supplyItems);
-        if (parsed.supplySales) setSupplySales(parsed.supplySales);
-        if (parsed.settings) setSettings(parsed.settings);
-        return true;
-      }
-      return false;
-    } catch {
+  /**
+   * Action 12: Schema-Validated Database Import
+   */
+  const importDatabase = (jsonData: string): boolean => {
+    const verification = BackupService.validateImportSchema(jsonData);
+    if (!verification.valid || !verification.data) {
+      alert(`خطأ في استيراد البيانات: ${verification.error}`);
       return false;
     }
+
+    dbEngine.hydrate(verification.data);
+    syncFromEngine(verification.data);
+    alert('تم استيراد واستعادة قاعدة البيانات بنجاح وبأمان تام ✅');
+    return true;
   };
 
+  /**
+   * Action 13: Reset database safely
+   */
   const resetDatabase = () => {
     localStorage.removeItem(STORAGE_KEY);
-    window.location.reload();
+    dbEngine.hydrate({
+      users: mockUsers,
+      students: mockStudents,
+      courses: mockCourses,
+      groups: mockGroups,
+      sessions: mockSessions,
+      enrollments: mockEnrollments,
+      installments: mockInstallments,
+      payments: mockPayments,
+      attendance: mockAttendance,
+      progress: mockProgress,
+      supplyItems: mockSupplyItems,
+      supplySales: mockSupplySales,
+      portfolio: mockPortfolio,
+      customDiplomas: {},
+      settings: initialSettings
+    });
+    syncFromEngine(dbEngine.getState());
   };
 
   return (
     <MarsamContext.Provider value={{
       currentUser, login, logout,
+      theme, toggleTheme,
       users, students, courses, groups, sessions,
       enrollments, installments, payments, attendance,
-      progress, supplyItems, supplySales, settings,
+      progress, supplyItems, supplySales, portfolio, customDiplomas, settings,
       addStudentWithEnrollment, addCoursePayment,
       recordStudentAttendance, processBarcodeScan,
-      addSupplyItem, updateSupplyStock, createSupplySale,
+      addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale,
+      updateStudentProgress, addPortfolioItem, updatePortfolioStatus,
+      saveStudentDiploma,
       updateSettings, exportDatabase, importDatabase, resetDatabase
     }}>
       {children}
@@ -546,14 +530,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(MarsamContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}
-
 export function useMarsam() {
-  const ctx = useContext(MarsamContext);
-  if (!ctx) throw new Error('useMarsam must be used within AuthProvider');
-  return ctx;
+  const context = useContext(MarsamContext);
+  if (!context) throw new Error('useMarsam must be used within an AuthProvider');
+  return context;
 }
