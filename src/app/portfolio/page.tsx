@@ -71,7 +71,7 @@ export default function PortfolioPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Sparkles className="text-blue-600" size={26} />
+            <Sparkles className="text-teal-400" size={26} />
             معرض الأعمال الفنية ولوحات المرسم
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -91,7 +91,7 @@ export default function PortfolioPage() {
       {/* Supervisors Summary Row */}
       <div className="glass p-5 rounded-2xl border border-slate-200 bg-white">
         <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
-          <Palette size={16} className="text-blue-600" />
+          <Palette size={16} className="text-teal-400" />
           فنانو ومشرفو المرسم
         </h3>
 
@@ -106,14 +106,14 @@ export default function PortfolioPage() {
                 key={sup.id}
                 className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-3"
               >
-                <div className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
+                <div className="w-11 h-11 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
                   {sup.name.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-xs text-slate-900 truncate">{sup.name}</p>
                   <p className="text-[11px] text-slate-500">{sup.phone || 'مشرف معتمد'}</p>
                   <div className="flex gap-2 mt-1.5 flex-wrap">
-                    <span className="badge badge-blue text-[10px]">{approved} معتمد</span>
+                    <span className="badge badge-teal text-[10px]">{approved} معتمد</span>
                     {pending > 0 && (
                       <span className="badge badge-info text-[10px]">{pending} قيد الاعتماد</span>
                     )}
@@ -138,8 +138,8 @@ export default function PortfolioPage() {
               onClick={() => setFilter(f.id as any)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 filter === f.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-blue-600'
+                  ? 'bg-teal-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-teal-400'
               }`}
             >
               {f.label}
@@ -172,7 +172,7 @@ export default function PortfolioPage() {
             return (
               <div
                 key={item.id}
-                className="glass rounded-2xl overflow-hidden border border-slate-200 flex flex-col group transition-all hover:shadow-lg hover:border-blue-400 bg-white"
+                className="glass rounded-2xl overflow-hidden border border-slate-200 flex flex-col group transition-all hover:shadow-lg hover:border-teal-500/40 bg-white"
               >
                 {/* Artwork Image Container */}
                 <div
@@ -193,7 +193,7 @@ export default function PortfolioPage() {
 
                   {/* Status Badge */}
                   <div className="absolute top-2.5 right-2.5">
-                    <span className={`badge ${item.status === 'approved' ? 'badge-blue' : item.status === 'pending' ? 'badge-info' : 'badge-danger'}`}>
+                    <span className={`badge ${item.status === 'approved' ? 'badge-teal' : item.status === 'pending' ? 'badge-info' : 'badge-danger'}`}>
                       {item.status === 'approved' ? <CheckCircle size={11} /> : <Clock size={11} />}
                       {item.status === 'approved' ? 'معتمد' : item.status === 'pending' ? 'في الانتظار' : 'مرفوض'}
                     </span>
@@ -204,7 +204,7 @@ export default function PortfolioPage() {
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
                     <h4 className="font-bold text-sm text-slate-900 leading-snug line-clamp-1">{item.title}</h4>
-                    <p className="text-xs text-blue-700 font-semibold mt-0.5">
+                    <p className="text-xs text-teal-300 font-semibold mt-0.5">
                       بإشراف: {supervisor?.name || 'فنان المرسم'}
                     </p>
                     {item.description && (
@@ -236,7 +236,7 @@ export default function PortfolioPage() {
                       <div className="w-full flex items-center justify-between text-[11px] text-slate-500">
                         <span>تاريخ الإضافة: {item.uploadDate}</span>
                         {item.status === 'approved' && (
-                          <span className="text-blue-700 font-bold flex items-center gap-1">
+                          <span className="text-teal-300 font-bold flex items-center gap-1">
                             <ShieldCheck size={12} /> منشورة
                           </span>
                         )}
@@ -256,7 +256,7 @@ export default function PortfolioPage() {
           <div className="bg-white p-6 rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-slate-800">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                <Upload size={18} className="text-blue-600" />
+                <Upload size={18} className="text-teal-400" />
                 إضافة عمل فني جديد إلى المعرض
               </h3>
               <button
@@ -275,7 +275,7 @@ export default function PortfolioPage() {
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition-colors bg-blue-50/20"
+                  className="border-2 border-dashed border-slate-200 hover:border-teal-500/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-teal-500/10/20"
                 >
                   {previewImage ? (
                     <div className="space-y-2">
@@ -285,11 +285,11 @@ export default function PortfolioPage() {
                         alt="Preview"
                         className="max-h-48 mx-auto rounded-lg object-contain shadow-md"
                       />
-                      <p className="text-[11px] text-blue-600 font-bold">انقر لتغيير الصورة</p>
+                      <p className="text-[11px] text-teal-400 font-bold">انقر لتغيير الصورة</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <Upload size={32} className="mx-auto text-blue-600 mb-1" />
+                      <Upload size={32} className="mx-auto text-teal-400 mb-1" />
                       <p className="font-bold text-xs text-slate-800">اختر صورة العمل الفني من جهازك</p>
                       <p className="text-[10px] text-slate-400">PNG, JPG, JPEG (يتم حفظها في قاعدة البيانات المحلية)</p>
                     </div>
@@ -394,7 +394,7 @@ export default function PortfolioPage() {
             <div className="p-5 flex items-center justify-between bg-white border-t border-slate-100">
               <div>
                 <h3 className="font-black text-lg text-slate-900">{selectedArtwork.title}</h3>
-                <p className="text-xs text-blue-700 font-semibold mt-0.5">{selectedArtwork.description}</p>
+                <p className="text-xs text-teal-300 font-semibold mt-0.5">{selectedArtwork.description}</p>
               </div>
               <button
                 onClick={() => setSelectedArtwork(null)}

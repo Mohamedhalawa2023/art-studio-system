@@ -32,7 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const lowStockCount = supplyItems.filter(i => i.stockQty <= i.minStock).length;
 
   return (
-    <div className="flex min-h-screen bg-[#0F141C] text-[#F3F4F6]">
+    <div className="flex min-h-screen bg-[#0F172A] text-[#F3F4F6]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -43,21 +43,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Sidebar - Warm Atelier Slate */}
       <aside
-        className={`fixed top-0 right-0 h-full w-64 bg-[#141B26] text-[#F3F4F6] z-50 flex flex-col justify-between transition-transform duration-200 border-l border-white/10 shadow-xl
+        className={`fixed top-0 right-0 h-full w-64 bg-[#131D2D] text-[#F3F4F6] z-50 flex flex-col justify-between transition-transform duration-200 border-l border-white/10 shadow-xl
           ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} lg:static lg:translate-x-0`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Studio Brand Header */}
-          <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#171F2C]">
+          <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#182335]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E06D53] to-[#E5A93C] text-white flex items-center justify-center shadow-lg shadow-[#E06D53]/30 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 text-white flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
                 <Palette size={22} />
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-black text-slate-100 tracking-tight truncate">
                   {settings.name || 'مرسم الإبداع'}
                 </h1>
-                <p className="text-[11px] text-[#E06D53] font-bold">نظام المرسم المكتبي</p>
+                <p className="text-[11px] text-teal-400 font-bold">نظام المرسم المكتبي</p>
               </div>
             </div>
             <button
@@ -84,12 +84,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#E06D53] to-[#C9563D] text-white shadow-lg shadow-[#E06D53]/30 border border-white/15'
+                      ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/20 border border-white/15'
                       : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon size={17} className={isActive ? 'text-white' : 'text-[#E06D53]/80'} />
+                    <Icon size={17} className={isActive ? 'text-white' : 'text-teal-400'} />
                     <span>{item.label}</span>
                   </div>
 
@@ -110,13 +110,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Footer info in sidebar */}
-        <div className="p-3 border-t border-white/10 shrink-0 bg-[#121822]">
+        <div className="p-3 border-t border-white/10 shrink-0 bg-[#0F172A]">
           <div className="flex items-center justify-between text-xs text-slate-400 px-1 py-1">
             <span className="flex items-center gap-1.5 font-bold text-slate-300">
-              <ShieldCheck size={14} className="text-[#34D399]" />
+              <ShieldCheck size={14} className="text-emerald-400" />
               النسخة المحلية نشطة
             </span>
-            <span className="text-[10px] font-mono text-[#E5A93C] font-bold">v1.2</span>
+            <span className="text-[10px] font-mono text-teal-400 font-bold">v1.2</span>
           </div>
         </div>
       </aside>
@@ -126,7 +126,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Top bar on mobile */}
         <header className="lg:hidden p-4 border-b border-white/10 flex items-center justify-between glass">
           <div className="flex items-center gap-2">
-            <Palette size={20} className="text-[#E06D53]" />
+            <Palette size={20} className="text-teal-400" />
             <span className="font-bold text-sm text-slate-100">{settings.name}</span>
           </div>
           <button

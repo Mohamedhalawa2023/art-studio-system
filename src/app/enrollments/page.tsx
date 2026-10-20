@@ -26,7 +26,7 @@ export default function EnrollmentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <FileText className="text-blue-600" size={26} />
+            <FileText className="text-teal-400" size={26} />
             الحجوزات وعقود الطلاب
           </h1>
           <p className="text-slate-500 text-sm mt-1">{enrollments.length} اشتراك مسجل بقاعدة البيانات</p>
@@ -50,8 +50,8 @@ export default function EnrollmentsPage() {
           {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'مكتملة', count: enrollments.filter(e => e.paymentStatus === 'completed').length, colorClass: 'text-blue-700', borderClass: 'border-blue-600' },
-              { label: 'جزئية', count: enrollments.filter(e => e.paymentStatus === 'partial').length, colorClass: 'text-blue-600', borderClass: 'border-blue-400' },
+              { label: 'مكتملة', count: enrollments.filter(e => e.paymentStatus === 'completed').length, colorClass: 'text-teal-300', borderClass: 'border-teal-500/60' },
+              { label: 'جزئية', count: enrollments.filter(e => e.paymentStatus === 'partial').length, colorClass: 'text-teal-400', borderClass: 'border-teal-500/40' },
               { label: 'متأخرة', count: enrollments.filter(e => e.paymentStatus === 'overdue').length, colorClass: 'text-slate-800', borderClass: 'border-slate-300' },
               { label: 'لم تدفع', count: enrollments.filter(e => e.paymentStatus === 'unpaid').length, colorClass: 'text-slate-500', borderClass: 'border-slate-200' },
             ].map(s => (
@@ -83,10 +83,10 @@ export default function EnrollmentsPage() {
                     const course = courses.find(c => c.id === group?.courseId);
 
                     return (
-                      <tr key={enrollment.id} className="hover:bg-blue-50/30 transition-colors">
+                      <tr key={enrollment.id} className="hover:bg-teal-500/10/30 transition-colors">
                         <td className="p-3.5">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                               {student?.name ? student.name.charAt(0) : '؟'}
                             </div>
                             <span className="font-bold text-slate-900">{student?.name || 'طالب غير محدد'}</span>
@@ -96,14 +96,14 @@ export default function EnrollmentsPage() {
                         <td className="p-3.5 text-slate-500">{group?.schedule || 'مواعيد الدورة'}</td>
                         <td className="p-3.5">
                           {enrollment.contractSigned ? (
-                            <span className="badge badge-blue flex items-center gap-1 w-fit"><CheckCircle size={10} />موقّع إلكترونياً</span>
+                            <span className="badge badge-teal flex items-center gap-1 w-fit"><CheckCircle size={10} />موقّع إلكترونياً</span>
                           ) : (
                             <span className="badge badge-danger w-fit">غير موقّع</span>
                           )}
                         </td>
                         <td className="p-3.5">
                           <span className={`badge ${
-                            enrollment.paymentStatus === 'completed' ? 'badge-blue' :
+                            enrollment.paymentStatus === 'completed' ? 'badge-teal' :
                             enrollment.paymentStatus === 'partial' ? 'badge-info' :
                             enrollment.paymentStatus === 'overdue' ? 'badge-danger' : 'badge-gray'
                           }`}>
@@ -114,7 +114,7 @@ export default function EnrollmentsPage() {
                         </td>
                         <td className="p-3.5">
                           <div>
-                            <p className="font-black text-blue-700">{enrollment.totalPaid?.toLocaleString()} ج</p>
+                            <p className="font-black text-teal-300">{enrollment.totalPaid?.toLocaleString()} ج</p>
                             <p className="text-[10px] text-slate-400">من إجمالي {enrollment.totalAmount?.toLocaleString()} ج</p>
                           </div>
                         </td>
@@ -146,13 +146,13 @@ export default function EnrollmentsPage() {
                 <div key={s.id} className="flex-1 flex items-center gap-2">
                   <div className="flex flex-col items-center gap-1 flex-1">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                      done ? 'bg-blue-600 text-white' : current ? 'bg-blue-700 text-white shadow-md shadow-blue-600/30' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      done ? 'bg-teal-600 text-white' : current ? 'bg-teal-700 text-white shadow-md shadow-blue-600/30' : 'bg-slate-100 text-slate-500 border border-slate-200'
                     }`}>
                       {done ? <CheckCircle size={16} /> : thisNum}
                     </div>
-                    <p className={`text-xs text-center font-bold ${current ? 'text-blue-700' : 'text-slate-500'}`}>{s.label}</p>
+                    <p className={`text-xs text-center font-bold ${current ? 'text-teal-300' : 'text-slate-500'}`}>{s.label}</p>
                   </div>
-                  {i < 2 && <div className={`h-0.5 w-8 -mt-4 ${done ? 'bg-blue-600' : 'bg-slate-200'}`} />}
+                  {i < 2 && <div className={`h-0.5 w-8 -mt-4 ${done ? 'bg-teal-600' : 'bg-slate-200'}`} />}
                 </div>
               );
             })}
@@ -178,14 +178,14 @@ export default function EnrollmentsPage() {
                     {groups.filter(g => g.courseId === selectedCourseId).map(group => {
                       const available = (group.capacity || 10) - (group.enrolled || 0);
                       return (
-                        <label key={group.id} className={`p-3.5 rounded-xl border cursor-pointer transition-all ${selectedGroupId === group.id ? 'border-blue-600 bg-blue-50/60' : 'border-slate-200 hover:bg-slate-50'}`}>
+                        <label key={group.id} className={`p-3.5 rounded-xl border cursor-pointer transition-all ${selectedGroupId === group.id ? 'border-teal-500/60 bg-teal-500/10/60' : 'border-slate-200 hover:bg-slate-50'}`}>
                           <input type="radio" className="sr-only" value={group.id} checked={selectedGroupId === group.id} onChange={() => setSelectedGroupId(group.id)} />
                           <div className="flex justify-between items-center">
                             <div>
                               <p className="font-bold text-xs text-slate-900">{group.schedule}</p>
                               <p className="text-[11px] text-slate-500">{group.room || 'القاعة الرئيسية'}</p>
                             </div>
-                            <span className={`badge ${available > 0 ? 'badge-blue' : 'badge-danger'} text-[10px]`}>
+                            <span className={`badge ${available > 0 ? 'badge-teal' : 'badge-danger'} text-[10px]`}>
                               {available > 0 ? `${available} مكان متاح` : 'ممتلئة'}
                             </span>
                           </div>
@@ -209,13 +209,13 @@ export default function EnrollmentsPage() {
           {step === 'new-step2' && (
             <div className="glass p-6 rounded-2xl border border-slate-200 space-y-5 bg-white">
               <div className="flex items-center gap-2.5">
-                <FileText size={22} className="text-blue-600" />
+                <FileText size={22} className="text-teal-400" />
                 <h2 className="text-lg font-black text-slate-900">٢. بنود وثيقة التعاقد</h2>
               </div>
-              <div className="p-4 rounded-xl text-xs leading-relaxed text-slate-800 whitespace-pre-line bg-blue-50/30 border border-blue-100">
+              <div className="p-4 rounded-xl text-xs leading-relaxed text-slate-800 whitespace-pre-line bg-teal-500/10/30 border border-blue-100">
                 {contractText}
               </div>
-              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200">
+              <div className="p-4 rounded-xl bg-teal-500/10/60 border border-teal-500/20">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -224,7 +224,7 @@ export default function EnrollmentsPage() {
                     onChange={e => setContractAccepted(e.target.checked)}
                   />
                   <p className="text-xs text-slate-800 leading-relaxed">
-                    أقر أنا <strong className="text-blue-700">ولي الأمر / الطالب</strong> بالاطلاع على جميع شروط وضوابط المرسم المذكورة أعلاه والموافقة التامة عليها.
+                    أقر أنا <strong className="text-teal-300">ولي الأمر / الطالب</strong> بالاطلاع على جميع شروط وضوابط المرسم المذكورة أعلاه والموافقة التامة عليها.
                   </p>
                 </label>
               </div>
@@ -252,11 +252,11 @@ export default function EnrollmentsPage() {
                         { id: 'full', label: 'سداد كامل', desc: `${price.toLocaleString()} ج دفعة واحدة`, discount: '(خصم 5%)' },
                         { id: 'installments', label: 'تقسيط ميسر', desc: `3 أقساط × ${Math.round(price/3).toLocaleString()} ج`, discount: '' },
                       ].map(plan => (
-                        <label key={plan.id} className={`p-4 rounded-xl cursor-pointer transition-all text-center border ${paymentPlan === plan.id ? 'border-blue-600 bg-blue-50/60' : 'border-slate-200 bg-slate-50'}`}>
+                        <label key={plan.id} className={`p-4 rounded-xl cursor-pointer transition-all text-center border ${paymentPlan === plan.id ? 'border-teal-500/60 bg-teal-500/10/60' : 'border-slate-200 bg-slate-50'}`}>
                           <input type="radio" className="sr-only" value={plan.id} checked={paymentPlan === plan.id} onChange={() => setPaymentPlan(plan.id as any)} />
                           <p className="font-bold text-xs text-slate-900">{plan.label}</p>
                           <p className="text-[11px] text-slate-500 mt-1">{plan.desc}</p>
-                          {plan.discount && <p className="text-[10px] text-blue-700 font-bold mt-0.5">{plan.discount}</p>}
+                          {plan.discount && <p className="text-[10px] text-teal-300 font-bold mt-0.5">{plan.discount}</p>}
                         </label>
                       ))}
                     </div>

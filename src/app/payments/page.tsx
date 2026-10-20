@@ -90,7 +90,7 @@ export default function PaymentsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <CreditCard size={26} className="text-blue-600" />
+            <CreditCard size={26} className="text-teal-400" />
             ماليات الكورسات والأقساط
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -113,14 +113,14 @@ export default function PaymentsPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass p-5 rounded-2xl border-r-4 border-blue-600 bg-white">
+        <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/60 bg-white">
           <p className="text-xs text-slate-500 font-semibold">إجمالي رسوم الكورسات المحصلة</p>
-          <p className="text-2xl font-black text-blue-700 mt-1">{totalCollected.toLocaleString()} ج</p>
+          <p className="text-2xl font-black text-teal-300 mt-1">{totalCollected.toLocaleString()} ج</p>
           <p className="text-xs text-slate-400 mt-1">خزينة الكورسات والتدريب</p>
         </div>
-        <div className="glass p-5 rounded-2xl border-r-4 border-blue-400 bg-white">
+        <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/40 bg-white">
           <p className="text-xs text-slate-500 font-semibold">أقساط معلقة (مستحقة قريباً)</p>
-          <p className="text-2xl font-black text-blue-600 mt-1">{pendingInstallmentsCount} أقساط</p>
+          <p className="text-2xl font-black text-teal-400 mt-1">{pendingInstallmentsCount} أقساط</p>
           <p className="text-xs text-slate-400 mt-1">مجدولة للشهر القادم</p>
         </div>
         <div className="glass p-5 rounded-2xl border-r-4 border-slate-300 bg-white">
@@ -128,7 +128,7 @@ export default function PaymentsPage() {
           <p className="text-2xl font-black text-slate-800 mt-1">{overdueInstallmentsCount} أقساط</p>
           <p className="text-xs text-slate-400 mt-1">تتطلب تنبيه ولي الأمر</p>
         </div>
-        <div className="glass p-5 rounded-2xl border-r-4 border-blue-500 bg-white">
+        <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/60 bg-white">
           <p className="text-xs text-slate-500 font-semibold">عدد إيصالات الدفع المصدرة</p>
           <p className="text-2xl font-black text-blue-800 mt-1">{payments.length} إيصال</p>
           <p className="text-xs text-slate-400 mt-1">ترقيم CRS-2026</p>
@@ -140,10 +140,10 @@ export default function PaymentsPage() {
         <div className="lg:col-span-3 glass p-5 rounded-2xl space-y-4 bg-white border border-slate-200">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <Clock size={18} className="text-blue-600" />
+              <Clock size={18} className="text-teal-400" />
               جدول الأقساط واستحقاقات الطلاب
             </h3>
-            <span className="badge badge-blue text-xs font-mono">{installments.length} قسط</span>
+            <span className="badge badge-teal text-xs font-mono">{installments.length} قسط</span>
           </div>
 
           <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
@@ -156,11 +156,11 @@ export default function PaymentsPage() {
               return (
                 <div
                   key={inst.id}
-                  className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-blue-50/40 hover:border-blue-200 flex items-center justify-between text-xs transition-all"
+                  className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-teal-500/10/40 hover:border-teal-500/20 flex items-center justify-between text-xs transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                      inst.status === 'paid' ? 'bg-blue-100 text-blue-600' :
+                      inst.status === 'paid' ? 'bg-teal-500/15 text-teal-400' :
                       inst.status === 'overdue' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'
                     }`}>
                       {inst.status === 'paid' ? <CheckCircle size={18} /> : inst.status === 'overdue' ? <AlertCircle size={18} /> : <Clock size={18} />}
@@ -177,7 +177,7 @@ export default function PaymentsPage() {
                     <div className="text-left">
                       <p className="font-bold text-sm text-slate-900 font-mono">{inst.amount} ج</p>
                       <span className={`badge text-[10px] mt-0.5 ${
-                        inst.status === 'paid' ? 'badge-blue' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'
+                        inst.status === 'paid' ? 'badge-teal' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'
                       }`}>
                         {inst.status === 'paid' ? 'تم السداد' : inst.status === 'overdue' ? 'متأخر ⚠️' : 'قيد الانتظار'}
                       </span>
@@ -206,7 +206,7 @@ export default function PaymentsPage() {
         <div className="lg:col-span-2 glass p-5 rounded-2xl space-y-4 bg-white border border-slate-200">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <CreditCard size={18} className="text-blue-600" />
+              <CreditCard size={18} className="text-teal-400" />
               سجل إيصالات السداد (CRS)
             </h3>
             <span className="text-xs text-slate-500">{payments.length} إيصال</span>
@@ -220,15 +220,15 @@ export default function PaymentsPage() {
               const course = courses.find(c => c.id === group?.courseId);
 
               return (
-                <div key={pay.id} className="p-3 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/30 text-xs space-y-2 transition-all">
+                <div key={pay.id} className="p-3 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-teal-500/20 hover:bg-teal-500/10/30 text-xs space-y-2 transition-all">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded text-[11px]">
+                      <span className="font-mono font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded text-[11px]">
                         {pay.receiptNumber}
                       </span>
                       <strong className="text-slate-800 mr-2">{student?.name}</strong>
                     </div>
-                    <span className="font-black text-sm text-blue-700 font-mono">{pay.amount} ج</span>
+                    <span className="font-black text-sm text-teal-300 font-mono">{pay.amount} ج</span>
                   </div>
 
                   <div className="flex items-center justify-between text-slate-500 text-[11px]">
@@ -244,7 +244,7 @@ export default function PaymentsPage() {
                         method: pay.method,
                         notes: pay.notes
                       })}
-                      className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold"
+                      className="text-teal-400 hover:text-teal-300 flex items-center gap-1 font-semibold"
                     >
                       <Printer size={12} /> طباعة الإيصال
                     </button>
@@ -270,7 +270,7 @@ export default function PaymentsPage() {
           <div className="bg-white border border-slate-200 shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                <CreditCard size={20} className="text-blue-600" />
+                <CreditCard size={20} className="text-teal-400" />
                 تسجيل دفعة رسوم دورة تدريبية
               </h3>
               <button onClick={() => setShowAddPayment(false)} className="text-slate-400 hover:text-slate-700">
@@ -305,7 +305,7 @@ export default function PaymentsPage() {
                 <label className="block text-slate-700 font-semibold mb-1">المبلغ المطلوب سداده الآن (ج):</label>
                 <input
                   type="number"
-                  className="input text-base font-bold text-blue-700"
+                  className="input text-base font-bold text-teal-300"
                   required
                   value={payAmount}
                   onChange={e => setPayAmount(Number(e.target.value))}
@@ -369,7 +369,7 @@ export default function PaymentsPage() {
                 <h2 className="text-xl font-black text-slate-900">{settings.name}</h2>
                 <p className="text-xs text-slate-500 mt-0.5">إيصال سداد رسوم دورة تدريبية</p>
                 <p className="text-xs text-slate-400">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-blue-50 px-3 py-1 rounded text-xs font-mono font-bold text-blue-700 border border-blue-200">
+                <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-teal-300 border border-teal-500/20">
                   إيصال رقم: {currentReceipt.receiptNumber}
                 </div>
               </div>
@@ -401,7 +401,7 @@ export default function PaymentsPage() {
 
               <div className="border-t border-b py-3 flex justify-between items-center">
                 <span className="font-black text-sm text-slate-900">المبلغ المدفوع:</span>
-                <span className="font-black text-2xl text-blue-700 font-mono">{currentReceipt.amount} ج</span>
+                <span className="font-black text-2xl text-teal-300 font-mono">{currentReceipt.amount} ج</span>
               </div>
 
               <div className="flex justify-between text-xs text-slate-600">

@@ -66,7 +66,7 @@ export function Pagination({
       <div className="font-medium text-slate-500">
         عرض <span className="font-bold text-slate-800">{startItem}</span> إلى{' '}
         <span className="font-bold text-slate-800">{endItem}</span> من إجمالي{' '}
-        <span className="font-bold text-blue-700">{totalItems}</span> سجل
+        <span className="font-bold text-teal-300">{totalItems}</span> سجل
       </div>
 
       {/* Navigation Buttons */}
@@ -109,7 +109,7 @@ export function Pagination({
                 onClick={() => onPageChange(pageNum)}
                 className={`min-w-[34px] h-[34px] px-2 rounded-lg text-sm font-semibold transition ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                    ? 'bg-teal-600 text-white shadow-sm shadow-blue-200'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >

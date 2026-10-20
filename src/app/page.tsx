@@ -24,16 +24,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-4">
       {/* 1. Welcome Banner - Strict RTL Alignment & Balanced Left Actions */}
-      <div className="p-4 md:py-4.5 md:px-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] shadow-xs relative overflow-hidden">
+      <div className="p-4 md:py-4.5 md:px-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 w-full">
           {/* Right-aligned Header Information */}
           <div className="space-y-1.5 text-right flex-1">
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold">
-              <Shield size={13} className="text-blue-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-teal-500/10 dark:bg-teal-950/40 border border-teal-500/20 dark:border-teal-500/20 text-teal-300 dark:text-teal-300 text-xs font-bold">
+              <Shield size={13} className="text-teal-400" />
               <span>نظام إدارة المرسم المكتبي • تخزين محلي 100%</span>
             </div>
             <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              لوحة إدارة <span className="text-blue-600 dark:text-blue-400">{settings.name || 'مرسم الإبداع'}</span>
+              لوحة إدارة <span className="text-teal-400 dark:text-teal-300">{settings.name || 'مرسم الإبداع'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-300 text-xs md:text-sm max-w-2xl leading-relaxed">
               إدارة شؤون الطلاب، عقود التدريب الرسمية، الشهادات الفنية الملكية، الحضور بالباركود، ومبيعات الخامات الفنية.
@@ -63,43 +63,43 @@ export default function Dashboard() {
       {/* 2. KPI Stats Grid - Tightened Padding & Warning Alert Highlight */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Total Students */}
-        <Link href="/students" prefetch={true} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] hover:border-blue-500 transition-all group shadow-xs">
+        <Link href="/students" prefetch={true} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] hover:border-teal-500/60 transition-all group shadow-xs">
           <div className="flex items-center justify-between pb-1">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">إجمالي الطلاب المقيدين</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-teal-900/30 text-teal-400 dark:text-teal-300 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Users size={16} />
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-1">{students.length}</p>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1.5 font-bold flex items-center gap-1">
+          <p className="text-xs text-teal-400 dark:text-teal-300 mt-1.5 font-bold flex items-center gap-1">
             <span>ملفات الطلاب والشهادات</span>
             <ArrowUpRight size={13} />
           </p>
         </Link>
 
         {/* Course Revenue */}
-        <Link href="/payments" prefetch={true} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] hover:border-blue-500 transition-all group shadow-xs">
+        <Link href="/payments" prefetch={true} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] hover:border-teal-500/60 transition-all group shadow-xs">
           <div className="flex items-center justify-between pb-1">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">إيرادات رسوم الكورسات</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-teal-900/30 text-teal-400 dark:text-teal-300 flex items-center justify-center group-hover:scale-105 transition-transform">
               <CreditCard size={16} />
             </div>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-blue-700 dark:text-blue-300 mt-1 font-mono">{totalCourseRevenue.toLocaleString()} ج</p>
+          <p className="text-2xl md:text-3xl font-black text-teal-300 dark:text-teal-300 mt-1 font-mono">{totalCourseRevenue.toLocaleString()} ج</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
-            متبقي أقساط: <strong className="text-blue-600 dark:text-blue-400 font-mono">{totalRemainingTuition.toLocaleString()} ج</strong>
+            متبقي أقساط: <strong className="text-teal-400 dark:text-teal-300 font-mono">{totalRemainingTuition.toLocaleString()} ج</strong>
           </p>
         </Link>
 
         {/* Supplies Profit */}
-        <Link href="/supplies" prefetch={true} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] hover:border-blue-500 transition-all group shadow-xs">
+        <Link href="/supplies" prefetch={true} className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] hover:border-teal-500/60 transition-all group shadow-xs">
           <div className="flex items-center justify-between pb-1">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">أرباح متجر الأدوات (صافي)</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-teal-900/30 text-teal-400 dark:text-teal-300 flex items-center justify-center group-hover:scale-105 transition-transform">
               <ShoppingBag size={16} />
             </div>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-blue-700 dark:text-blue-300 mt-1 font-mono">+{totalSuppliesProfit.toLocaleString()} ج</p>
+          <p className="text-2xl md:text-3xl font-black text-teal-300 dark:text-teal-300 mt-1 font-mono">+{totalSuppliesProfit.toLocaleString()} ج</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
             المبيعات: <strong className="font-mono text-slate-800 dark:text-slate-200">{totalSuppliesSales.toLocaleString()} ج</strong>
           </p>
@@ -112,7 +112,7 @@ export default function Dashboard() {
           className={`p-4 rounded-2xl border transition-all group shadow-xs ${
             overdueEnrollments.length > 0
               ? 'border-rose-300 bg-rose-50/40 hover:border-rose-500'
-              : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] hover:border-blue-500'
+              : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] hover:border-teal-500/60'
           }`}
         >
           <div className="flex items-center justify-between pb-1">
@@ -122,7 +122,7 @@ export default function Dashboard() {
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${
               overdueEnrollments.length > 0
                 ? 'bg-rose-100 text-rose-600 border border-rose-200'
-                : 'bg-blue-50 text-blue-600'
+                : 'bg-teal-500/10 text-teal-400'
             }`}>
               <AlertCircle size={16} />
             </div>
@@ -133,7 +133,7 @@ export default function Dashboard() {
             {overdueEnrollments.length}
           </p>
           <p className={`text-xs mt-1.5 font-bold ${
-            overdueEnrollments.length > 0 ? 'text-rose-600' : 'text-blue-600'
+            overdueEnrollments.length > 0 ? 'text-rose-600' : 'text-teal-400'
           }`}>
             {overdueEnrollments.length > 0 ? '⚠️ يتطلب المتابعة والتحصيل' : 'لا توجد متأخرات'}
           </p>
@@ -143,14 +143,14 @@ export default function Dashboard() {
       {/* 3 & 4. Main Two Columns - Equal Height, Equal 4 Items, & Strict RTL Text Alignment */}
       <div className="grid lg:grid-cols-2 gap-4 items-stretch">
         {/* Recent Tuition Receipts (CRS) */}
-        <div className="p-4.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] flex flex-col justify-between shadow-xs">
+        <div className="p-4.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
               <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <CreditCard size={17} className="text-blue-600" />
+                <CreditCard size={17} className="text-teal-400" />
                 آخر إيصالات سداد الكورسات (CRS)
               </h3>
-              <Link href="/payments" prefetch={true} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold">
+              <Link href="/payments" prefetch={true} className="text-xs text-teal-400 dark:text-teal-300 hover:underline font-bold">
                 عرض الكل
               </Link>
             </div>
@@ -163,7 +163,7 @@ export default function Dashboard() {
                   <div key={pay.id} className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 flex items-center justify-between text-xs">
                     <div className="flex-1 min-w-0 pr-1 text-right">
                       <div className="flex items-center gap-2 text-right">
-                        <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[11px] border border-blue-200 shrink-0">
+                        <span className="font-mono font-bold text-teal-300 bg-teal-500/10 px-2 py-0.5 rounded text-[11px] border border-teal-500/20 shrink-0">
                           {pay.receiptNumber}
                         </span>
                         <strong className="text-slate-900 text-right truncate block max-w-[200px] [unicode-bidi:plaintext] dir-rtl">
@@ -172,7 +172,7 @@ export default function Dashboard() {
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1 text-right">{pay.date} • {pay.method}</p>
                     </div>
-                    <span className="font-black text-sm text-blue-700 font-mono shrink-0 mr-3">+{pay.amount} ج</span>
+                    <span className="font-black text-sm text-teal-300 font-mono shrink-0 mr-3">+{pay.amount} ج</span>
                   </div>
                 );
               })}
@@ -181,21 +181,21 @@ export default function Dashboard() {
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span>إجمالي الإيصالات المسجلة: {payments.length}</span>
-            <Link href="/payments" prefetch={true} className="text-blue-600 font-bold hover:underline">
+            <Link href="/payments" prefetch={true} className="text-teal-400 font-bold hover:underline">
               طباعة إيصال جديد ←
             </Link>
           </div>
         </div>
 
         {/* Recent Supplies Sales (SHP) */}
-        <div className="p-4.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] flex flex-col justify-between shadow-xs">
+        <div className="p-4.5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
               <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <ShoppingBag size={17} className="text-blue-600" />
+                <ShoppingBag size={17} className="text-teal-400" />
                 آخر فواتير متجر الأدوات (SHP)
               </h3>
-              <Link href="/supplies" prefetch={true} className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold">
+              <Link href="/supplies" prefetch={true} className="text-xs text-teal-400 dark:text-teal-300 hover:underline font-bold">
                 فتح نقطة البيع
               </Link>
             </div>
@@ -205,19 +205,19 @@ export default function Dashboard() {
                 <div key={sale.id} className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 flex items-center justify-between text-xs">
                   <div className="flex-1 min-w-0 pr-1 text-right">
                     <div className="flex items-center gap-2 text-right">
-                      <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[11px] border border-blue-200 shrink-0">
+                      <span className="font-mono font-bold text-teal-300 bg-teal-500/10 px-2 py-0.5 rounded text-[11px] border border-teal-500/20 shrink-0">
                         {sale.invoiceNumber}
                       </span>
                       <strong className="text-slate-900 text-right truncate block max-w-[180px] [unicode-bidi:plaintext] dir-rtl">
                         {sale.customerName}
                       </strong>
-                      <span className="badge badge-blue text-[10px] shrink-0">
+                      <span className="badge badge-teal text-[10px] shrink-0">
                         {sale.items.length} صنف
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1 text-right">{sale.date} • ربح: +{sale.profit} ج</p>
                   </div>
-                  <span className="font-black text-sm text-blue-700 font-mono shrink-0 mr-3">{sale.totalAmount} ج</span>
+                  <span className="font-black text-sm text-teal-300 font-mono shrink-0 mr-3">{sale.totalAmount} ج</span>
                 </div>
               ))}
             </div>
@@ -225,7 +225,7 @@ export default function Dashboard() {
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span>إجمالي فواتير المتجر: {supplySales.length}</span>
-            <Link href="/supplies" prefetch={true} className="text-blue-600 font-bold hover:underline">
+            <Link href="/supplies" prefetch={true} className="text-teal-400 font-bold hover:underline">
               إصدار فاتورة بيع ←
             </Link>
           </div>
@@ -233,15 +233,15 @@ export default function Dashboard() {
       </div>
 
       {/* Safety & Backup Reminder Card */}
-      <div className="p-3.5 rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="p-3.5 rounded-2xl border border-teal-500/20 dark:border-blue-900 bg-teal-500/10/60 dark:bg-blue-950/40 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-xs">
             <CheckCircle size={18} />
           </div>
           <div className="text-right">
             <h4 className="font-bold text-xs text-slate-900 dark:text-white">قاعدة البيانات المحلية تعمل ومحمية على القرص الصلب</h4>
             <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
-              كل الحركات والشهادات والعقود تُحفظ فوراً في ملف <code className="font-mono text-blue-700 dark:text-blue-300">data/data_store.json</code> محلياً وتعمل بدون إنترنت.
+              كل الحركات والشهادات والعقود تُحفظ فوراً في ملف <code className="font-mono text-teal-300 dark:text-teal-300">data/data_store.json</code> محلياً وتعمل بدون إنترنت.
             </p>
           </div>
         </div>

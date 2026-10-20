@@ -151,7 +151,7 @@ export default function StudentsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Users size={26} className="text-blue-600" />
+            <Users size={26} className="text-teal-400" />
             شؤون الطلاب وملفات التعاقد
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -203,29 +203,29 @@ export default function StudentsPage() {
                   onClick={() => setSelectedStudentId(student.id)}
                   className={`p-3.5 rounded-xl cursor-pointer transition-all border ${
                     isSelected
-                      ? 'border-blue-600 bg-blue-50/60 shadow-sm'
-                      : 'border-slate-200 bg-white hover:border-blue-300'
+                      ? 'border-teal-500/60 bg-teal-500/10/60 shadow-sm'
+                      : 'border-slate-200 bg-white hover:border-teal-500/30'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
+                    <div className="w-11 h-11 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
                       {student.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className="font-bold text-sm text-slate-900 truncate">{student.name}</p>
-                        <span className="text-[11px] font-mono text-blue-700 font-bold">{student.qrToken}</span>
+                        <span className="text-[11px] font-mono text-teal-300 font-bold">{student.qrToken}</span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">
                         ولي الأمر: {guardian?.name || 'غير مسجل'} • {guardian?.phone}
                       </p>
                       <div className="flex items-center justify-between gap-2 mt-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="badge badge-blue text-[10px]">{student.level || 'مبتدئ'}</span>
+                          <span className="badge badge-teal text-[10px]">{student.level || 'مبتدئ'}</span>
                           {remaining > 0 ? (
                             <span className="badge badge-danger text-[10px]">متبقي {remaining} ج</span>
                           ) : (
-                            <span className="badge badge-blue text-[10px]">سدد بالكامل</span>
+                            <span className="badge badge-teal text-[10px]">سدد بالكامل</span>
                           )}
                         </div>
                         <button
@@ -235,10 +235,10 @@ export default function StudentsPage() {
                             setDiplomaStudent(student);
                             setShowDiplomaModal(true);
                           }}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-teal-500/10 hover:bg-teal-500/15 text-teal-300 dark:bg-blue-950 dark:text-teal-300 font-bold border border-teal-500/20 dark:border-teal-500/20 transition-all flex items-center gap-1 cursor-pointer shrink-0"
                           title="استخراج الشهادة الفنية الملكية"
                         >
-                          <Award size={11} className="text-blue-600" />
+                          <Award size={11} className="text-teal-400" />
                           <span>الشهادة</span>
                         </button>
                       </div>
@@ -261,22 +261,22 @@ export default function StudentsPage() {
         {/* ================= STUDENT PROFILE & CONTRACT (2 COLS) ================= */}
         <div className="lg:col-span-2">
           {selectedStudent ? (
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] shadow-sm space-y-6">
+            <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-sm space-y-6">
               {/* Profile Header */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-2xl shadow-md shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-2xl shadow-md shrink-0">
                     {selectedStudent.name.charAt(0)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-xl font-black text-slate-900 dark:text-white">{selectedStudent.name}</h2>
-                      <span className="badge badge-blue text-xs font-mono">{selectedStudent.qrToken}</span>
+                      <span className="badge badge-teal text-xs font-mono">{selectedStudent.qrToken}</span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       تاريخ الميلاد: {selectedStudent.birthDate} • المستوى: {selectedStudent.level}
                     </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
+                    <p className="text-xs text-teal-400 dark:text-teal-300 font-semibold mt-0.5">
                       الكورس الحالي: {primaryCourse?.name || 'غير مسجل بكورس'}
                     </p>
                   </div>
@@ -288,7 +288,7 @@ export default function StudentsPage() {
                       setDiplomaStudent(selectedStudent);
                       setShowDiplomaModal(true);
                     }}
-                    className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-black shadow-md shadow-blue-600/30 text-xs flex items-center gap-1.5 cursor-pointer py-2 px-3.5"
+                    className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white font-black shadow-md shadow-blue-600/30 text-xs flex items-center gap-1.5 cursor-pointer py-2 px-3.5"
                   >
                     <Award size={15} className="text-white" />
                     <span>🎓 الشهادة الملكية (A4 Diploma)</span>
@@ -297,27 +297,27 @@ export default function StudentsPage() {
                   <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
                   <button
                     onClick={() => setProfileTab('info')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${profileTab === 'info' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${profileTab === 'info' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
                   >
                     البيانات والكارنيه
                   </button>
                   <button
                     onClick={() => setProfileTab('contract')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'contract' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'contract' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
                   >
                     <FileText size={13} />
                     وثيقة التعاقد
                   </button>
                   <button
                     onClick={() => setProfileTab('financials')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'financials' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'financials' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
                   >
                     <CreditCard size={13} />
                     الماليات
                   </button>
                   <button
                     onClick={() => setProfileTab('progress')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'progress' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'progress' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
                   >
                     <Award size={13} />
                     تقدم الدروس
@@ -330,22 +330,22 @@ export default function StudentsPage() {
               {profileTab === 'info' && (
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Student ID Card (Printable) */}
-                  <div className="p-6 rounded-2xl border-2 border-blue-200 flex flex-col items-center justify-between text-center relative overflow-hidden bg-gradient-to-b from-blue-50/70 to-white shadow-sm">
+                  <div className="p-6 rounded-2xl border-2 border-teal-500/20 flex flex-col items-center justify-between text-center relative overflow-hidden bg-gradient-to-b from-blue-50/70 to-white shadow-sm">
                     <div className="w-full pb-3 border-b border-blue-100 flex items-center justify-between text-xs text-slate-500">
-                      <span className="font-bold text-blue-700">🎨 {settings.name}</span>
+                      <span className="font-bold text-teal-300">🎨 {settings.name}</span>
                       <span className="font-medium text-slate-600">بطاقة عضوية المرسم الرسمية</span>
                     </div>
 
                     <div className="my-5 space-y-2">
-                      <div className="w-20 h-20 rounded-full mx-auto bg-blue-600 border-4 border-blue-100 flex items-center justify-center text-3xl font-black text-white shadow-md">
+                      <div className="w-20 h-20 rounded-full mx-auto bg-teal-600 border-4 border-blue-100 flex items-center justify-center text-3xl font-black text-white shadow-md">
                         {selectedStudent.name.charAt(0)}
                       </div>
                       <h3 className="font-black text-lg text-slate-900">{selectedStudent.name}</h3>
-                      <p className="text-xs font-bold text-blue-600">{primaryCourse?.name}</p>
+                      <p className="text-xs font-bold text-teal-400">{primaryCourse?.name}</p>
                     </div>
 
                     {/* Barcode Display */}
-                    <div className="bg-white p-3 rounded-xl border border-blue-200 shadow-sm my-2 w-full max-w-[220px]">
+                    <div className="bg-white p-3 rounded-xl border border-teal-500/20 shadow-sm my-2 w-full max-w-[220px]">
                       <div className="flex justify-center items-center py-1">
                         <QrCode size={56} className="text-blue-900" />
                       </div>
@@ -354,7 +354,7 @@ export default function StudentsPage() {
 
                     <button
                       onClick={() => window.print()}
-                      className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white btn-sm w-full mt-4 flex items-center justify-center gap-1.5 shadow-sm"
+                      className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white btn-sm w-full mt-4 flex items-center justify-center gap-1.5 shadow-sm"
                     >
                       <Printer size={14} /> طباعة بطاقة الطالب (ID)
                     </button>
@@ -364,25 +364,25 @@ export default function StudentsPage() {
                   <div className="space-y-4">
                     <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
                       <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
-                        <Shield size={16} className="text-blue-600" /> بيانات ولي الأمر
+                        <Shield size={16} className="text-teal-400" /> بيانات ولي الأمر
                       </h4>
                       <div className="space-y-2 text-xs text-slate-700">
                         <p className="flex justify-between border-b border-slate-200/60 pb-1.5"><span className="text-slate-500">الاسم:</span> <strong className="text-slate-900">{selectedGuardian?.name}</strong></p>
-                        <p className="flex justify-between border-b border-slate-200/60 pb-1.5"><span className="text-slate-500">رقم الهاتف:</span> <strong className="font-mono text-blue-700 font-bold">{selectedGuardian?.phone}</strong></p>
+                        <p className="flex justify-between border-b border-slate-200/60 pb-1.5"><span className="text-slate-500">رقم الهاتف:</span> <strong className="font-mono text-teal-300 font-bold">{selectedGuardian?.phone}</strong></p>
                         <p className="flex justify-between"><span className="text-slate-500">البريد:</span> <span className="font-mono text-slate-600">{selectedGuardian?.email || 'غير مسجل'}</span></p>
                       </div>
                     </div>
 
                     <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
                       <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
-                        <HeartPulse size={16} className="text-blue-600" /> ملاحظات صحية وتراخيص
+                        <HeartPulse size={16} className="text-teal-400" /> ملاحظات صحية وتراخيص
                       </h4>
                       <div className="space-y-2.5 text-xs">
                         <p className="text-slate-600 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed">
                           {selectedStudent.healthNotes || 'لا توجد ملاحظات أو حساسيات مسجلة.'}
                         </p>
                         <div className="pt-2 flex items-center gap-2">
-                          <span className={`badge ${selectedStudent.publishConsent ? 'badge-blue' : 'badge-gray'}`}>
+                          <span className={`badge ${selectedStudent.publishConsent ? 'badge-teal' : 'badge-gray'}`}>
                             {selectedStudent.publishConsent ? 'موافق على نشر الأعمال بالمعرض الفني' : 'غير موافق على النشر'}
                           </span>
                         </div>
@@ -402,7 +402,7 @@ export default function StudentsPage() {
                     </div>
                     <button
                       onClick={() => window.print()}
-                      className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white btn-sm flex items-center gap-1.5 shadow-sm"
+                      className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white btn-sm flex items-center gap-1.5 shadow-sm"
                     >
                       <Printer size={15} /> طباعة وثيقة التعاقد (A4)
                     </button>
@@ -417,7 +417,7 @@ export default function StudentsPage() {
                         <p className="text-xs text-slate-600 mt-1">{settings.address} • هاتف: {settings.phone}</p>
                       </div>
                       <div className="text-left">
-                        <span className="text-xs font-mono font-bold bg-blue-50 text-blue-800 px-3 py-1 rounded border border-blue-200">
+                        <span className="text-xs font-mono font-bold bg-teal-500/10 text-blue-800 px-3 py-1 rounded border border-teal-500/20">
                           عقد رقم: CTR-{selectedStudent.id.slice(-5)}
                         </span>
                         <p className="text-xs text-slate-500 mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate}</p>
@@ -425,7 +425,7 @@ export default function StudentsPage() {
                     </div>
 
                     {/* Parties */}
-                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs space-y-2">
+                    <div className="bg-teal-500/10/50 p-4 rounded-xl border border-blue-100 text-xs space-y-2">
                       <p>
                         <strong>الطرف الأول (إدارة المرسم):</strong> {settings.name}، ويمثلها المدير التنفيذي.
                       </p>
@@ -455,7 +455,7 @@ export default function StudentsPage() {
                       <div className="space-y-6">
                         <p className="font-bold text-slate-800">ختم وتوقيع إدارة المرسم</p>
                         <div className="h-10 border-b border-dashed border-slate-400 flex items-center justify-center">
-                          <span className="text-[10px] text-blue-700 font-bold border-2 border-blue-700 px-3 py-0.5 rounded-full bg-blue-50">معتمد رسمياً ✅</span>
+                          <span className="text-[10px] text-teal-300 font-bold border-2 border-blue-700 px-3 py-0.5 rounded-full bg-teal-500/10">معتمد رسمياً ✅</span>
                         </div>
                         <p className="text-slate-500">إدارة {settings.name}</p>
                       </div>
@@ -474,9 +474,9 @@ export default function StudentsPage() {
                         <p className="text-xs text-slate-500 font-medium">إجمالي رسوم الكورس</p>
                         <p className="text-xl font-black text-slate-900 mt-1">{primaryEnrollment.totalAmount} ج</p>
                       </div>
-                      <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/70 text-center">
-                        <p className="text-xs text-blue-700 font-medium">المبلغ المسدد</p>
-                        <p className="text-xl font-black text-blue-700 mt-1">{primaryEnrollment.totalPaid} ج</p>
+                      <div className="p-4 rounded-xl border border-teal-500/20 bg-teal-500/10/70 text-center">
+                        <p className="text-xs text-teal-300 font-medium">المبلغ المسدد</p>
+                        <p className="text-xl font-black text-teal-300 mt-1">{primaryEnrollment.totalPaid} ج</p>
                       </div>
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
                         <p className="text-xs text-slate-500 font-medium">المتبقي المطلوب</p>
@@ -492,7 +492,7 @@ export default function StudentsPage() {
                     {primaryEnrollment && primaryEnrollment.totalPaid < primaryEnrollment.totalAmount && (
                       <button
                         onClick={() => setShowPaymentModal(true)}
-                        className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white btn-sm flex items-center gap-1.5 shadow-sm"
+                        className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white btn-sm flex items-center gap-1.5 shadow-sm"
                       >
                         <CreditCard size={14} /> تسجيل دفعة نقدية جديدة
                       </button>
@@ -507,7 +507,7 @@ export default function StudentsPage() {
                       studentPayments.map(pay => (
                         <div key={pay.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
                           <div>
-                            <span className="font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded mr-2">
+                            <span className="font-mono font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded mr-2">
                               {pay.receiptNumber}
                             </span>
                             <span className="font-bold text-slate-900">{pay.amount} ج</span>
@@ -536,7 +536,7 @@ export default function StudentsPage() {
                   {/* Installments Schedule */}
                   <div className="pt-3 border-t border-slate-200">
                     <h4 className="font-black text-sm text-slate-900 mb-3 flex items-center gap-1.5">
-                      <Clock size={15} className="text-blue-600" /> جدول الأقساط المتبقية
+                      <Clock size={15} className="text-teal-400" /> جدول الأقساط المتبقية
                     </h4>
                     <div className="space-y-2">
                       {studentInstallments.map((inst, idx) => (
@@ -547,7 +547,7 @@ export default function StudentsPage() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-black text-slate-900">{inst.amount} ج</span>
-                            <span className={`badge text-[10px] ${inst.status === 'paid' ? 'badge-blue' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'}`}>
+                            <span className={`badge text-[10px] ${inst.status === 'paid' ? 'badge-teal' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'}`}>
                               {inst.status === 'paid' ? 'مدفوع' : inst.status === 'overdue' ? 'متأخر' : 'معلق'}
                             </span>
                           </div>
@@ -566,7 +566,7 @@ export default function StudentsPage() {
                       <h4 className="font-black text-sm text-slate-900">تقدم المنهج حسب موضوعات الدروس</h4>
                       <p className="text-xs text-slate-500">مقرر: {primaryCourse?.name}</p>
                     </div>
-                    <span className="badge badge-blue text-xs font-bold">
+                    <span className="badge badge-teal text-xs font-bold">
                       {studentProgress.length} دروس مكتملة
                     </span>
                   </div>
@@ -579,12 +579,12 @@ export default function StudentsPage() {
                         <div
                           key={index}
                           className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                            completed ? 'bg-blue-50/70 border-blue-200' : 'bg-slate-50/50 border-slate-200'
+                            completed ? 'bg-teal-500/10/70 border-teal-500/20' : 'bg-slate-50/50 border-slate-200'
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                              completed ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-200 text-slate-500'
+                              completed ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-200 text-slate-500'
                             }`}>
                               {index + 1}
                             </div>
@@ -596,7 +596,7 @@ export default function StudentsPage() {
                             </div>
                           </div>
 
-                          <span className={`badge text-[10px] ${completed ? 'badge-blue' : 'badge-gray'}`}>
+                          <span className={`badge text-[10px] ${completed ? 'badge-teal' : 'badge-gray'}`}>
                             {completed ? 'تم الإنجاز ✅' : 'قيد الانتظار'}
                           </span>
                         </div>
@@ -621,7 +621,7 @@ export default function StudentsPage() {
           <div className="bg-white p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl border border-blue-100">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-                <Plus size={20} className="text-blue-600" />
+                <Plus size={20} className="text-teal-400" />
                 تسجيل طالب جديد واستخراج وثيقة التعاقد
               </h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-800 p-1">
@@ -632,7 +632,7 @@ export default function StudentsPage() {
             <form onSubmit={handleAddStudent} className="space-y-4 text-xs">
               {/* Student Info */}
               <div className="space-y-2">
-                <h4 className="font-black text-blue-700 text-sm">١. بيانات الطالب</h4>
+                <h4 className="font-black text-teal-300 text-sm">١. بيانات الطالب</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-600 mb-1 font-bold">اسم الطالب الرباعي *:</label>
@@ -682,7 +682,7 @@ export default function StudentsPage() {
 
               {/* Guardian Info */}
               <div className="space-y-2 pt-2 border-t border-slate-200">
-                <h4 className="font-black text-blue-700 text-sm">٢. بيانات ولي الأمر</h4>
+                <h4 className="font-black text-teal-300 text-sm">٢. بيانات ولي الأمر</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-600 mb-1 font-bold">اسم ولي الأمر *:</label>
@@ -709,7 +709,7 @@ export default function StudentsPage() {
 
               {/* Course & Financial Agreement */}
               <div className="space-y-2 pt-2 border-t border-slate-200">
-                <h4 className="font-black text-blue-700 text-sm">٣. الكورس المتفق عليه والماليات</h4>
+                <h4 className="font-black text-teal-300 text-sm">٣. الكورس المتفق عليه والماليات</h4>
                 <div>
                   <label className="block text-slate-600 mb-1 font-bold">اختر الكورس والمجموعة:</label>
                   <select
@@ -742,7 +742,7 @@ export default function StudentsPage() {
                     <label className="block text-slate-600 mb-1 font-bold">المدفوع الآن (مقدم):</label>
                     <input
                       type="number"
-                      className="input text-xs font-black text-blue-700"
+                      className="input text-xs font-black text-teal-300"
                       value={newStudentData.initialPayment}
                       onChange={e => setNewStudentData({ ...newStudentData, initialPayment: Number(e.target.value) })}
                     />
@@ -761,7 +761,7 @@ export default function StudentsPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900">
+                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-blue-900">
                   سيتم توليد باركود تلقائي للطالب وعقد اشتراك رسمي، وتقسيم المتبقي ({Math.max(0, newStudentData.totalAmount - newStudentData.initialPayment)} ج) على قسطين تلقائياً.
                 </div>
               </div>
@@ -770,7 +770,7 @@ export default function StudentsPage() {
                 <button
                   type="submit"
                   disabled={isAddingStudent}
-                  className="btn btn-primary bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex-1 py-2.5 font-bold shadow-sm flex items-center justify-center gap-2"
+                  className="btn btn-primary bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex-1 py-2.5 font-bold shadow-sm flex items-center justify-center gap-2"
                 >
                   {isAddingStudent ? 'جاري الحفظ والتعاقد...' : 'حفظ الطالب واستخراج وثيقة التعاقد'}
                 </button>
@@ -798,16 +798,16 @@ export default function StudentsPage() {
               <p className="text-slate-700">
                 الطالب: <strong className="text-slate-900">{selectedStudent?.name}</strong>
               </p>
-              <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="p-3 bg-teal-500/10 rounded-xl border border-teal-500/20">
                 <span className="text-slate-600">المتبقي حالياً:</span>{' '}
-                <strong className="text-blue-700 font-black text-sm">{Math.max(0, primaryEnrollment.totalAmount - primaryEnrollment.totalPaid)} ج</strong>
+                <strong className="text-teal-300 font-black text-sm">{Math.max(0, primaryEnrollment.totalAmount - primaryEnrollment.totalPaid)} ج</strong>
               </div>
 
               <div>
                 <label className="block text-slate-600 mb-1 font-bold">المبلغ المدفوع (ج):</label>
                 <input
                   type="number"
-                  className="input text-sm font-black text-blue-700"
+                  className="input text-sm font-black text-teal-300"
                   value={payAmount}
                   onChange={e => setPayAmount(Number(e.target.value))}
                 />
@@ -842,7 +842,7 @@ export default function StudentsPage() {
               <button
                 onClick={handleRecordPayment}
                 disabled={isRecordingPayment}
-                className="btn btn-primary bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex-1 font-bold shadow-sm flex items-center justify-center gap-2"
+                className="btn btn-primary bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex-1 font-bold shadow-sm flex items-center justify-center gap-2"
               >
                 {isRecordingPayment ? 'جاري تسجيل الدفعة...' : 'تأكيد الدفع وطباعة الإيصال'}
               </button>
@@ -857,7 +857,7 @@ export default function StudentsPage() {
       {/* ================= MODAL: PRINTABLE RECEIPT ================= */}
       {receiptData && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-blue-200">
+          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-teal-500/20">
             <button
               onClick={() => setReceiptData(null)}
               className="absolute top-4 left-4 text-slate-400 hover:text-slate-800 p-1"
@@ -870,7 +870,7 @@ export default function StudentsPage() {
                 <h2 className="text-xl font-black text-blue-900">{settings.name}</h2>
                 <p className="text-xs text-slate-600 mt-0.5">إيصال سداد رسوم تدريبية</p>
                 <p className="text-xs text-slate-500">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-blue-50 px-3 py-1 rounded text-xs font-mono font-bold text-blue-800 border border-blue-200">
+                <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-blue-800 border border-teal-500/20">
                   إيصال رقم: {receiptData.receiptNumber}
                 </div>
               </div>
@@ -890,13 +890,13 @@ export default function StudentsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>طريقة السداد:</span>
-                  <span className="font-semibold text-blue-700">{receiptData.method}</span>
+                  <span className="font-semibold text-teal-300">{receiptData.method}</span>
                 </div>
               </div>
 
               <div className="border-t border-b border-slate-200 py-3 flex justify-between items-center">
                 <span className="font-black text-sm text-slate-900">المبلغ المدفوع:</span>
-                <span className="font-black text-2xl text-blue-700">{receiptData.amount} ج</span>
+                <span className="font-black text-2xl text-teal-300">{receiptData.amount} ج</span>
               </div>
 
               <div className="flex justify-between text-xs text-slate-600">
@@ -912,7 +912,7 @@ export default function StudentsPage() {
             <div className="mt-5 pt-3 border-t border-slate-200 flex gap-2">
               <button
                 onClick={() => window.print()}
-                className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white flex-1 flex items-center justify-center gap-1.5 shadow-sm"
+                className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white flex-1 flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Printer size={16} /> طباعة إيصال الدفع
               </button>

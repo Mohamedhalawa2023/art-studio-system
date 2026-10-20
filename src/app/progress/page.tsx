@@ -88,7 +88,7 @@ export default function ProgressPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Award className="text-blue-600" size={26} />
+            <Award className="text-teal-400" size={26} />
             متابعة وتقييم مستوى الطلاب
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -115,8 +115,8 @@ export default function ProgressPage() {
       </div>
 
       {savedSuccess && (
-        <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center gap-3 text-sm font-bold animate-in fade-in">
-          <CheckCircle size={20} className="shrink-0 text-blue-600" />
+        <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300 flex items-center gap-3 text-sm font-bold animate-in fade-in">
+          <CheckCircle size={20} className="shrink-0 text-teal-400" />
           <span>تم حفظ التقييمات بنجاح في قاعدة البيانات المحلية ومزامنتها على القرص الصلب.</span>
         </div>
       )}
@@ -151,7 +151,7 @@ export default function ProgressPage() {
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <p className="text-[11px] text-slate-500 font-medium">الكورس المحدد:</p>
                 <p className="font-bold text-xs text-slate-900 mt-0.5">{activeCourse?.name || 'الفنون التشكيلية'}</p>
-                <p className="text-[10px] text-blue-700 font-semibold mt-0.5">عدد الطلاب: {currentStudents.length} طلاب</p>
+                <p className="text-[10px] text-teal-300 font-semibold mt-0.5">عدد الطلاب: {currentStudents.length} طلاب</p>
               </div>
             </div>
           </div>
@@ -183,11 +183,11 @@ export default function ProgressPage() {
                 return (
                   <div
                     key={student.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:border-blue-300 transition-all space-y-3"
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:border-teal-500/30 transition-all space-y-3"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
                           {student.name.charAt(0)}
                         </div>
                         <div>
@@ -209,7 +209,7 @@ export default function ProgressPage() {
                             >
                               <Star
                                 size={19}
-                                className={r <= current.rating ? 'text-blue-600 fill-blue-600' : 'text-slate-200'}
+                                className={r <= current.rating ? 'text-teal-400 fill-blue-600' : 'text-slate-200'}
                               />
                             </button>
                           ))}
@@ -289,7 +289,7 @@ export default function ProgressPage() {
                 <div key={student.id} className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+                      <div className="w-11 h-11 rounded-xl bg-teal-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
                         {student.name.charAt(0)}
                       </div>
                       <div>
@@ -298,7 +298,7 @@ export default function ProgressPage() {
                       </div>
                     </div>
 
-                    <span className="badge badge-blue text-xs">
+                    <span className="badge badge-teal text-xs">
                       {studentEvals.length} تقييمات مسجلة
                     </span>
                   </div>
@@ -315,7 +315,7 @@ export default function ProgressPage() {
                           className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-blue-700">
+                            <span className="text-xs font-bold text-teal-300">
                               {evalItem.level}
                             </span>
                             <div className="flex gap-0.5">
@@ -323,7 +323,7 @@ export default function ProgressPage() {
                                 <Star
                                   key={r}
                                   size={13}
-                                  className={r <= evalItem.rating ? 'text-blue-600 fill-blue-600' : 'text-slate-200'}
+                                  className={r <= evalItem.rating ? 'text-teal-400 fill-blue-600' : 'text-slate-200'}
                                 />
                               ))}
                             </div>

@@ -14,7 +14,7 @@ export default function AnnouncementsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Megaphone className="text-blue-600" size={26} />
+            <Megaphone className="text-teal-400" size={26} />
             الإعلانات والمعارض
           </h1>
           <p className="text-slate-500 text-sm mt-1">إدارة إعلانات المرسم والمعارض الفنية</p>
@@ -46,23 +46,23 @@ export default function AnnouncementsPage() {
       {/* Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map(ann => (
-          <div key={ann.id} className="glass overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-blue-300 transition-all">
+          <div key={ann.id} className="glass overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-teal-500/30 transition-all">
             {/* Blue accent top bar */}
-            <div className="h-1.5 w-full bg-blue-600" />
+            <div className="h-1.5 w-full bg-teal-600" />
             <div className="p-5">
               <div className="flex items-start justify-between gap-2 mb-3">
                 <h3 className="font-bold text-lg leading-tight text-slate-900">{ann.title}</h3>
-                <span className={`badge shrink-0 ${ann.type === 'exhibition' ? 'badge-blue' : 'badge-info'}`}>
+                <span className={`badge shrink-0 ${ann.type === 'exhibition' ? 'badge-teal' : 'badge-info'}`}>
                   {ann.type === 'exhibition' ? 'معرض' : 'إعلان'}
                 </span>
               </div>
               <p className="text-slate-600 text-sm leading-6">{ann.content}</p>
               <div className="flex items-center gap-2 mt-4 text-xs text-slate-500">
-                <Calendar size={12} className="text-blue-600" />
+                <Calendar size={12} className="text-teal-400" />
                 <span>{new Date(ann.startDate).toLocaleDateString('ar-EG')} — {new Date(ann.endDate).toLocaleDateString('ar-EG')}</span>
               </div>
               {ann.link && (
-                <a href={ann.link} className="flex items-center gap-1 text-xs text-blue-600 mt-2 hover:text-blue-800 font-semibold">
+                <a href={ann.link} className="flex items-center gap-1 text-xs text-teal-400 mt-2 hover:text-blue-800 font-semibold">
                   <ExternalLink size={12} />
                   رابط التفاصيل
                 </a>

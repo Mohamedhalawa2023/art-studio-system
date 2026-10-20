@@ -131,7 +131,7 @@ export default function AttendancePage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <QrCode size={26} className="text-blue-600" />
+            <QrCode size={26} className="text-teal-400" />
             تسجيل الحضور بالباركود والتقدم
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -155,7 +155,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Session & Lesson Topic Selector */}
-      <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] shadow-sm space-y-4">
+      <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-sm space-y-4">
         <div>
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">اختر الحصة والمجموعة الحالية:</label>
           <div className="grid sm:grid-cols-3 gap-2">
@@ -169,13 +169,13 @@ export default function AttendancePage() {
                   onClick={() => setSelectedSessionId(sess.id)}
                   className={`p-3 rounded-xl text-right transition-all border ${
                     isSelected
-                      ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 shadow-sm'
+                      ? 'bg-teal-500/10 dark:bg-teal-950/40 border-teal-500/60 shadow-sm'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-slate-300'
                   }`}
                 >
                   <p className="font-bold text-sm text-slate-900 dark:text-white">{crs?.name}</p>
                   <p className="text-xs text-slate-500">{sess.date} — {sess.time}</p>
-                  <span className={`badge text-[10px] mt-2 ${sess.status === 'completed' ? 'badge-blue' : 'badge-warning'}`}>
+                  <span className={`badge text-[10px] mt-2 ${sess.status === 'completed' ? 'badge-teal' : 'badge-warning'}`}>
                     {sess.status === 'completed' ? 'حصة سابقة' : 'حصة اليوم'}
                   </span>
                 </button>
@@ -187,12 +187,12 @@ export default function AttendancePage() {
         {/* Lesson Topic Selector */}
         {course?.syllabus && course.syllabus.length > 0 && (
           <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 shrink-0">
+            <div className="flex items-center gap-2 text-xs font-bold text-teal-400 shrink-0">
               <BookOpen size={16} />
               موضوع درس اليوم المعتمد:
             </div>
             <select
-              className="input text-xs flex-1 max-w-md bg-white dark:bg-slate-900 border-blue-300"
+              className="input text-xs flex-1 max-w-md bg-white dark:bg-slate-900 border-teal-500/30"
               value={selectedLessonTopic}
               onChange={e => setSelectedLessonTopic(e.target.value)}
             >
@@ -213,10 +213,10 @@ export default function AttendancePage() {
       {mode === 'scan' && (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Scanner Input & Camera placeholder */}
-          <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#132247] shadow-sm space-y-5 text-center">
+          <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-sm space-y-5 text-center">
             {/* Barcode Scanner Box */}
-            <div className="p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border-2 border-dashed border-blue-300 dark:border-blue-700 space-y-3">
-              <Barcode size={50} className="mx-auto text-blue-600 animate-pulse" />
+            <div className="p-5 rounded-2xl bg-teal-500/10/60 dark:bg-blue-950/30 border-2 border-dashed border-teal-500/30 dark:border-blue-700 space-y-3">
+              <Barcode size={50} className="mx-auto text-teal-400 animate-pulse" />
               <h3 className="font-bold text-slate-900 dark:text-white">امسح كارت الطالب بجهاز السكانر USB</h3>
               <p className="text-xs text-slate-500">
                 وجّه السكانر نحو باركود الكارت وسيتم تسجيل الحضور واحتساب تقدم الدرس فوراً
@@ -225,7 +225,7 @@ export default function AttendancePage() {
               <form onSubmit={handleBarcodeScan} className="pt-2">
                 <input
                   ref={barcodeInputRef}
-                  className="input text-center text-base font-mono tracking-widest border-blue-400 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-bold"
+                  className="input text-center text-base font-mono tracking-widest border-teal-500/40 bg-white dark:bg-slate-900 text-teal-300 dark:text-teal-300 font-bold"
                   placeholder="جاهز للمسح... (STU-2026-XXXX)"
                   value={barcodeInput}
                   onChange={e => setBarcodeInput(e.target.value)}
@@ -270,19 +270,19 @@ export default function AttendancePage() {
                 {scanResult.success ? (
                   <>
                     <div className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl font-black shadow-lg ${
-                      scanResult.isOverdue ? 'bg-red-50 border-2 border-red-500 text-red-600' : 'bg-blue-50 border-2 border-blue-600 text-blue-700'
+                      scanResult.isOverdue ? 'bg-red-50 border-2 border-red-500 text-red-600' : 'bg-teal-500/10 border-2 border-teal-500/60 text-teal-300'
                     }`}>
                       {scanResult.student?.name.charAt(0)}
                     </div>
 
                     <div>
-                      <span className="badge badge-blue text-xs font-bold py-1 px-3">
+                      <span className="badge badge-teal text-xs font-bold py-1 px-3">
                         ✅ تم تسجيل الحضور بنجاح
                       </span>
                       <h3 className="text-xl font-black text-slate-900 mt-2">{scanResult.student?.name}</h3>
                       <p className="text-xs text-slate-500 font-mono mt-0.5">{scanResult.student?.qrToken}</p>
                       {selectedLessonTopic && (
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-xs text-teal-400 mt-1">
                           الدرس المنجز: <strong>{selectedLessonTopic}</strong>
                         </p>
                       )}
@@ -300,7 +300,7 @@ export default function AttendancePage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 font-semibold">
+                      <div className="p-2 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 font-semibold">
                         حالة الرسوم: مسددة بالكامل ✅
                       </div>
                     )}
@@ -314,7 +314,7 @@ export default function AttendancePage() {
               </div>
             ) : (
               <div className="text-center py-12 text-slate-500 space-y-2">
-                <QrCode size={48} className="mx-auto text-blue-600" />
+                <QrCode size={48} className="mx-auto text-teal-400" />
                 <p className="text-sm font-semibold text-slate-800">في انتظار مسح كارت الطالب...</p>
                 <p className="text-xs text-slate-400">ستظهر بيانات الطالب وحالته المالية فور المسح</p>
               </div>
@@ -352,14 +352,14 @@ export default function AttendancePage() {
                 const remaining = enr ? Math.max(0, enr.totalAmount - enr.totalPaid) : 0;
 
                 return (
-                  <tr key={student.id} className="hover:bg-blue-50/30 transition-colors">
+                  <tr key={student.id} className="hover:bg-teal-500/10/30 transition-colors">
                     <td className="p-3 font-semibold text-slate-800">{student.name}</td>
-                    <td className="p-3 font-mono text-xs text-blue-700 font-bold">{student.qrToken}</td>
+                    <td className="p-3 font-mono text-xs text-teal-300 font-bold">{student.qrToken}</td>
                     <td className="p-3">
                       {remaining > 0 ? (
                         <span className="badge badge-danger text-xs">عليه {remaining} ج</span>
                       ) : (
-                        <span className="badge badge-blue text-xs">خالص الرسوم</span>
+                        <span className="badge badge-teal text-xs">خالص الرسوم</span>
                       )}
                     </td>
                     <td className="p-3 text-xs text-slate-500 font-mono">{att?.checkIn || '—'}</td>
@@ -369,7 +369,7 @@ export default function AttendancePage() {
                           disabled={isMarking}
                           onClick={() => handleManualMark(student.id, 'present')}
                           className={`px-2.5 py-1 rounded text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                            att?.status === 'present' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            att?.status === 'present' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           }`}
                         >
                           حاضر

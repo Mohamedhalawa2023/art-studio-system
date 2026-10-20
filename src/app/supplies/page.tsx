@@ -245,7 +245,7 @@ export default function SuppliesPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <ShoppingBag className="text-blue-600" size={26} />
+            <ShoppingBag className="text-teal-400" size={26} />
             متجر ومخزن الأدوات الفنية
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -257,13 +257,13 @@ export default function SuppliesPage() {
         <div className="flex gap-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
           <button
             onClick={() => setActiveTab('pos')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'pos' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'pos' ? 'bg-teal-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-teal-400 hover:bg-slate-50'}`}
           >
             نقطة البيع (POS)
           </button>
           <button
             onClick={() => setActiveTab('inventory')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${activeTab === 'inventory' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${activeTab === 'inventory' ? 'bg-teal-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-teal-400 hover:bg-slate-50'}`}
           >
             المخزون
             {lowStockCount > 0 && (
@@ -274,7 +274,7 @@ export default function SuppliesPage() {
           </button>
           <button
             onClick={() => setActiveTab('financials')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'financials' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'financials' ? 'bg-teal-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-teal-400 hover:bg-slate-50'}`}
           >
             الماليات والأرباح
           </button>
@@ -289,7 +289,7 @@ export default function SuppliesPage() {
             {/* Search & Barcode Bar */}
             <div className="grid sm:grid-cols-2 gap-3">
               <form onSubmit={handleBarcodeSubmit} className="relative">
-                <Barcode size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600" />
+                <Barcode size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400" />
                 <input
                   className="input pr-10 text-sm font-mono"
                   placeholder="امسح الباركود بالسكانر واضغط Enter..."
@@ -315,7 +315,7 @@ export default function SuppliesPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-blue-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-teal-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-500/30 hover:text-teal-400'}`}
                 >
                   {cat === 'all' ? 'جميع الأدوات' : cat}
                 </button>
@@ -333,23 +333,23 @@ export default function SuppliesPage() {
                   <div
                     key={item.id}
                     onClick={() => !isOutOfStock && addToCart(item.id)}
-                    className={`glass p-4 rounded-xl flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group bg-white border border-slate-200 ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'hover:border-blue-400 hover:shadow-md hover:shadow-blue-500/5'}`}
+                    className={`glass p-4 rounded-xl flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group bg-white border border-slate-200 ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'hover:border-teal-500/40 hover:shadow-md hover:shadow-blue-500/5'}`}
                   >
                     {inCart && (
-                      <span className="absolute top-2 left-2 bg-blue-600 text-white font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
+                      <span className="absolute top-2 left-2 bg-teal-600 text-white font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
                         {inCart.quantity}
                       </span>
                     )}
 
                     <div>
-                      <span className="text-xs text-blue-600 font-semibold">{item.category}</span>
+                      <span className="text-xs text-teal-400 font-semibold">{item.category}</span>
                       <h4 className="font-bold text-sm text-slate-900 mt-1 line-clamp-2">{item.name}</h4>
                       <p className="text-xs text-slate-400 font-mono mt-1">كود: {item.barcode}</p>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                       <div>
-                        <span className="text-lg font-black text-blue-700 font-mono">{item.sellPrice} ج</span>
+                        <span className="text-lg font-black text-teal-300 font-mono">{item.sellPrice} ج</span>
                       </div>
                       <span className={`badge text-xs ${isOutOfStock ? 'badge-danger' : isLowStock ? 'badge-info' : 'badge-gray'}`}>
                         {isOutOfStock ? 'نفد المخزون' : `متبقي ${item.stockQty}`}
@@ -366,7 +366,7 @@ export default function SuppliesPage() {
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-blue-600" />
+                  <ShoppingBag size={20} className="text-teal-400" />
                   فاتورة البيع الحالية
                 </h3>
                 {cart.length > 0 && (
@@ -390,7 +390,7 @@ export default function SuppliesPage() {
                       <div key={c.productId} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-sm">
                         <div className="flex-1 min-w-0 pr-2">
                           <p className="font-semibold text-slate-800 truncate text-xs">{product.name}</p>
-                          <p className="text-xs text-blue-700 font-mono font-bold">{product.sellPrice * c.quantity} ج ({product.sellPrice} ج للقطعة)</p>
+                          <p className="text-xs text-teal-300 font-mono font-bold">{product.sellPrice * c.quantity} ج ({product.sellPrice} ج للقطعة)</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button onClick={() => updateCartQty(c.productId, -1)} className="p-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-600">
@@ -415,13 +415,13 @@ export default function SuppliesPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCustomerType('student')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${customerType === 'student' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${customerType === 'student' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
                   >
                     طالب مقيد
                   </button>
                   <button
                     onClick={() => setCustomerType('walkin')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${customerType === 'walkin' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${customerType === 'walkin' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
                   >
                     مشتري خارجي
                   </button>
@@ -478,7 +478,7 @@ export default function SuppliesPage() {
               </div>
               <div className="flex items-center justify-between text-lg">
                 <span className="font-bold text-slate-800">المبلغ المطلوب:</span>
-                <span className="font-black text-2xl text-blue-700 font-mono">{cartSummary.subtotal} ج</span>
+                <span className="font-black text-2xl text-teal-300 font-mono">{cartSummary.subtotal} ج</span>
               </div>
 
               <button
@@ -501,11 +501,11 @@ export default function SuppliesPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="glass p-4 rounded-xl bg-white border border-slate-200">
               <p className="text-xs text-slate-500 font-semibold">إجمالي الأصناف</p>
-              <p className="text-2xl font-black text-blue-700 mt-1">{supplyItems.length}</p>
+              <p className="text-2xl font-black text-teal-300 mt-1">{supplyItems.length}</p>
             </div>
             <div className="glass p-4 rounded-xl bg-white border border-slate-200">
               <p className="text-xs text-slate-500 font-semibold">إجمالي قطع المخزن</p>
-              <p className="text-2xl font-black text-blue-600 mt-1">
+              <p className="text-2xl font-black text-teal-400 mt-1">
                 {supplyItems.reduce((acc, i) => acc + i.stockQty, 0)} قطعة
               </p>
             </div>
@@ -558,15 +558,15 @@ export default function SuppliesPage() {
                 {paginatedInventory.map(item => {
                   const isLow = item.stockQty <= item.minStock;
                   return (
-                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="p-3 font-mono text-xs text-blue-700 font-bold">{item.barcode}</td>
+                    <tr key={item.id} className="hover:bg-teal-500/10/30 transition-colors">
+                      <td className="p-3 font-mono text-xs text-teal-300 font-bold">{item.barcode}</td>
                       <td className="p-3 font-semibold text-slate-800">{item.name}</td>
-                      <td className="p-3"><span className="badge badge-blue text-xs">{item.category}</span></td>
+                      <td className="p-3"><span className="badge badge-teal text-xs">{item.category}</span></td>
                       <td className="p-3 text-slate-500">{item.costPrice} ج</td>
                       <td className="p-3 font-bold text-slate-900">{item.sellPrice} ج</td>
-                      <td className="p-3 text-blue-700 font-bold font-mono">+{item.sellPrice - item.costPrice} ج</td>
+                      <td className="p-3 text-teal-300 font-bold font-mono">+{item.sellPrice - item.costPrice} ج</td>
                       <td className="p-3">
-                        <span className={`badge ${item.stockQty === 0 ? 'badge-danger' : isLow ? 'badge-info' : 'badge-blue'}`}>
+                        <span className={`badge ${item.stockQty === 0 ? 'badge-danger' : isLow ? 'badge-info' : 'badge-teal'}`}>
                           {item.stockQty} {isLow && item.stockQty > 0 && '(أوشك على النفاد)'}
                         </span>
                       </td>
@@ -582,7 +582,7 @@ export default function SuppliesPage() {
                           <span className="text-xs px-2 font-mono font-bold text-slate-800">{item.stockQty}</span>
                           <button
                             onClick={() => updateSupplyStock(item.id, 1)}
-                            className="p-1 rounded hover:bg-slate-200 text-blue-700"
+                            className="p-1 rounded hover:bg-slate-200 text-teal-300"
                             title="إضافة قطعة للمخزن"
                           >
                             <Plus size={13} />
@@ -604,7 +604,7 @@ export default function SuppliesPage() {
                                 minStock: item.minStock
                               });
                             }}
-                            className="p-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-400 transition-all shadow-xs"
+                            className="p-1.5 rounded-lg border border-teal-500/20 bg-teal-500/10 text-teal-300 hover:bg-teal-500/15 hover:border-teal-500/40 transition-all shadow-xs"
                             title="تعديل بيانات الأداة"
                           >
                             <Edit3 size={14} />
@@ -640,17 +640,17 @@ export default function SuppliesPage() {
         <div className="space-y-6">
           {/* Financial KPIs (Separated for Supplies only) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="glass p-5 rounded-2xl border-r-4 border-blue-600 bg-white">
+            <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/60 bg-white">
               <p className="text-xs text-slate-500 font-semibold">إجمالي مبيعات الأدوات</p>
-              <p className="text-2xl font-black text-blue-700 mt-1">{totalSalesRevenue.toLocaleString()} ج</p>
+              <p className="text-2xl font-black text-teal-300 mt-1">{totalSalesRevenue.toLocaleString()} ج</p>
               <p className="text-xs text-slate-400 mt-1">خزينة متجر الأدوات</p>
             </div>
-            <div className="glass p-5 rounded-2xl border-r-4 border-blue-400 bg-white">
+            <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/40 bg-white">
               <p className="text-xs text-slate-500 font-semibold">تكلفة البضاعة المباعة</p>
-              <p className="text-2xl font-black text-blue-600 mt-1">{totalSalesCost.toLocaleString()} ج</p>
+              <p className="text-2xl font-black text-teal-400 mt-1">{totalSalesCost.toLocaleString()} ج</p>
               <p className="text-xs text-slate-400 mt-1">رأس المال المسترد</p>
             </div>
-            <div className="glass p-5 rounded-2xl border-r-4 border-blue-500 bg-white">
+            <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/60 bg-white">
               <p className="text-xs text-slate-500 font-semibold">صافي أرباح الأدوات فقط</p>
               <p className="text-2xl font-black text-blue-800 mt-1">{totalSalesProfit.toLocaleString()} ج</p>
               <p className="text-xs text-slate-400 mt-1">هامش ربح {profitMargin}%</p>
@@ -665,7 +665,7 @@ export default function SuppliesPage() {
           {/* Invoices List */}
           <div className="glass p-5 rounded-2xl bg-white border border-slate-200">
             <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
-              <Tag size={18} className="text-blue-600" />
+              <Tag size={18} className="text-teal-400" />
               سجل فواتير بيع الأدوات (خزينة الأدوات المستقلة)
             </h3>
 
@@ -674,7 +674,7 @@ export default function SuppliesPage() {
                 <div key={sale.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                      <span className="font-mono text-xs font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded">
                         {sale.invoiceNumber}
                       </span>
                       <span className="font-bold text-sm text-slate-800">{sale.customerName}</span>
@@ -689,12 +689,12 @@ export default function SuppliesPage() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <p className="font-black text-sm text-blue-700 font-mono">{sale.totalAmount} ج</p>
+                      <p className="font-black text-sm text-teal-300 font-mono">{sale.totalAmount} ج</p>
                       <p className="text-xs text-slate-400">ربح: +{sale.profit} ج</p>
                     </div>
                     <button
                       onClick={() => setCurrentInvoice(sale)}
-                      className="btn btn-secondary btn-sm flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:border-blue-300"
+                      className="btn btn-secondary btn-sm flex items-center gap-1 text-teal-400 hover:text-teal-300 hover:border-teal-500/30"
                     >
                       <Printer size={13} />
                       عرض / طباعة
@@ -778,7 +778,7 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-slate-600 font-semibold mb-1">سعر البيع للطالب:</label>
                   <input
                     type="number"
-                    className="input text-sm font-bold text-blue-700"
+                    className="input text-sm font-bold text-teal-300"
                     value={newProduct.sellPrice || ''}
                     onChange={e => setNewProduct({ ...newProduct, sellPrice: Number(e.target.value) })}
                   />
@@ -842,7 +842,7 @@ export default function SuppliesPage() {
           <div className="bg-white border border-slate-200 shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                <Edit3 size={18} className="text-blue-600" />
+                <Edit3 size={18} className="text-teal-400" />
                 تعديل بيانات الأداة / المنتج
               </h3>
               <button onClick={() => setEditingProduct(null)} className="text-slate-400 hover:text-slate-700">
@@ -874,7 +874,7 @@ export default function SuppliesPage() {
                 <div>
                   <label className="block text-xs text-slate-600 font-semibold mb-1">كود الباركود:</label>
                   <input
-                    className="input text-sm font-mono font-bold text-blue-700"
+                    className="input text-sm font-mono font-bold text-teal-300"
                     required
                     value={editForm.barcode}
                     onChange={e => setEditForm({ ...editForm, barcode: e.target.value })}
@@ -896,7 +896,7 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-slate-600 font-semibold mb-1">سعر البيع للطالب:</label>
                   <input
                     type="number"
-                    className="input text-sm font-bold text-blue-700"
+                    className="input text-sm font-bold text-teal-300"
                     required
                     value={editForm.sellPrice}
                     onChange={e => setEditForm({ ...editForm, sellPrice: Number(e.target.value) })}
@@ -963,7 +963,7 @@ export default function SuppliesPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">كود الباركود:</span>
-                <span className="font-mono text-blue-700 font-bold">{deletingProduct.barcode}</span>
+                <span className="font-mono text-teal-300 font-bold">{deletingProduct.barcode}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">الرصيد بالمخزن:</span>
@@ -1011,7 +1011,7 @@ export default function SuppliesPage() {
                 <h2 className="text-xl font-black text-slate-900">{settings.name}</h2>
                 <p className="text-xs text-slate-500 mt-0.5">قسم متجر ومبيعات الأدوات الفنية</p>
                 <p className="text-xs text-slate-400">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-blue-50 px-3 py-1 rounded text-xs font-mono font-bold text-blue-700 border border-blue-200">
+                <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-teal-300 border border-teal-500/20">
                   فاتورة رقم: {currentInvoice.invoiceNumber}
                 </div>
               </div>
@@ -1045,7 +1045,7 @@ export default function SuppliesPage() {
                     <tr key={idx} className="py-1.5">
                       <td className="py-1.5 text-slate-800">{item.productName}</td>
                       <td className="py-1.5 text-center font-bold text-slate-900">{item.quantity}</td>
-                      <td className="py-1.5 text-left font-bold text-blue-700 font-mono">{item.total} ج</td>
+                      <td className="py-1.5 text-left font-bold text-teal-300 font-mono">{item.total} ج</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1054,7 +1054,7 @@ export default function SuppliesPage() {
               {/* Total */}
               <div className="border-t pt-3 flex justify-between items-center">
                 <span className="font-black text-sm text-slate-900">إجمالي الفاتورة:</span>
-                <span className="font-black text-xl text-blue-700 font-mono">{currentInvoice.totalAmount} ج</span>
+                <span className="font-black text-xl text-teal-300 font-mono">{currentInvoice.totalAmount} ج</span>
               </div>
 
               <p className="text-center text-[10px] text-slate-400 pt-2 border-t">

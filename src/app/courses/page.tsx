@@ -13,7 +13,7 @@ export default function CoursesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <BookOpen className="text-blue-600" size={26} />
+            <BookOpen className="text-teal-400" size={26} />
             الكورسات والورش الفنية
           </h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">
@@ -38,21 +38,21 @@ export default function CoursesPage() {
             <div key={course.id} className="glass rounded-2xl overflow-hidden border border-slate-200 bg-white">
               {/* Course Header */}
               <button
-                className="w-full p-5 flex items-center gap-4 text-right hover:bg-blue-50/30 transition-colors cursor-pointer"
+                className="w-full p-5 flex items-center gap-4 text-right hover:bg-teal-500/10/30 transition-colors cursor-pointer"
                 onClick={() => setExpanded(isOpen ? null : course.id)}
               >
-                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white text-2xl shrink-0 shadow-md shadow-blue-600/20">
+                <div className="w-12 h-12 rounded-xl bg-teal-600 flex items-center justify-center text-white text-2xl shrink-0 shadow-md shadow-blue-600/20">
                   🎨
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="font-bold text-base text-slate-900">{course.name}</h3>
-                    <span className="badge badge-blue text-xs">{course.ageGroup}</span>
+                    <span className="badge badge-teal text-xs">{course.ageGroup}</span>
                   </div>
                   <p className="text-slate-500 text-xs mt-1 line-clamp-1">{course.description}</p>
                 </div>
                 <div className="text-left shrink-0 ml-2">
-                  <p className="text-xl font-black text-blue-700">{course.price?.toLocaleString()} ج</p>
+                  <p className="text-xl font-black text-teal-300">{course.price?.toLocaleString()} ج</p>
                   <p className="text-[11px] text-slate-400">{course.sessionsCount} حصص</p>
                 </div>
                 <div className="text-slate-400 shrink-0">
@@ -65,11 +65,11 @@ export default function CoursesPage() {
                 <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
                   {/* Levels row */}
                   {course.levels && course.levels.length > 0 && (
-                    <div className="flex flex-wrap gap-2 p-3.5 rounded-xl bg-blue-50/40 border border-blue-100">
+                    <div className="flex flex-wrap gap-2 p-3.5 rounded-xl bg-teal-500/10/40 border border-blue-100">
                       <p className="w-full text-xs font-bold text-slate-600 mb-1">المستويات والمحاور المعتمدة:</p>
                       {course.levels.map((level, i) => (
-                        <span key={i} className="flex items-center gap-1 badge badge-blue text-xs">
-                          <Star size={11} className="text-blue-600" />
+                        <span key={i} className="flex items-center gap-1 badge badge-teal text-xs">
+                          <Star size={11} className="text-teal-400" />
                           {level}
                         </span>
                       ))}
@@ -79,7 +79,7 @@ export default function CoursesPage() {
                   {/* Groups */}
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
-                      <Users size={15} className="text-blue-600" />
+                      <Users size={15} className="text-teal-400" />
                       المجموعات المفتوحة ({courseGroups.length})
                     </h4>
                   </div>
@@ -108,21 +108,21 @@ export default function CoursesPage() {
                                   {group.startDate} — {group.endDate}
                                 </div>
                               </div>
-                              <span className={`badge ${group.status === 'active' ? 'badge-blue' : group.status === 'upcoming' ? 'badge-info' : 'badge-gray'}`}>
+                              <span className={`badge ${group.status === 'active' ? 'badge-teal' : group.status === 'upcoming' ? 'badge-info' : 'badge-gray'}`}>
                                 {group.status === 'active' ? 'نشطة' : group.status === 'upcoming' ? 'قادمة' : 'منتهية'}
                               </span>
                             </div>
 
                             <div className="flex items-center justify-between text-xs text-slate-600">
                               <span>المقاعد المشغولة:</span>
-                              <span className={`font-bold ${pct >= 100 ? 'text-red-500' : 'text-blue-700'}`}>
+                              <span className={`font-bold ${pct >= 100 ? 'text-red-500' : 'text-teal-300'}`}>
                                 {enrolled}/{capacity} طالب ({pct}%)
                               </span>
                             </div>
 
                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                               <div
-                                className="bg-blue-600 h-full rounded-full transition-all"
+                                className="bg-teal-600 h-full rounded-full transition-all"
                                 style={{ width: `${Math.min(pct, 100)}%` }}
                               />
                             </div>

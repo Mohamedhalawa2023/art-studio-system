@@ -238,7 +238,7 @@ export default function ArtDiplomaModal({
             {/* Print A4 */}
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
             >
               <Printer size={14} />
               <span>طباعة A4</span>
@@ -256,10 +256,10 @@ export default function ArtDiplomaModal({
 
         {/* Collapsible Editor Drawer (Hidden on print) */}
         {showEditor && (
-          <div className="no-print bg-blue-50/40 border border-blue-200 rounded-2xl p-4 space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-blue-200/60 pb-2">
+          <div className="no-print bg-teal-500/10/40 border border-teal-500/20 rounded-2xl p-4 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-teal-500/20/60 pb-2">
               <span className="font-bold text-slate-900">تعديل نصوص ودرجات الشهادة في أي وقت:</span>
-              <span className="text-[10px] text-blue-700 font-bold">التعديلات تنعكس فوراً</span>
+              <span className="text-[10px] text-teal-300 font-bold">التعديلات تنعكس فوراً</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -305,11 +305,11 @@ export default function ArtDiplomaModal({
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-[11px] leading-relaxed"
                 />
                 <div className="flex gap-1 flex-wrap">
-                  <button type="button" onClick={() => applyCritiquePreset('oil')} className="text-[9px] bg-blue-50 text-blue-800 px-2 py-0.5 rounded border border-blue-200 font-bold">زيتي</button>
+                  <button type="button" onClick={() => applyCritiquePreset('oil')} className="text-[9px] bg-teal-500/10 text-blue-800 px-2 py-0.5 rounded border border-teal-500/20 font-bold">زيتي</button>
                   <button type="button" onClick={() => applyCritiquePreset('portrait')} className="text-[9px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">بورتريه</button>
-                  <button type="button" onClick={() => applyCritiquePreset('water')} className="text-[9px] bg-blue-100 text-blue-900 px-2 py-0.5 rounded font-bold">مائي</button>
+                  <button type="button" onClick={() => applyCritiquePreset('water')} className="text-[9px] bg-teal-500/15 text-blue-900 px-2 py-0.5 rounded font-bold">مائي</button>
                   <button type="button" onClick={() => applyCritiquePreset('kids')} className="text-[9px] bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-bold">أطفال</button>
-                  <button type="button" onClick={() => applyCritiquePreset('general')} className="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold">عام</button>
+                  <button type="button" onClick={() => applyCritiquePreset('general')} className="text-[9px] bg-teal-500/10 text-teal-300 px-2 py-0.5 rounded border border-teal-500/20 font-bold">عام</button>
                 </div>
               </div>
 

@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="space-y-2">
               <h3 className="text-lg font-black text-slate-900">حدث تنبيه في عرض الواجهة</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                تم التقاط هذا الاستثناء تلقائياً وتوثيقه في سجلات النظام المحلية (<code className="font-mono text-blue-700">logs/app.log</code>). بياناتك وقاعدة بياناتك محفوظة بأمان تام على القرص الصلب.
+                تم التقاط هذا الاستثناء تلقائياً وتوثيقه في سجلات النظام المحلية (<code className="font-mono text-teal-300">logs/app.log</code>). بياناتك وقاعدة بياناتك محفوظة بأمان تام على القرص الصلب.
               </p>
             </div>
 

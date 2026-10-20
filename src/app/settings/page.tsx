@@ -53,7 +53,7 @@ export default function SettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Settings size={26} className="text-blue-600" />
+            <Settings size={26} className="text-teal-400" />
             إعدادات النظام والنسخ الاحتياطي
           </h1>
           <p className="text-slate-500 text-sm mt-1">
@@ -61,7 +61,7 @@ export default function SettingsPage() {
           </p>
         </div>
         {saveSuccess && (
-          <span className="badge badge-blue text-xs py-1.5 px-3 flex items-center gap-1 shadow-sm">
+          <span className="badge badge-teal text-xs py-1.5 px-3 flex items-center gap-1 shadow-sm">
             <CheckCircle size={14} /> تم حفظ الإعدادات بنجاح
           </span>
         )}
@@ -71,7 +71,7 @@ export default function SettingsPage() {
         {/* Studio Info */}
         <div className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
           <h3 className="font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-            <Palette size={18} className="text-blue-600" />
+            <Palette size={18} className="text-teal-400" />
             بيانات المرسم (تظهر على الشهادات، الفواتير، والعقود)
           </h3>
           <div className="space-y-3 text-xs">
@@ -111,12 +111,12 @@ export default function SettingsPage() {
         {/* Database & Backup (Crucial Desktop feature) */}
         <div className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
           <h3 className="font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-            <HardDrive size={18} className="text-blue-600" />
+            <HardDrive size={18} className="text-teal-400" />
             النسخ الاحتياطي ومزامنة القرص الصلب
           </h3>
           <div className="space-y-3 text-xs text-slate-800">
             <p className="leading-relaxed text-slate-500">
-              جميع بياناتك (الطلاب، الشهادات، العقود، الدفعات، مبيعات الأدوات، وتقييمات الحصص) مخزنة ومحمية محلياً في ملف <code className="bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded text-blue-700 font-mono">data/data_store.json</code> على جهازك، وتعمل 100% بدون إنترنت.
+              جميع بياناتك (الطلاب، الشهادات، العقود، الدفعات، مبيعات الأدوات، وتقييمات الحصص) مخزنة ومحمية محلياً في ملف <code className="bg-teal-500/10 border border-blue-100 px-1.5 py-0.5 rounded text-teal-300 font-mono">data/data_store.json</code> على جهازك، وتعمل 100% بدون إنترنت.
             </p>
 
             <div className="pt-2 space-y-2.5">
@@ -128,8 +128,8 @@ export default function SettingsPage() {
                 تصدير نسخة احتياطية فورية (Download JSON Backup)
               </button>
 
-              <label className="w-full btn btn-secondary flex items-center justify-center gap-2 py-2.5 text-xs cursor-pointer border border-slate-200 hover:border-blue-300">
-                <Upload size={16} className="text-blue-600" />
+              <label className="w-full btn btn-secondary flex items-center justify-center gap-2 py-2.5 text-xs cursor-pointer border border-slate-200 hover:border-teal-500/30">
+                <Upload size={16} className="text-teal-400" />
                 استعادة قاعدة البيانات من ملف نسخة احتياطية
                 <input
                   type="file"
@@ -146,10 +146,10 @@ export default function SettingsPage() {
         <div className="glass p-5 rounded-2xl border border-slate-200 bg-white lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <h3 className="font-bold text-slate-900 flex items-center gap-2">
-              <FileText size={18} className="text-blue-600" />
+              <FileText size={18} className="text-teal-400" />
               محرر بنود وثيقة التعاقد الرسمية
             </h3>
-            <span className="badge badge-blue text-xs font-mono">الإصدار v2.0 المعتمد</span>
+            <span className="badge badge-teal text-xs font-mono">الإصدار v2.0 المعتمد</span>
           </div>
 
           <p className="text-xs text-slate-500">

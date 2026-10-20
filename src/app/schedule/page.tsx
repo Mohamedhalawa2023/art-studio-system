@@ -15,7 +15,7 @@ export default function SchedulePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-          <Calendar className="text-blue-600" size={26} />
+          <Calendar className="text-teal-400" size={26} />
           جدول الحصص الأسبوعي
         </h1>
         <p className="text-slate-500 text-sm mt-1">الأسبوع الحالي — أكتوبر 2026</p>
@@ -33,13 +33,13 @@ export default function SchedulePage() {
                 key={i}
                 className={`min-h-36 p-2.5 rounded-xl border transition-all ${
                   isToday
-                    ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20'
+                    ? 'border-teal-500/60 bg-teal-500/10/60 ring-2 ring-blue-500/20'
                     : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'
                 }`}
               >
                 <div className="text-center mb-2">
-                  <p className={`text-xs font-bold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>{DAYS[date.getDay()]}</p>
-                  <p className={`text-lg font-black ${isToday ? 'text-blue-700' : 'text-slate-800'}`}>{date.getDate()}</p>
+                  <p className={`text-xs font-bold ${isToday ? 'text-teal-300' : 'text-slate-500'}`}>{DAYS[date.getDay()]}</p>
+                  <p className={`text-lg font-black ${isToday ? 'text-teal-300' : 'text-slate-800'}`}>{date.getDate()}</p>
                 </div>
                 <div className="space-y-1.5">
                   {daySessions.map(sess => {
@@ -50,10 +50,10 @@ export default function SchedulePage() {
                         key={sess.id}
                         className={`p-1.5 rounded-lg text-center border text-xs ${
                           sess.status === 'completed'
-                            ? 'bg-blue-100 border-blue-200 text-blue-800'
+                            ? 'bg-teal-500/15 border-teal-500/20 text-blue-800'
                             : sess.status === 'cancelled'
                             ? 'bg-red-50 border-red-200 text-red-700'
-                            : 'bg-white border-blue-200 text-blue-700 shadow-2xs'
+                            : 'bg-white border-teal-500/20 text-teal-300 shadow-2xs'
                         }`}
                       >
                         <p className="font-bold truncate">{course?.name}</p>
@@ -71,7 +71,7 @@ export default function SchedulePage() {
       {/* Sessions List */}
       <div className="glass p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
         <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-          <Calendar size={18} className="text-blue-600" />
+          <Calendar size={18} className="text-teal-400" />
           جميع الحصص المجدولة
         </h3>
         <div className="space-y-3">
@@ -82,24 +82,24 @@ export default function SchedulePage() {
             return (
               <div
                 key={sess.id}
-                className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-blue-200 transition-all"
+                className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-teal-500/20 transition-all"
               >
                 <div className="text-center w-12 shrink-0">
                   <p className="text-xs text-slate-400">{new Date(sess.date).toLocaleDateString('ar-EG', { month: 'short' })}</p>
-                  <p className="text-xl font-black text-blue-700 font-mono">{new Date(sess.date).getDate()}</p>
+                  <p className="text-xl font-black text-teal-300 font-mono">{new Date(sess.date).getDate()}</p>
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-sm text-slate-900">{course?.name}</p>
                   <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
-                    <span className="flex items-center gap-1 font-mono"><Clock size={11} className="text-blue-600" /> {sess.time}</span>
-                    <span className="flex items-center gap-1"><MapPin size={11} className="text-blue-600" /> {group?.room}</span>
+                    <span className="flex items-center gap-1 font-mono"><Clock size={11} className="text-teal-400" /> {sess.time}</span>
+                    <span className="flex items-center gap-1"><MapPin size={11} className="text-teal-400" /> {group?.room}</span>
                     <span>م/ {supervisor?.name}</span>
                   </div>
                 </div>
                 <span className={`badge ${
-                  sess.status === 'completed' ? 'badge-blue' :
+                  sess.status === 'completed' ? 'badge-teal' :
                   sess.status === 'cancelled' ? 'badge-danger' :
-                  sess.status === 'makeup' ? 'badge-info' : 'badge-blue'
+                  sess.status === 'makeup' ? 'badge-info' : 'badge-teal'
                 }`}>
                   {sess.status === 'completed' ? 'مكتملة' : sess.status === 'cancelled' ? 'ملغاة' : sess.status === 'makeup' ? 'تعويضية' : 'مجدولة'}
                 </span>
