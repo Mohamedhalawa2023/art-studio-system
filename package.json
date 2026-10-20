@@ -45,15 +45,19 @@
       "output": "dist"
     },
     "win": {
-      "target": "nsis",
+      "target": ["nsis", "portable"],
       "icon": "public/icon.ico"
+    },
+    "portable": {
+      "artifactName": "Marsam-Portable.exe"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "مرسم للفنون"
+      "shortcutName": "مرسم للفنون",
+      "artifactName": "Marsam-Setup.exe"
     },
     "files": [
       "electron/**/*",
