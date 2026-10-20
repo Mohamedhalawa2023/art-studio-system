@@ -40,6 +40,7 @@
     "productName": "مرسم - إدارة المرسم",
     "npmRebuild": false,
     "nodeGypRebuild": false,
+    "afterPack": "./electron/afterPack.js",
     "directories": {
       "output": "dist"
     },
@@ -60,10 +61,6 @@
       "!node_modules/**"
     ],
     "extraResources": [
-      {
-        "from": ".next/standalone",
-        "to": "standalone"
-      },
       {
         "from": "public",
         "to": "public"

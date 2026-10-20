@@ -6,11 +6,9 @@ const fs = require('fs');
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
-  // If an instance is already running, exit immediately
   app.quit();
 } else {
   app.on('second-instance', () => {
-    // Someone tried to run a second instance, focus our existing window
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
@@ -24,7 +22,27 @@ const PORT = 3000;
 const HOST = '127.0.0.1';
 const APP_URL = `http://${HOST}:${PORT}`;
 
-// Check if server is answering requests
+// Setup log directory
+function getLogFilePath() {
+  const base = process.env.APPDATA || process.env.LOCALAPPDATA || (
+    process.platform === 'darwin'
+      ? path.join(process.env.HOME || '', 'Library', 'Application Support')
+      : path.join(process.env.HOME || '', '.config')
+  );
+  const logDir = path.join(base, 'MarsamArtStudio', 'logs');
+  if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+  return path.join(logDir, 'electron.log');
+}
+
+function logMessage(msg) {
+  try {
+    const time = new Date().toISOString();
+    const line = `[${time}] ${msg}\n`;
+    fs.appendFileSync(getLogFilePath(), line, 'utf-8');
+    console.log(line.trim());
+  } catch (e) {}
+}
+
 function pingServer(url, timeoutMs = 1200) {
   return new Promise((resolve) => {
     const req = http.get(url, (res) => {
@@ -38,7 +56,6 @@ function pingServer(url, timeoutMs = 1200) {
   });
 }
 
-// Locate standalone server directory
 function getStandaloneDir() {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'standalone');
@@ -46,26 +63,29 @@ function getStandaloneDir() {
   return path.join(__dirname, '..', '.next', 'standalone');
 }
 
-// Start standalone Next.js server if not already running
 async function startStandaloneServer() {
   const isAlive = await pingServer(APP_URL);
   if (isAlive) {
-    console.log('[Marsam Desktop] Server is already running on', APP_URL);
+    logMessage(`Server is already alive on ${APP_URL}`);
     return;
   }
 
   const standaloneDir = getStandaloneDir();
   const serverScript = path.join(standaloneDir, 'server.js');
 
+  logMessage(`Standalone directory: ${standaloneDir}`);
+  logMessage(`Server script: ${serverScript}`);
+
   if (!fs.existsSync(serverScript)) {
-    console.warn('[Marsam Desktop] Standalone server script not found at:', serverScript);
+    logMessage(`ERROR: Standalone server.js NOT FOUND at ${serverScript}`);
     return;
   }
 
-  console.log('[Marsam Desktop] Spawning standalone Next.js server:', serverScript);
+  const nextModule = path.join(standaloneDir, 'node_modules', 'next');
+  logMessage(`Next.js module path: ${nextModule} (Exists: ${fs.existsSync(nextModule)})`);
 
-  // In packaged Electron, process.execPath is the app binary.
-  // Setting ELECTRON_RUN_AS_NODE: '1' runs Electron internal Node engine directly.
+  logMessage(`Spawning standalone server process via ${process.execPath}...`);
+
   const env = Object.assign({}, process.env, {
     PORT: String(PORT),
     HOSTNAME: HOST,
@@ -81,31 +101,94 @@ async function startStandaloneServer() {
   });
 
   if (serverProcess.stdout) {
-    serverProcess.stdout.on('data', (d) => console.log(`[Next.js Server] ${d.toString().trim()}`));
+    serverProcess.stdout.on('data', (d) => logMessage(`[Next.js Server] ${d.toString().trim()}`));
   }
   if (serverProcess.stderr) {
-    serverProcess.stderr.on('data', (d) => console.error(`[Next.js Error] ${d.toString().trim()}`));
+    serverProcess.stderr.on('data', (d) => logMessage(`[Next.js Error] ${d.toString().trim()}`));
   }
 
   serverProcess.on('exit', (code, signal) => {
-    console.log(`[Marsam Desktop] Server process exited with code ${code}, signal ${signal}`);
+    logMessage(`Server process exited with code ${code}, signal ${signal}`);
   });
 }
 
 function stopServer() {
   if (serverProcess) {
-    console.log('[Marsam Desktop] Terminating embedded server...');
+    logMessage('Terminating embedded Next.js server...');
     try {
       serverProcess.kill('SIGTERM');
       if (process.platform === 'win32' && serverProcess.pid) {
         spawn('taskkill', ['/pid', String(serverProcess.pid), '/f', '/t']);
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
     serverProcess = null;
   }
 }
+
+const splashHtml = `
+  <!DOCTYPE html>
+  <html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8">
+    <title>مرسم — جاري التحميل</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .card {
+        background: white;
+        padding: 40px 60px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+      }
+      .spinner {
+        width: 44px;
+        height: 44px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #1d4ed8;
+        border-radius: 50%;
+        animation: spin 0.9s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+        margin-bottom: 24px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        color: #1d4ed8;
+      }
+      p {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="spinner"></div>
+      <h1>مرسم — نظام إدارة المرسم</h1>
+      <p>جاري تشغيل الخادم والاتصال بقاعدة البيانات...</p>
+    </div>
+  </body>
+  </html>
+`;
 
 async function createWindow() {
   const iconPath = app.isPackaged
@@ -118,7 +201,7 @@ async function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     title: 'مرسم — نظام إدارة المرسم ودورات الفنون',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8fafc',
     autoHideMenuBar: true,
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
@@ -129,22 +212,30 @@ async function createWindow() {
 
   mainWindow.maximize();
 
+  // Show splash immediately
+  mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(splashHtml));
+
   // Smart polling loader: waits for the server to be completely healthy before loading
   let serverReady = false;
   let attempts = 0;
-  const maxAttempts = 40;
+  const maxAttempts = 35;
 
   while (!serverReady && attempts < maxAttempts) {
     serverReady = await pingServer(APP_URL);
     if (!serverReady) {
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 800));
       attempts++;
     }
   }
 
-  mainWindow.loadURL(APP_URL).catch((err) => {
-    console.error('[Marsam Desktop] Failed to load URL:', err);
-  });
+  if (serverReady) {
+    logMessage('Server responded successfully, loading app URL...');
+    mainWindow.loadURL(APP_URL).catch((err) => {
+      logMessage(`Failed to load URL: ${err}`);
+    });
+  } else {
+    logMessage('ERROR: Server did not respond after maximum attempts.');
+  }
 
   // Open external links in default web browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
