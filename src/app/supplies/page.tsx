@@ -47,7 +47,7 @@ export default function SuppliesPage() {
 
   // POS Cart State
   const [cart, setCart] = useState<Array<{ productId: string; quantity: number }>>([]);
-  const [customerType, setCustomerType] = useState<'walkin' | 'student'>('student');
+  const [customerType, setCustomerType] = useState<'walkin' | 'student'>('walkin');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [walkinName, setWalkinName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'instapay' | 'vodafone' | 'card'>('cash');
@@ -88,6 +88,17 @@ export default function SuppliesPage() {
     const code = scanned.trim();
     if (!code) return;
 
+    // 1. Check if it's a student ID/QR card scan
+    const studentFound = students.find(s => s.qrToken?.toLowerCase() === code.toLowerCase() || s.id.toLowerCase() === code.toLowerCase());
+    if (studentFound) {
+      setCustomerType('student');
+      setSelectedStudentId(studentFound.id);
+      playScanSuccessBeep();
+      setScanToast({ type: 'success', message: `👤 تم مسح كارت الطالب: "${studentFound.name}" وتحديده للفاتورة` });
+      return;
+    }
+
+    // 2. Check product barcode
     const found = supplyItems.find(p => p.barcode.trim().toLowerCase() === code.toLowerCase());
     if (found) {
       if (found.stockQty <= 0) {
