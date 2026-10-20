@@ -286,19 +286,19 @@ export default function SuppliesPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Products Catalog (2 Cols) */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Search & Barcode Bar */}
-            <div className="grid sm:grid-cols-2 gap-3">
-              <form onSubmit={handleBarcodeSubmit} className="relative">
+            {/* Search, Barcode & Quick Add Button */}
+            <div className="grid sm:grid-cols-12 gap-3">
+              <form onSubmit={handleBarcodeSubmit} className="relative sm:col-span-5">
                 <Barcode size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400" />
                 <input
                   className="input pr-10 text-sm font-mono"
-                  placeholder="امسح الباركود بالسكانر واضغط Enter..."
+                  placeholder="امسح الباركود بالسكانر..."
                   value={barcodeInput}
                   onChange={e => setBarcodeInput(e.target.value)}
                   autoFocus
                 />
               </form>
-              <div className="relative">
+              <div className="relative sm:col-span-4">
                 <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   className="input pr-10 text-sm"
@@ -307,6 +307,14 @@ export default function SuppliesPage() {
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
+              <button
+                type="button"
+                onClick={() => setShowAddProduct(true)}
+                className="btn btn-primary text-xs font-bold py-2.5 px-3 flex items-center justify-center gap-1.5 sm:col-span-3 shadow-md shadow-teal-500/15"
+                title="إضافة خامة أو أداة جديدة للمخزن"
+              >
+                <Plus size={15} /> إضافة صنف جديد
+              </button>
             </div>
 
             {/* Categories Chips */}
