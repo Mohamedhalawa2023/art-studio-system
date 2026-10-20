@@ -12,6 +12,24 @@ exports.default = async function (context) {
   if (fs.existsSync(srcStandalone)) {
     fs.cpSync(srcStandalone, destStandalone, { recursive: true, force: true });
     console.log('[afterPack] Standalone directory copied successfully with all dependencies.');
+    
+    // Copy .next/static into destination
+    const srcStatic = path.join(projectDir, '.next', 'static');
+    const destStatic = path.join(destStandalone, '.next', 'static');
+    if (fs.existsSync(srcStatic)) {
+      fs.mkdirSync(path.dirname(destStatic), { recursive: true });
+      fs.cpSync(srcStatic, destStatic, { recursive: true, force: true });
+      console.log('[afterPack] Copied .next/static to destination.');
+    }
+
+    // Copy public into destination
+    const srcPublic = path.join(projectDir, 'public');
+    const destPublic = path.join(destStandalone, 'public');
+    if (fs.existsSync(srcPublic)) {
+      fs.mkdirSync(destPublic, { recursive: true });
+      fs.cpSync(srcPublic, destPublic, { recursive: true, force: true });
+      console.log('[afterPack] Copied public to destination.');
+    }
   } else {
     console.error('[afterPack] Source standalone directory not found at:', srcStandalone);
   }
