@@ -1,40 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  /* ثيم أزرق وأبيض ملكي نقي ومريح جداً للعين (Blue & White Atelier) */
-  --primary: #1d4ed8;           /* Royal Blue */
-  --primary-dark: #1e40af;      /* Deep Navy Blue */
-  --primary-light: #eff6ff;     /* Ice Blue */
-  --accent: #2563eb;            /* Bright Blue Accent */
-  --accent-dark: #1e3a8a;       /* Dark Indigo */
-  --success: #0284c7;           /* Cerulean Blue */
-  --danger: #e11d48;            /* Crimson (only for critical debt/delete) */
-  --warning: #2563eb;           /* Blue for alerts */
-  --info: #3b82f6;              /* Sky Blue */
+  /* ========================================================
+     🎨 باليتة المرسم الدافئ — Warm Atelier & Slate
+     مستوحاة من الفحم وألوان التيراكوتا والصلصال والأوكر الدافئ
+     ======================================================== */
+  --primary: #E06D53;           /* Terracotta / Burnt Clay (طيني فني دافئ) */
+  --primary-dark: #C9563D;      /* Deep Terracotta */
+  --primary-light: rgba(224, 109, 83, 0.15);
+  --accent: #E5A93C;            /* Warm Ochre / Golden Earth (خردلي دافئ) */
+  --accent-dark: #C78B22;       /* Rich Amber */
+  --success: #34D399;           /* Sage Green / Soft Emerald (أخضر ميرمية مريح) */
+  --danger: #EF4444;            /* Coral Crimson (أحمر مرجاني للتنبيهات) */
+  --warning: #E5A93C;           /* Warm Ochre for warnings */
+  --info: #38BDF8;              /* Soft Cerulean Sky */
 
-  /* Pure White Canvas */
-  --bg: #f8fafc;                /* Very soft crisp off-white */
-  --surface: #ffffff;           /* Pure Crisp White */
-  --surface-card: #ffffff;      /* Pure White Card */
-  --surface-card2: #f0f7ff;     /* Very Light Ice Blue (للفصل المريح) */
-  --text: #0f172a;              /* Deep Navy-Charcoal (أقصى درجات الوضوح والراحة) */
-  --text-muted: #64748b;        /* Slate Muted */
-  --border: #e2e8f0;            /* Soft Clean Border */
-  --border-blue: #bfdbfe;       /* Subtle Blue Border */
-}
-
-[data-theme="dark"] {
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --primary-light: #1e3a8a;
-  --bg: #0b1329;
-  --surface: #132247;
-  --surface-card: #132247;
-  --surface-card2: #1a2d5a;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(255,255,255,0.1);
-  --border-blue: rgba(59,130,246,0.25);
+  /* Deep Charcoal Slate Background */
+  --bg: #0F141C;                /* كحلي فحمي عميق هادئ جداً للعين */
+  --surface: #171F2C;           /* Slate Warm Card */
+  --surface-card: #171F2C;      /* سطح الكروت */
+  --surface-card2: #1E2838;     /* فواصل وكروت ثانوية */
+  --text: #F3F4F6;              /* أبيض عاجي مريح للعين (Warm Ivory) */
+  --text-muted: #9CA3AF;        /* رمادي رمادي دافئ */
+  --border: rgba(255, 255, 255, 0.08); /* حدود ناعمة غير مزعجة */
+  --border-accent: rgba(224, 109, 83, 0.25);
 }
 
 * {
@@ -44,6 +33,7 @@
 html {
   direction: rtl;
   font-family: 'Cairo', 'Segoe UI', -apple-system, sans-serif;
+  color-scheme: dark;
 }
 
 body {
@@ -52,51 +42,45 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  background-image: 
+    radial-gradient(ellipse at 15% 20%, rgba(224, 109, 83, 0.07) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 70%, rgba(229, 169, 60, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(52, 211, 153, 0.03) 0%, transparent 40%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Scrollbar */
+/* Custom Atelier Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(29, 78, 216, 0.25); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(29, 78, 216, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(224, 109, 83, 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(224, 109, 83, 0.6); }
 
-/* Clean White Card */
+/* Warm Atelier Glass Card */
 .glass {
-  background: var(--surface);
+  background: rgba(23, 31, 44, 0.85);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-dark {
-  background: var(--surface);
+  background: rgba(15, 20, 28, 0.95);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border);
 }
 
-[data-theme="dark"] .glass {
-  background: rgba(19, 34, 71, 0.9);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-}
-
-/* Royal Blue & Ink Title */
+/* Artistic Warm Gradient Title */
 .gradient-text {
-  background: linear-gradient(135deg, #0f172a 20%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #FFFFFF 15%, #E06D53 70%, #E5A93C 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-[data-theme="dark"] .gradient-text {
-  background: linear-gradient(135deg, #ffffff 30%, #60a5fa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Blue & White Badges */
+/* Harmonious Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -106,13 +90,14 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
 }
-.badge-blue    { background: rgba(29, 78, 216, 0.08); color: #1d4ed8; border: 1px solid rgba(29, 78, 216, 0.22); }
-.badge-purple  { background: rgba(29, 78, 216, 0.08); color: #1d4ed8; border: 1px solid rgba(29, 78, 216, 0.22); }
-.badge-success { background: rgba(2, 132, 199, 0.1); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.25); }
-.badge-danger  { background: rgba(225, 29, 72, 0.08);  color: #e11d48; border: 1px solid rgba(225, 29, 72, 0.22); }
-.badge-warning { background: rgba(37, 99, 235, 0.08); color: #1d4ed8; border: 1px solid rgba(37, 99, 235, 0.22); }
-.badge-info    { background: rgba(59, 130, 246, 0.1); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.25); }
-.badge-gray    { background: rgba(148, 163, 184, 0.12); color: #475569; border: 1px solid rgba(148, 163, 184, 0.25); }
+.badge-terracotta { background: rgba(224, 109, 83, 0.14); color: #E06D53; border: 1px solid rgba(224, 109, 83, 0.3); }
+.badge-purple     { background: rgba(224, 109, 83, 0.14); color: #E06D53; border: 1px solid rgba(224, 109, 83, 0.3); }
+.badge-blue       { background: rgba(56, 189, 248, 0.12); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.badge-success    { background: rgba(52, 211, 153, 0.14); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.3); }
+.badge-danger     { background: rgba(239, 68, 68, 0.14);  color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.badge-warning    { background: rgba(229, 169, 60, 0.14); color: #E5A93C; border: 1px solid rgba(229, 169, 60, 0.3); }
+.badge-info       { background: rgba(56, 189, 248, 0.12); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.badge-gray       { background: rgba(156, 163, 175, 0.12); color: #9CA3AF; border: 1px solid rgba(156, 163, 175, 0.25); }
 
 /* Buttons */
 .btn {
@@ -124,53 +109,72 @@ body {
   border-radius: 12px;
   font-size: 0.8125rem;
   font-weight: 700;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   border: none;
 }
+
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, #E06D53 0%, #C9563D 100%);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+  box-shadow: 0 4px 14px rgba(224, 109, 83, 0.35);
 }
 .btn-primary:hover {
-  background: var(--primary-dark);
-  box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35);
+  background: linear-gradient(135deg, #D05A3F 0%, #B8472E 100%);
+  box-shadow: 0 6px 18px rgba(224, 109, 83, 0.5);
+  transform: translateY(-1px);
 }
+.btn-primary:active {
+  transform: translateY(0);
+}
+
 .btn-secondary {
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
   border: 1px solid var(--border);
 }
 .btn-secondary:hover {
-  background: var(--surface-card2);
-  border-color: #93c5fd;
-  color: #1d4ed8;
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+.btn-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
 }
 
 /* Inputs */
 .input {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #111722;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text);
   border-radius: 12px;
   padding: 9px 14px;
   font-size: 0.8125rem;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
 }
 .input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+  border-color: #E06D53;
+  box-shadow: 0 0 0 3px rgba(224, 109, 83, 0.22);
+}
+.input::placeholder {
+  color: rgba(156, 163, 175, 0.6);
 }
 
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(8, 12, 18, 0.8);
+  backdrop-filter: blur(8px);
   z-index: 50;
   display: flex;
   align-items: center;
@@ -178,10 +182,10 @@ body {
   padding: 16px;
 }
 
-/* Print Isolation for A4 */
+/* Print Isolation for A4 & Thermal Receipts */
 @media print {
   @page {
-    size: A4 landscape;
+    size: A4 portrait;
     margin: 0;
   }
   body {
