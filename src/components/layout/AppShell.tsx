@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, CreditCard, QrCode, ShoppingBag,
   Settings, Menu, X, Palette, ShieldCheck, Sun, Moon,
-  Award, Sparkles, BookOpen, FileCheck, Calendar, Megaphone
+  Award, Sparkles, BookOpen, FileCheck, Calendar, Megaphone, BarChart3
 } from 'lucide-react';
 import { useMarsam } from '@/lib/store';
 
@@ -15,6 +15,7 @@ const mainNav = [
   { href: '/attendance', label: 'تسجيل الحضور والسكانر', icon: QrCode },
   { href: '/payments', label: 'ماليات الكورسات والأقساط', icon: CreditCard },
   { href: '/supplies', label: 'متجر ومخزن الأدوات', icon: ShoppingBag },
+  { href: '/reports', label: 'التقارير المالية والأرباح', icon: BarChart3 },
   { href: '/progress', label: 'متابعة وتقييم الطلاب', icon: Award },
   { href: '/portfolio', label: 'معرض الأعمال الفنية', icon: Sparkles },
   { href: '/courses', label: 'الكورسات والورش الفنية', icon: BookOpen },

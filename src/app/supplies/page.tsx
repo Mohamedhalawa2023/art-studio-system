@@ -335,15 +335,51 @@ export default function SuppliesPage() {
                     onClick={() => !isOutOfStock && addToCart(item.id)}
                     className={`glass p-4 rounded-xl flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group bg-white border border-slate-200 ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'hover:border-teal-500/40 hover:shadow-md hover:shadow-blue-500/5'}`}
                   >
-                    {inCart && (
-                      <span className="absolute top-2 left-2 bg-teal-600 text-white font-bold text-xs w-6 h-6 rounded-full flex items-center justify-center shadow-sm">
-                        {inCart.quantity}
-                      </span>
-                    )}
+                    {/* Card Header: Category & Quick Actions */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs text-teal-400 font-semibold">{item.category}</span>
+                      <div className="flex items-center gap-1">
+                        {inCart && (
+                          <span className="bg-teal-600 text-white font-bold text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-xs">
+                            {inCart.quantity}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProduct(item);
+                            setEditForm({
+                              name: item.name,
+                              category: item.category,
+                              barcode: item.barcode,
+                              costPrice: item.costPrice,
+                              sellPrice: item.sellPrice,
+                              stockQty: item.stockQty,
+                              minStock: item.minStock
+                            });
+                          }}
+                          className="p-1 rounded-md text-slate-400 hover:text-teal-400 hover:bg-slate-100 transition-colors"
+                          title="تعديل بيانات وسعر الأداة"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingProduct(item);
+                          }}
+                          className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="حذف الأداة من المخزن"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
 
                     <div>
-                      <span className="text-xs text-teal-400 font-semibold">{item.category}</span>
-                      <h4 className="font-bold text-sm text-slate-900 mt-1 line-clamp-2">{item.name}</h4>
+                      <h4 className="font-bold text-sm text-slate-900 mt-0.5 line-clamp-2">{item.name}</h4>
                       <p className="text-xs text-slate-400 font-mono mt-1">كود: {item.barcode}</p>
                     </div>
 

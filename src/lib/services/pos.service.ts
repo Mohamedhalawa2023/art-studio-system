@@ -219,4 +219,27 @@ export class PosService {
       onStateCommit
     );
   }
+
+  /**
+   * Adjusts stock quantity of an inventory item atomically
+   */
+  public updateSupplyStock(
+    id: string,
+    deltaQty: number,
+    onStateCommit?: (state: any) => void
+  ): SupplyItem {
+    return this.db.executeTransaction(
+      'UPDATE_SUPPLY_STOCK',
+      (draft) => {
+        const item = draft.supplyItems.find(s => s.id === id);
+        if (!item) {
+          throw new Error(`الصنف المراد تعديل مخزونه غير موجود (ID: ${id}).`);
+        }
+        item.stockQty = Math.max(0, item.stockQty + deltaQty);
+        logger.info('PosService', `Stock adjusted for: ${item.name} -> ${item.stockQty}`);
+        return { ...item };
+      },
+      onStateCommit
+    );
+  }
 }

@@ -395,15 +395,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Action 7: Manual Stock Adjustment
+   * Action 7: Manual Stock Adjustment (ACID Transaction)
    */
   const updateSupplyStock = (id: string, deltaQty: number) => {
-    setSupplyItems(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, stockQty: Math.max(0, item.stockQty + deltaQty) };
-      }
-      return item;
-    }));
+    try {
+      return posService.updateSupplyStock(id, deltaQty, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
   };
 
   /**
