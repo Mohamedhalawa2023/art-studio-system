@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Printer, X, Barcode as BarcodeIcon, Tag, Check, Copy } from 'lucide-react';
+import { Printer, X, Barcode as BarcodeIcon } from 'lucide-react';
 import { encodeCode128, generateBarcodeSvgElements } from '@/lib/barcode/code128';
 
 interface BarcodeStickerModalProps {
@@ -32,12 +32,29 @@ export function BarcodeStickerModal({ product, studioName = 'مرسم الإبد
   }, [printCount]);
 
   const handlePrint = () => {
-    window.print();
+    document.documentElement.classList.add('print-barcode-stickers');
+    const pageStyle = document.createElement('style');
+    pageStyle.textContent = stickerSize === 'compact'
+      ? '@page { size: 38mm 25mm; margin: 0; }'
+      : '@page { size: A4 portrait; margin: 0; }';
+    document.head.appendChild(pageStyle);
+
+    const cleanup = () => {
+      document.documentElement.classList.remove('print-barcode-stickers');
+      pageStyle.remove();
+    };
+    window.addEventListener('afterprint', cleanup, { once: true });
+    try {
+      window.print();
+    } catch (error) {
+      cleanup();
+      throw error;
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+    <div className="barcode-sticker-modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="barcode-sticker-modal-content bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -97,7 +114,7 @@ export function BarcodeStickerModal({ product, studioName = 'مرسم الإبد
                 min={1}
                 max={200}
                 value={printCount}
-                onChange={e => setPrintCount(Math.max(1, parseInt(e.target.value) || 1))}
+                onChange={e => setPrintCount(Math.min(200, Math.max(1, parseInt(e.target.value) || 1)))}
                 className="input w-16 text-center text-xs py-1 px-1 font-mono font-bold"
                 title="أو اكتب أي عدد مخصص"
               />
@@ -118,15 +135,17 @@ export function BarcodeStickerModal({ product, studioName = 'مرسم الإبد
         </div>
 
         {/* Live Stickers Preview & Printable Section */}
-        <div className="flex-1 overflow-y-auto p-4 rounded-xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-100/50 dark:bg-black/20">
+        <div className="barcode-sticker-preview flex-1 overflow-y-auto p-4 rounded-xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-100/50 dark:bg-black/20">
           <div
             id="printable-barcode-stickers"
+            data-sticker-size={stickerSize}
             className="grid grid-cols-2 sm:grid-cols-3 gap-3 print:grid-cols-3 print:gap-2 print:m-0"
           >
             {stickers.map(idx => (
               <div
                 key={idx}
                 className="bg-white text-slate-900 border border-slate-300 rounded-lg p-2.5 flex flex-col items-center justify-between text-center shadow-xs page-break-inside-avoid print:shadow-none print:border-black"
+                data-barcode-sticker="true"
                 style={{ width: '100%', minHeight: stickerSize === 'standard' ? '120px' : '95px' }}
               >
                 {/* Header */}
@@ -142,23 +161,27 @@ export function BarcodeStickerModal({ product, studioName = 'مرسم الإبد
 
                 {/* SVG Barcode */}
                 <div className="flex justify-center items-center my-0.5">
-                  <svg
-                    width="100%"
-                    height={height}
-                    viewBox={`0 0 ${totalWidth} ${height}`}
-                    className="max-w-[170px]"
-                  >
-                    {rects.map((r, rIdx) => (
-                      <rect
-                        key={rIdx}
-                        x={r.x}
-                        y={r.y}
-                        width={r.width}
-                        height={r.height}
-                        fill="#000000"
-                      />
-                    ))}
-                  </svg>
+                  {rects.length > 0 ? (
+                    <svg
+                      width="100%"
+                      height={height}
+                      viewBox={`0 0 ${totalWidth} ${height}`}
+                      className="max-w-[170px]"
+                    >
+                      {rects.map((r, rIdx) => (
+                        <rect
+                          key={rIdx}
+                          x={r.x}
+                          y={r.y}
+                          width={r.width}
+                          height={r.height}
+                          fill="#000000"
+                        />
+                      ))}
+                    </svg>
+                  ) : (
+                    <span className="text-[10px] font-bold text-red-600">كود غير صالح للطباعة</span>
+                  )}
                 </div>
 
                 {/* Barcode Number */}
@@ -178,9 +201,10 @@ export function BarcodeStickerModal({ product, studioName = 'مرسم الإبد
           <div className="flex gap-2">
             <button
               onClick={handlePrint}
-              className="btn btn-primary flex items-center gap-1.5 text-xs font-bold py-2 px-4 shadow-md shadow-teal-500/15"
+              disabled={rects.length === 0}
+              className="btn btn-primary flex items-center gap-1.5 text-xs font-bold py-2 px-4 shadow-md shadow-teal-500/15 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Printer size={15} /> طباعة {printCount} ملصق باركود
+              <Printer size={15} /> {rects.length === 0 ? 'الكود غير صالح للطباعة' : `طباعة ${printCount} ملصق باركود`}
             </button>
             <button onClick={onClose} className="btn btn-secondary text-xs">
               إغلاق

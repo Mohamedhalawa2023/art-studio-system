@@ -7,6 +7,7 @@ import { Payment, Enrollment, Installment } from '@/lib/mockData';
 import { DatabaseEngine } from '@/lib/db/transactionManager';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
+import { formatLocalDateTime } from '@/lib/dates';
 
 export interface RecordPaymentDTO {
   enrollmentId: string;
@@ -49,8 +50,6 @@ export class FinanceService {
         }
 
         const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10);
-        const timeStr = now.toTimeString().slice(0, 5);
         const receiptNumber = `RCP-${String(draft.payments.length + 1).padStart(4, '0')}`;
 
         // 1. Create Payment Record
@@ -60,7 +59,7 @@ export class FinanceService {
           amount: validatedAmount,
           method: dto.method,
           receiptNumber,
-          date: `${dateStr} ${timeStr}`,
+          date: formatLocalDateTime(now),
           recordedBy: dto.recordedBy || 'u1',
           status: 'valid',
           notes: dto.notes?.trim() || 'سداد دفعة دراسية'

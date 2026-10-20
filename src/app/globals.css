@@ -237,4 +237,94 @@ body {
     box-sizing: border-box !important;
     z-index: 99999 !important;
   }
+
+  html.print-barcode-stickers body * {
+    visibility: hidden !important;
+  }
+  html.print-barcode-stickers body *:not(:has(#printable-barcode-stickers)):not(#printable-barcode-stickers):not(#printable-barcode-stickers *) {
+    display: none !important;
+  }
+  html.print-barcode-stickers body *:has(#printable-barcode-stickers) {
+    display: contents !important;
+  }
+  html.print-barcode-stickers #printable-barcode-stickers,
+  html.print-barcode-stickers #printable-barcode-stickers * {
+    visibility: visible !important;
+  }
+  html.print-barcode-stickers .barcode-sticker-modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+  html.print-barcode-stickers .barcode-sticker-modal-content {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  html.print-barcode-stickers .barcode-sticker-preview {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  html.print-barcode-stickers #printable-barcode-stickers {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 50mm) !important;
+    justify-content: center !important;
+    align-content: start !important;
+    gap: 2mm !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #ffffff !important;
+  }
+  html.print-barcode-stickers #printable-barcode-stickers[data-sticker-size='compact'] {
+    grid-template-columns: 38mm !important;
+  }
+  html.print-barcode-stickers [data-barcode-sticker] {
+    box-sizing: border-box !important;
+    width: 50mm !important;
+    height: 30mm !important;
+    min-height: 30mm !important;
+    max-height: 30mm !important;
+    padding: 2mm !important;
+    border: 0.2mm solid #000000 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  html.print-barcode-stickers #printable-barcode-stickers[data-sticker-size='compact'] [data-barcode-sticker]:not(:last-child) {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+  html.print-barcode-stickers #printable-barcode-stickers[data-sticker-size='compact'] [data-barcode-sticker] {
+    width: 38mm !important;
+    height: 25mm !important;
+    min-height: 25mm !important;
+    max-height: 25mm !important;
+  }
 }

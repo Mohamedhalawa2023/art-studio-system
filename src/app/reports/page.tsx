@@ -35,36 +35,58 @@ export default function FinancialReportsPage() {
 
   // Compute Filter Date Threshold
   const filterDateRange = useMemo(() => {
-    if (!currentDate) {
-      return { startDate: new Date(0), endDate: new Date(2100, 0, 1) };
+    if (dateFilter === 'custom') {
+      if (!customStart || !customEnd) return null;
+
+      const parseLocalDate = (value: string) => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+        if (!match) return null;
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const date = new Date(year, month - 1, day);
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+          ? date
+          : null;
+      };
+
+      const startDate = parseLocalDate(customStart);
+      const endDate = parseLocalDate(customEnd);
+      if (!startDate || !endDate || startDate > endDate) return null;
+      endDate.setHours(23, 59, 59, 999);
+      return { startDate, endDate };
     }
+
+    if (!currentDate) return null;
+
     const now = new Date(currentDate);
-    let startDate = new Date(0);
-    let endDate = new Date(2100, 0, 1);
+    let startDate: Date;
+    let endDate: Date;
 
     if (dateFilter === 'today') {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     } else if (dateFilter === 'week') {
-      const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday/Saturday adjustment
-      startDate = new Date(now.setDate(diff));
-      startDate.setHours(0, 0, 0, 0);
+      const daysSinceMonday = (now.getDay() + 6) % 7;
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
+      endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6, 23, 59, 59, 999);
     } else if (dateFilter === 'month') {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     } else if (dateFilter === 'year') {
       startDate = new Date(now.getFullYear(), 0, 1);
-    } else if (dateFilter === 'custom' && customStart && customEnd) {
-      startDate = new Date(customStart);
-      endDate = new Date(customEnd);
-      endDate.setHours(23, 59, 59);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    } else {
+      startDate = new Date(0);
+      endDate = new Date(8640000000000000);
     }
 
     return { startDate, endDate };
-  }, [dateFilter, customStart, customEnd]);
+  }, [currentDate, dateFilter, customStart, customEnd]);
 
   // Filtered Payments (Course revenue)
   const filteredPayments = useMemo(() => {
+    if (!filterDateRange) return [];
     return payments.filter(p => {
       if (p.status !== 'valid') return false;
       const d = new Date(p.date);
@@ -74,6 +96,7 @@ export default function FinancialReportsPage() {
 
   // Filtered Supply Sales (Tools revenue)
   const filteredSales = useMemo(() => {
+    if (!filterDateRange) return [];
     return supplySales.filter(s => {
       const d = new Date(s.date);
       return d >= filterDateRange.startDate && d <= filterDateRange.endDate;

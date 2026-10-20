@@ -7,6 +7,7 @@ import { SupplySale, SupplyItem, Payment } from '@/lib/mockData';
 import { DatabaseEngine } from '@/lib/db/transactionManager';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
+import { formatLocalDateTime } from '@/lib/dates';
 
 export interface CreateSaleDTO {
   customerType: 'student' | 'walkin';
@@ -81,15 +82,13 @@ export class PosService {
         }
 
         const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10);
-        const timeStr = now.toTimeString().slice(0, 5);
         const yearStr = now.getFullYear();
         const nextInvoiceNo = `SHP-${yearStr}-${String(draft.supplySales.length + 1).padStart(4, '0')}`;
 
         const sale: SupplySale = {
           id: `sale-${Date.now()}`,
           invoiceNumber: nextInvoiceNo,
-          date: `${dateStr} ${timeStr}`,
+          date: formatLocalDateTime(now),
           customerType: dto.customerType,
           customerName: validatedCustomer,
           customerId: dto.customerId,

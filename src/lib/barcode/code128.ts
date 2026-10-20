@@ -22,8 +22,8 @@ const STOP = 106;
 
 export function encodeCode128(text: string): string[] {
   // Subset B starts at character 32 (space) up to 126 (~)
-  const clean = text.replace(/[^\x20-\x7E]/g, '');
-  if (!clean) return [];
+  if (!text || !/^[\x20-\x7E]+$/.test(text)) return [];
+  const clean = text;
 
   const codes: number[] = [START_B];
   let checkSum = START_B;

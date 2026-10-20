@@ -7,6 +7,7 @@ import { Student, Enrollment, Installment, Payment, User } from '@/lib/mockData'
 import { DatabaseEngine } from '@/lib/db/transactionManager';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
+import { addLocalCalendarDays, formatLocalDate, formatLocalDateTime } from '@/lib/dates';
 
 export interface RegisterStudentDTO {
   name: string;
@@ -44,8 +45,8 @@ export class StudentService {
         const validatedBirthDate = Validators.validateDateString(dto.birthDate, 'تاريخ الميلاد');
 
         const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10);
-        const timeStr = now.toTimeString().slice(0, 5);
+        const dateStr = formatLocalDate(now);
+        const dateTimeStr = formatLocalDateTime(now);
 
         // 2. Manage Guardian Account
         let guardian = draft.users.find(u => u.phone === validatedPhone && u.role === 'guardian');
@@ -135,7 +136,7 @@ export class StudentService {
               amount: initialPayment,
               method: dto.paymentMethod || 'cash',
               receiptNumber: nextReceiptNo,
-              date: `${dateStr} ${timeStr}`,
+              date: dateTimeStr,
               recordedBy: 'u1',
               status: 'valid',
               notes: 'دفعة مقدمة عند التعاقد والتسجيل'
@@ -150,14 +151,14 @@ export class StudentService {
               id: `inst-${Date.now()}-1`,
               enrollmentId: createdEnrollment.id,
               amount: halfRemaining,
-              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+              dueDate: addLocalCalendarDays(now, 30),
               status: 'pending'
             };
             const installment2: Installment = {
               id: `inst-${Date.now()}-2`,
               enrollmentId: createdEnrollment.id,
               amount: remaining - halfRemaining,
-              dueDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+              dueDate: addLocalCalendarDays(now, 60),
               status: 'pending'
             };
             draft.installments.push(installment1, installment2);

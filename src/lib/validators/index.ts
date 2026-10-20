@@ -57,13 +57,27 @@ export const Validators = {
   /**
    * Validates barcode uniqueness and format
    */
-  validateBarcode(barcode: string, existingBarcodes: Set<string>, allowCurrentId?: string): string {
+  validateBarcode(barcode: string | undefined, existingBarcodes: Set<string>, allowCurrentBarcode?: string): string {
     const clean = barcode?.trim();
-    if (!clean || clean.length < 3) {
+    const normalizeBarcode = (value: string) => value.trim().toUpperCase();
+    const normalizedExisting = new Set(Array.from(existingBarcodes, normalizeBarcode));
+
+    if (!clean) {
+      // Auto-generate unique Code 128 barcode if left empty
+      let candidate = `ART-${Math.floor(100000 + Math.random() * 900000)}`;
+      while (normalizedExisting.has(normalizeBarcode(candidate))) {
+        candidate = `ART-${Math.floor(100000 + Math.random() * 900000)}`;
+      }
+      return candidate;
+    }
+    if (clean.length < 3) {
       throw new ValidationError('كود الباركود يجب أن يحتوي على 3 خانات على الأقل.', 'barcode');
     }
-    if (existingBarcodes.has(clean) && clean !== allowCurrentId) {
-      throw new ValidationError('كود الباركود هذا مسجل مسبقاً، يرجى توليد أو استخدام كود آخر (DUPLICATE_BARCODE).', 'barcode');
+    if (!/^[\x20-\x7E]+$/.test(clean)) {
+      throw new ValidationError('الباركود يجب أن يتكوّن من أحرف وأرقام ورموز إنجليزية قابلة للطباعة.', 'barcode');
+    }
+    if (normalizedExisting.has(normalizeBarcode(clean)) && normalizeBarcode(clean) !== normalizeBarcode(allowCurrentBarcode || '')) {
+      throw new ValidationError('كود الباركود هذا مسجل مسبقاً، يرجى استخدام كود آخر (DUPLICATE_BARCODE).', 'barcode');
     }
     return clean;
   },

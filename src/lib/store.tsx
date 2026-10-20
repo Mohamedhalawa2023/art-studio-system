@@ -14,6 +14,7 @@ import { PosService, CreateSaleDTO } from '@/lib/services/pos.service';
 import { AttendanceService, BarcodeScanResult } from '@/lib/services/attendance.service';
 import { BackupService } from '@/lib/services/backup.service';
 import { logger } from '@/lib/logger/logger';
+import { formatLocalDate } from '@/lib/dates';
 
 export type {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment,
@@ -334,7 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         rating: 5,
         notes: `حضر وأنجز موضوع الدرس: ${params.lessonTopic}`,
         recordedBy: currentUser?.id || 'admin',
-        date: new Date().toISOString().slice(0, 10)
+        date: formatLocalDate(new Date())
       };
       setProgress(prev => [progressRecord, ...prev]);
     }
@@ -425,7 +426,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       rating: params.rating,
       notes: params.notes || '',
       recordedBy: currentUser?.id || 'admin',
-      date: new Date().toISOString().slice(0, 10)
+      date: formatLocalDate(new Date())
     };
     setProgress(prev => [newProgress, ...prev]);
     setStudents(prev => prev.map(s => s.id === params.studentId ? { ...s, level: params.level } : s));
@@ -437,7 +438,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addPortfolioItem = (item: Omit<PortfolioItem, 'id' | 'uploadDate'>) => {
     const newItem: PortfolioItem = {
       id: 'pf_' + Date.now(),
-      uploadDate: new Date().toISOString().slice(0, 10),
+      uploadDate: formatLocalDate(new Date()),
       ...item
     };
     setPortfolio(prev => [newItem, ...prev]);

@@ -148,7 +148,6 @@ export class DatabaseEngine {
     const studentIds = new Set(draft.students.map(s => s.id));
     const groupIds = new Set(draft.groups.map(g => g.id));
     const enrollmentIds = new Set(draft.enrollments.map(e => e.id));
-    const productIds = new Set(draft.supplyItems.map(p => p.id));
 
     // Check Enrollments -> Students & Groups
     for (const enr of draft.enrollments) {
@@ -167,14 +166,8 @@ export class DatabaseEngine {
       }
     }
 
-    // Check Sales -> Supply Items
-    for (const sale of draft.supplySales) {
-      for (const item of sale.items) {
-        if (!productIds.has(item.productId)) {
-          throw new TransactionError(`FOREIGN_KEY_VIOLATION: الفاتورة ${sale.invoiceNumber} تشير إلى صنف غير موجود في المخزن (${item.productId})`);
-        }
-      }
-    }
+    // Sale lines contain immutable product name, price, cost, and quantity snapshots.
+    // Keep historical invoices valid when a product is removed from active inventory.
   }
 
   /**
