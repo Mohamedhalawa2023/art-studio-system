@@ -1,13 +1,15 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMarsam } from '@/lib/store';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { Pagination } from '@/components/common/Pagination';
+import { BarcodeStickerModal } from '@/components/supplies/BarcodeStickerModal';
+import { playScanSuccessBeep, playScanErrorBeep } from '@/lib/audio/beep';
 import {
   ShoppingBag, Search, Plus, Minus, Trash2, Printer, CheckCircle,
   AlertTriangle, DollarSign, Package, TrendingUp, Barcode, ArrowUpRight,
-  Filter, Tag, User as UserIcon, X, Edit3
+  Filter, Tag, User as UserIcon, X, Edit3, Volume2
 } from 'lucide-react';
 
 export default function SuppliesPage() {
@@ -69,14 +71,42 @@ export default function SuppliesPage() {
   // Invoice Modal
   const [currentInvoice, setCurrentInvoice] = useState<any>(null);
 
+  // Barcode Sticker Modal State
+  const [stickerProduct, setStickerProduct] = useState<any | null>(null);
+
+  // Instant Scanner Feedback Toast
+  const [scanToast, setScanToast] = useState<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!scanToast) return;
+    const timer = setTimeout(() => setScanToast(null), 3500);
+    return () => clearTimeout(timer);
+  }, [scanToast]);
+
+  // Central Barcode Processor (Works with USB Handheld Laser Scanners & Screen Input)
+  const processScannedBarcode = (scanned: string) => {
+    const code = scanned.trim();
+    if (!code) return;
+
+    const found = supplyItems.find(p => p.barcode.trim().toLowerCase() === code.toLowerCase());
+    if (found) {
+      if (found.stockQty <= 0) {
+        playScanErrorBeep();
+        setScanToast({ type: 'error', message: `⚠️ نفد مخزون: "${found.name}" (الرصيد: 0)` });
+        return;
+      }
+      addToCart(found.id);
+      playScanSuccessBeep();
+      setScanToast({ type: 'success', message: `✅ تم مسح بالسكانر: "${found.name}" (+1 في الفاتورة)` });
+    } else {
+      playScanErrorBeep();
+      setScanToast({ type: 'warning', message: `⚠️ الباركود [${code}] غير مسجل في المخزن!` });
+    }
+  };
+
   // Global Hardware Barcode Scanner Hook
   useBarcodeScanner({
-    onScan: (scanned) => {
-      const found = supplyItems.find(p => p.barcode === scanned);
-      if (found) {
-        addToCart(found.id);
-      }
-    },
+    onScan: (scanned) => processScannedBarcode(scanned),
     enabled: true
   });
 
@@ -140,13 +170,8 @@ export default function SuppliesPage() {
   const handleBarcodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!barcodeInput.trim()) return;
-    const found = supplyItems.find(p => p.barcode === barcodeInput.trim());
-    if (found) {
-      addToCart(found.id);
-      setBarcodeInput('');
-    } else {
-      alert('لم يتم العثور على أداة بهذا الباركود');
-    }
+    processScannedBarcode(barcodeInput);
+    setBarcodeInput('');
   };
 
   // Handle Edit Product
@@ -286,6 +311,27 @@ export default function SuppliesPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Products Catalog (2 Cols) */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Live Barcode Scanner Feedback Toast */}
+            {scanToast && (
+              <div
+                className={`p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all shadow-md ${
+                  scanToast.type === 'success'
+                    ? 'bg-teal-600 text-white shadow-teal-500/20'
+                    : scanToast.type === 'error'
+                    ? 'bg-red-600 text-white shadow-red-500/20'
+                    : 'bg-amber-500 text-white shadow-amber-500/20'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Volume2 size={16} />
+                  <span>{scanToast.message}</span>
+                </div>
+                <button onClick={() => setScanToast(null)} className="text-white/80 hover:text-white">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
             {/* Search, Barcode & Quick Add Button */}
             <div className="grid sm:grid-cols-12 gap-3">
               <form onSubmit={handleBarcodeSubmit} className="relative sm:col-span-5">
@@ -352,6 +398,17 @@ export default function SuppliesPage() {
                             {inCart.quantity}
                           </span>
                         )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setStickerProduct(item);
+                          }}
+                          className="p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+                          title="طباعة استيكرات باركود للقطعة"
+                        >
+                          <Barcode size={13} />
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -636,6 +693,13 @@ export default function SuppliesPage() {
                       <td className="p-3 text-center">
                         <div className="inline-flex items-center gap-1.5">
                           <button
+                            onClick={() => setStickerProduct(item)}
+                            className="p-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-400 transition-all shadow-xs"
+                            title="طباعة استيكرات باركود للصقها على كل قطعة"
+                          >
+                            <Barcode size={14} />
+                          </button>
+                          <button
                             onClick={() => {
                               setEditingProduct(item);
                               setEditForm({
@@ -798,10 +862,20 @@ export default function SuppliesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">الباركود (اختياري):</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs text-slate-600 font-semibold">كود الباركود:</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewProduct({ ...newProduct, barcode: `ART-${Math.floor(100000 + Math.random() * 900000)}` })}
+                      className="text-[11px] text-teal-600 hover:underline font-bold"
+                      title="توليد كود باركود فريد للقطعة"
+                    >
+                      🎲 كود تلقائي
+                    </button>
+                  </div>
                   <input
                     className="input text-sm font-mono"
-                    placeholder="امسح بالسكانر أو اتركه تلقائي"
+                    placeholder="امسح بالسكانر أو اضغط كود تلقائي"
                     value={newProduct.barcode}
                     onChange={e => setNewProduct({ ...newProduct, barcode: e.target.value })}
                   />
@@ -1120,6 +1194,15 @@ export default function SuppliesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ================= MODAL: PRINTABLE BARCODE STICKERS ================= */}
+      {stickerProduct && (
+        <BarcodeStickerModal
+          product={stickerProduct}
+          studioName={settings.name}
+          onClose={() => setStickerProduct(null)}
+        />
       )}
     </div>
   );
