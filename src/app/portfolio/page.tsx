@@ -155,7 +155,7 @@ export default function PortfolioPage() {
       {/* Gallery Grid */}
       {filteredItems.length === 0 ? (
         <div className="glass p-12 rounded-2xl border border-slate-200 text-center space-y-3 bg-white">
-          <ImageIcon size={44} className="mx-auto text-slate-400" />
+          <ImageIcon size={44} className="mx-auto text-[#94A3B8]" />
           <p className="font-bold text-sm text-slate-800">لا توجد أعمال فنية في هذا القسم بعد</p>
           <button
             onClick={() => setShowUploadModal(true)}
@@ -261,7 +261,7 @@ export default function PortfolioPage() {
               </h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-[#94A3B8] hover:text-slate-700"
               >
                 <X size={18} />
               </button>
@@ -291,7 +291,7 @@ export default function PortfolioPage() {
                     <div className="space-y-1">
                       <Upload size={32} className="mx-auto text-teal-400 mb-1" />
                       <p className="font-bold text-xs text-slate-800">اختر صورة العمل الفني من جهازك</p>
-                      <p className="text-[10px] text-slate-400">PNG, JPG, JPEG (يتم حفظها في قاعدة البيانات المحلية)</p>
+                      <p className="text-[10px] text-[#94A3B8]">PNG, JPG, JPEG (يتم حفظها في قاعدة البيانات المحلية)</p>
                     </div>
                   )}
                   <input

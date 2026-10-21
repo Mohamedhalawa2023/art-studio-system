@@ -76,7 +76,7 @@ export default function AnnouncementsPage() {
         ))}
 
         {filtered.length === 0 && (
-          <div className="col-span-3 text-center py-12 text-slate-400">
+          <div className="col-span-3 text-center py-12 text-[#94A3B8]">
             <Megaphone size={48} className="mx-auto mb-3 text-slate-300" />
             <p>لا يوجد إعلانات حالياً</p>
           </div>
@@ -89,7 +89,7 @@ export default function AnnouncementsPage() {
           <div className="bg-white border border-slate-200 shadow-2xl p-6 rounded-2xl w-full max-w-lg fade-in text-slate-900" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
               <h3 className="text-xl font-bold text-slate-900">إعلان جديد</h3>
-              <button onClick={() => setShowNew(false)} className="text-slate-400 hover:text-slate-700"><X size={20} /></button>
+              <button onClick={() => setShowNew(false)} className="text-[#94A3B8] hover:text-slate-700"><X size={20} /></button>
             </div>
             <div className="space-y-4">
               <div>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMarsam } from '@/lib/store';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Pagination } from '@/components/common/Pagination';
@@ -18,6 +18,12 @@ export default function StudentsPage() {
 
   const [search, setSearch] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedStudentId && students.length > 0) {
+      setSelectedStudentId(students[0].id);
+    }
+  }, [students, selectedStudentId]);
   const [profileTab, setProfileTab] = useState<'info' | 'contract' | 'financials' | 'progress'>('info');
   const [studentPage, setStudentPage] = useState(1);
   const STUDENTS_PER_PAGE = 15;
@@ -154,13 +160,13 @@ export default function StudentsPage() {
             <Users size={26} className="text-teal-400" />
             شؤون الطلاب وملفات التعاقد
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-[#94A3B8] text-sm mt-1">
             إدارة الطلاب، عقود التدريب الرسمية، ومتابعة الأقساط والتقدم الدراسي
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn btn-primary flex items-center gap-2 shadow-md shadow-blue-600/20"
+          className="btn bg-[#0D9488] hover:bg-[#0F766E] text-white flex items-center gap-2 shadow-md shadow-[#0D9488]/30 rounded-xl transition-all font-bold text-xs py-2.5 px-4"
         >
           <Plus size={18} />
           تسجيل طالب جديد
@@ -169,7 +175,7 @@ export default function StudentsPage() {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
         <input
           className="input pr-10 text-sm"
           placeholder="بحث بالاسم، هاتف ولي الأمر، أو كود الباركود..."
@@ -185,7 +191,7 @@ export default function StudentsPage() {
         {/* ================= STUDENTS LIST (1 COL) ================= */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider">
               قائمة الطلاب ({filteredStudents.length})
             </span>
           </div>
@@ -201,31 +207,27 @@ export default function StudentsPage() {
                 <div
                   key={student.id}
                   onClick={() => setSelectedStudentId(student.id)}
-                  className={`p-3.5 rounded-xl cursor-pointer transition-all border ${
-                    isSelected
-                      ? 'border-teal-500/60 bg-teal-500/10/60 shadow-sm'
-                      : 'border-slate-200 bg-white hover:border-teal-500/30'
-                  }`}
+                  className={`p-3.5 rounded-xl cursor-pointer transition-all border ${isSelected ? 'border-[#0D9488] bg-[#111827] shadow-md shadow-[#0D9488]/20' : 'border-[#2A3B56] bg-[#1B2537] hover:border-[#0D9488]/60'}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
+                    <div className="w-11 h-11 rounded-full bg-[#0D9488] text-white flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
                       {student.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-bold text-sm text-slate-900 truncate">{student.name}</p>
-                        <span className="text-[11px] font-mono text-teal-300 font-bold">{student.qrToken}</span>
+                        <p className="font-bold text-sm text-[#F8FAFC] truncate">{student.name}</p>
+                        <span className="text-[11px] font-mono text-[#2DD4BF] font-bold">{student.qrToken}</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      <p className="text-xs text-[#94A3B8] mt-0.5 truncate">
                         ولي الأمر: {guardian?.name || 'غير مسجل'} • {guardian?.phone}
                       </p>
                       <div className="flex items-center justify-between gap-2 mt-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="badge badge-teal text-[10px]">{student.level || 'مبتدئ'}</span>
+                          <span className="badge text-[10px] bg-[#111827] text-[#2DD4BF] border border-[#2A3B56]">{student.level || 'مبتدئ'}</span>
                           {remaining > 0 ? (
-                            <span className="badge badge-danger text-[10px]">متبقي {remaining} ج</span>
+                            <span className="badge text-[10px] bg-[#450A0A] border border-[#7F1D1D] text-[#F59E0B] font-bold">متبقي {remaining} ج</span>
                           ) : (
-                            <span className="badge badge-teal text-[10px]">سدد بالكامل</span>
+                            <span className="badge text-[10px] bg-[#115E59] border border-[#0D9488]/40 text-[#2DD4BF] font-bold">سدد بالكامل</span>
                           )}
                         </div>
                         <button
@@ -235,10 +237,10 @@ export default function StudentsPage() {
                             setDiplomaStudent(student);
                             setShowDiplomaModal(true);
                           }}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-teal-500/10 hover:bg-teal-500/15 text-teal-300 dark:bg-blue-950 dark:text-teal-300 font-bold border border-teal-500/20 dark:border-teal-500/20 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-[#111827] hover:bg-[#1B2537] text-[#2DD4BF] font-bold border border-[#2A3B56] transition-all flex items-center gap-1 cursor-pointer shrink-0"
                           title="استخراج الشهادة الفنية الملكية"
                         >
-                          <Award size={11} className="text-teal-400" />
+                          <Award size={11} className="text-[#2DD4BF]" />
                           <span>الشهادة</span>
                         </button>
                       </div>
@@ -254,29 +256,29 @@ export default function StudentsPage() {
             totalItems={filteredStudents.length}
             pageSize={STUDENTS_PER_PAGE}
             onPageChange={setStudentPage}
-            className="pt-2 border-t border-slate-100"
+            className="pt-2 border-t border-[#2A3B56]"
           />
         </div>
 
         {/* ================= STUDENT PROFILE & CONTRACT (2 COLS) ================= */}
         <div className="lg:col-span-2">
           {selectedStudent ? (
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-sm space-y-6">
+            <div className="p-6 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-6">
               {/* Profile Header */}
-              <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 gap-4">
+              <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between pb-4 border-b border-[#2A3B56] gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-2xl shadow-md shrink-0">
                     {selectedStudent.name.charAt(0)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-xl font-black text-slate-900 dark:text-white">{selectedStudent.name}</h2>
+                      <h2 className="text-xl font-black text-[#F8FAFC]">{selectedStudent.name}</h2>
                       <span className="badge badge-teal text-xs font-mono">{selectedStudent.qrToken}</span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-[#94A3B8] mt-1">
                       تاريخ الميلاد: {selectedStudent.birthDate} • المستوى: {selectedStudent.level}
                     </p>
-                    <p className="text-xs text-teal-400 dark:text-teal-300 font-semibold mt-0.5">
+                    <p className="text-xs text-[#2DD4BF] font-semibold mt-0.5">
                       الكورس الحالي: {primaryCourse?.name || 'غير مسجل بكورس'}
                     </p>
                   </div>
@@ -288,36 +290,36 @@ export default function StudentsPage() {
                       setDiplomaStudent(selectedStudent);
                       setShowDiplomaModal(true);
                     }}
-                    className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white font-black shadow-md shadow-blue-600/30 text-xs flex items-center gap-1.5 cursor-pointer py-2 px-3.5"
+                    className="btn bg-[#0D9488] hover:bg-[#0F766E] text-white font-black shadow-md shadow-[#0D9488]/30 text-xs flex items-center gap-1.5 cursor-pointer py-2 px-3.5 rounded-xl"
                   >
                     <Award size={15} className="text-white" />
                     <span>🎓 الشهادة الملكية (A4 Diploma)</span>
                   </button>
 
-                  <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+                  <div className="flex gap-1 bg-[#111827] border border-[#2A3B56] p-1 rounded-xl">
                   <button
                     onClick={() => setProfileTab('info')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${profileTab === 'info' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${profileTab === 'info' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
                   >
                     البيانات والكارنيه
                   </button>
                   <button
                     onClick={() => setProfileTab('contract')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'contract' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'contract' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
                   >
                     <FileText size={13} />
                     وثيقة التعاقد
                   </button>
                   <button
                     onClick={() => setProfileTab('financials')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'financials' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'financials' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
                   >
                     <CreditCard size={13} />
                     الماليات
                   </button>
                   <button
                     onClick={() => setProfileTab('progress')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'progress' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-teal-300 dark:hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'progress' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
                   >
                     <Award size={13} />
                     تقدم الدروس
@@ -330,26 +332,26 @@ export default function StudentsPage() {
               {profileTab === 'info' && (
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Student ID Card (Printable) */}
-                  <div className="p-6 rounded-2xl border-2 border-teal-500/20 flex flex-col items-center justify-between text-center relative overflow-hidden bg-gradient-to-b from-blue-50/70 to-white shadow-sm">
-                    <div className="w-full pb-3 border-b border-blue-100 flex items-center justify-between text-xs text-slate-500">
-                      <span className="font-bold text-teal-300">🎨 {settings.name}</span>
-                      <span className="font-medium text-slate-600">بطاقة عضوية المرسم الرسمية</span>
+                  <div className="p-6 rounded-2xl border border-[#2A3B56] flex flex-col items-center justify-between text-center relative overflow-hidden bg-[#111827] border-[#2A3B56] text-[#F8FAFC] shadow-sm">
+                    <div className="w-full pb-3 border-b border-[#2A3B56] flex items-center justify-between text-xs text-[#94A3B8]">
+                      <span className="font-bold text-[#2DD4BF]">🎨 {settings.name}</span>
+                      <span className="font-medium text-[#94A3B8]">بطاقة عضوية المرسم الرسمية</span>
                     </div>
 
                     <div className="my-5 space-y-2">
                       <div className="w-20 h-20 rounded-full mx-auto bg-teal-600 border-4 border-blue-100 flex items-center justify-center text-3xl font-black text-white shadow-md">
                         {selectedStudent.name.charAt(0)}
                       </div>
-                      <h3 className="font-black text-lg text-slate-900">{selectedStudent.name}</h3>
-                      <p className="text-xs font-bold text-teal-400">{primaryCourse?.name}</p>
+                      <h3 className="font-black text-lg text-[#F8FAFC]">{selectedStudent.name}</h3>
+                      <p className="text-xs font-bold text-[#2DD4BF]">{primaryCourse?.name}</p>
                     </div>
 
                     {/* Barcode Display */}
-                    <div className="bg-white p-3 rounded-xl border border-teal-500/20 shadow-sm my-2 w-full max-w-[220px]">
+                    <div className="bg-[#0E1629] p-3 rounded-xl border border-[#2A3B56] shadow-sm my-2 w-full max-w-[220px]">
                       <div className="flex justify-center items-center py-1">
-                        <QrCode size={56} className="text-blue-900" />
+                        <QrCode size={56} className="text-[#2DD4BF]" />
                       </div>
-                      <p className="font-mono text-blue-950 font-black text-xs tracking-wider mt-1">{selectedStudent.qrToken}</p>
+                      <p className="font-mono text-[#2DD4BF] font-black text-xs tracking-wider mt-1">{selectedStudent.qrToken}</p>
                     </div>
 
                     <button
@@ -362,23 +364,23 @@ export default function StudentsPage() {
 
                   {/* Guardian & Details */}
                   <div className="space-y-4">
-                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
-                      <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
+                    <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#111827] space-y-3">
+                      <h4 className="font-black text-sm text-[#F8FAFC] flex items-center gap-2">
                         <Shield size={16} className="text-teal-400" /> بيانات ولي الأمر
                       </h4>
-                      <div className="space-y-2 text-xs text-slate-700">
-                        <p className="flex justify-between border-b border-slate-200/60 pb-1.5"><span className="text-slate-500">الاسم:</span> <strong className="text-slate-900">{selectedGuardian?.name}</strong></p>
-                        <p className="flex justify-between border-b border-slate-200/60 pb-1.5"><span className="text-slate-500">رقم الهاتف:</span> <strong className="font-mono text-teal-300 font-bold">{selectedGuardian?.phone}</strong></p>
-                        <p className="flex justify-between"><span className="text-slate-500">البريد:</span> <span className="font-mono text-slate-600">{selectedGuardian?.email || 'غير مسجل'}</span></p>
+                      <div className="space-y-2 text-xs text-[#94A3B8]">
+                        <p className="flex justify-between border-b border-[#2A3B56] pb-1.5"><span className="text-[#94A3B8]">الاسم:</span> <strong className="text-[#F8FAFC]">{selectedGuardian?.name}</strong></p>
+                        <p className="flex justify-between border-b border-[#2A3B56] pb-1.5"><span className="text-[#94A3B8]">رقم الهاتف:</span> <strong className="font-mono text-teal-300 font-bold">{selectedGuardian?.phone}</strong></p>
+                        <p className="flex justify-between"><span className="text-[#94A3B8]">البريد:</span> <span className="font-mono text-slate-600">{selectedGuardian?.email || 'غير مسجل'}</span></p>
                       </div>
                     </div>
 
-                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
-                      <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
+                    <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#111827] space-y-3">
+                      <h4 className="font-black text-sm text-[#F8FAFC] flex items-center gap-2">
                         <HeartPulse size={16} className="text-teal-400" /> ملاحظات صحية وتراخيص
                       </h4>
                       <div className="space-y-2.5 text-xs">
-                        <p className="text-slate-600 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed">
+                        <p className="text-slate-600 bg-white p-3 rounded-xl border border-[#2A3B56] leading-relaxed">
                           {selectedStudent.healthNotes || 'لا توجد ملاحظات أو حساسيات مسجلة.'}
                         </p>
                         <div className="pt-2 flex items-center gap-2">
@@ -397,8 +399,8 @@ export default function StudentsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-black text-slate-900">وثيقة التعاقد والاشتراك الرسمي</h3>
-                      <p className="text-xs text-slate-500">مسجلة بتاريخ الانضمام: {primaryEnrollment?.enrollDate || '2026-10-01'}</p>
+                      <h3 className="font-black text-[#F8FAFC]">وثيقة التعاقد والاشتراك الرسمي</h3>
+                      <p className="text-xs text-[#94A3B8]">مسجلة بتاريخ الانضمام: {primaryEnrollment?.enrollDate || '2026-10-01'}</p>
                     </div>
                     <button
                       onClick={() => window.print()}
@@ -409,7 +411,7 @@ export default function StudentsPage() {
                   </div>
 
                   {/* Printable Formal A4 Paper */}
-                  <div className="bg-white text-slate-900 p-8 rounded-2xl shadow-md font-sans border-2 border-slate-200 space-y-6">
+                  <div className="bg-white text-[#F8FAFC] p-8 rounded-2xl shadow-md font-sans border-2 border-[#2A3B56] space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between border-b-2 border-blue-900 pb-4">
                       <div>
@@ -420,7 +422,7 @@ export default function StudentsPage() {
                         <span className="text-xs font-mono font-bold bg-teal-500/10 text-blue-800 px-3 py-1 rounded border border-teal-500/20">
                           عقد رقم: CTR-{selectedStudent.id.slice(-5)}
                         </span>
-                        <p className="text-xs text-slate-500 mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate}</p>
+                        <p className="text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate}</p>
                       </div>
                     </div>
 
@@ -439,7 +441,7 @@ export default function StudentsPage() {
 
                     {/* Clauses */}
                     <div className="space-y-2 text-xs leading-relaxed text-slate-700">
-                      <h4 className="font-bold text-slate-900 text-sm">بنود وشروط الاتفاق:</h4>
+                      <h4 className="font-bold text-[#F8FAFC] text-sm">بنود وشروط الاتفاق:</h4>
                       <p className="whitespace-pre-line text-slate-700 bg-white p-3 rounded-lg border border-dashed border-slate-300">
                         {settings.contractTerms}
                       </p>
@@ -450,14 +452,14 @@ export default function StudentsPage() {
                       <div className="space-y-6">
                         <p className="font-bold text-slate-800">توقيع ولي الأمر / الطالب</p>
                         <div className="h-10 border-b border-dashed border-slate-400"></div>
-                        <p className="text-slate-500">{selectedGuardian?.name}</p>
+                        <p className="text-[#94A3B8]">{selectedGuardian?.name}</p>
                       </div>
                       <div className="space-y-6">
                         <p className="font-bold text-slate-800">ختم وتوقيع إدارة المرسم</p>
                         <div className="h-10 border-b border-dashed border-slate-400 flex items-center justify-center">
                           <span className="text-[10px] text-teal-300 font-bold border-2 border-blue-700 px-3 py-0.5 rounded-full bg-teal-500/10">معتمد رسمياً ✅</span>
                         </div>
-                        <p className="text-slate-500">إدارة {settings.name}</p>
+                        <p className="text-[#94A3B8]">إدارة {settings.name}</p>
                       </div>
                     </div>
                   </div>
@@ -470,16 +472,16 @@ export default function StudentsPage() {
                   {/* Financial Summary */}
                   {primaryEnrollment && (
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
-                        <p className="text-xs text-slate-500 font-medium">إجمالي رسوم الكورس</p>
-                        <p className="text-xl font-black text-slate-900 mt-1">{primaryEnrollment.totalAmount} ج</p>
+                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-slate-50/70 text-center">
+                        <p className="text-xs text-[#94A3B8] font-medium">إجمالي رسوم الكورس</p>
+                        <p className="text-xl font-black text-[#F8FAFC] mt-1">{primaryEnrollment.totalAmount} ج</p>
                       </div>
                       <div className="p-4 rounded-xl border border-teal-500/20 bg-teal-500/10/70 text-center">
                         <p className="text-xs text-teal-300 font-medium">المبلغ المسدد</p>
                         <p className="text-xl font-black text-teal-300 mt-1">{primaryEnrollment.totalPaid} ج</p>
                       </div>
-                      <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
-                        <p className="text-xs text-slate-500 font-medium">المتبقي المطلوب</p>
+                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-slate-50/70 text-center">
+                        <p className="text-xs text-[#94A3B8] font-medium">المتبقي المطلوب</p>
                         <p className="text-xl font-black text-slate-800 mt-1">
                           {Math.max(0, primaryEnrollment.totalAmount - primaryEnrollment.totalPaid)} ج
                         </p>
@@ -488,7 +490,7 @@ export default function StudentsPage() {
                   )}
 
                   <div className="flex items-center justify-between pt-2">
-                    <h4 className="font-black text-sm text-slate-900">سجل إيصالات الدفع للكورس</h4>
+                    <h4 className="font-black text-sm text-[#F8FAFC]">سجل إيصالات الدفع للكورس</h4>
                     {primaryEnrollment && primaryEnrollment.totalPaid < primaryEnrollment.totalAmount && (
                       <button
                         onClick={() => setShowPaymentModal(true)}
@@ -502,17 +504,17 @@ export default function StudentsPage() {
                   {/* Payments Receipts */}
                   <div className="space-y-2">
                     {studentPayments.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-3 text-center">لم يتم تسجيل دفعات بعد.</p>
+                      <p className="text-xs text-[#94A3B8] py-3 text-center">لم يتم تسجيل دفعات بعد.</p>
                     ) : (
                       studentPayments.map(pay => (
-                        <div key={pay.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                        <div key={pay.id} className="p-3.5 bg-slate-50 border border-[#2A3B56] rounded-xl flex items-center justify-between text-xs">
                           <div>
                             <span className="font-mono font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded mr-2">
                               {pay.receiptNumber}
                             </span>
-                            <span className="font-bold text-slate-900">{pay.amount} ج</span>
-                            <span className="text-slate-500 mr-2">({pay.method})</span>
-                            <p className="text-[11px] text-slate-500 mt-1">{pay.date} • {pay.notes}</p>
+                            <span className="font-bold text-[#F8FAFC]">{pay.amount} ج</span>
+                            <span className="text-[#94A3B8] mr-2">({pay.method})</span>
+                            <p className="text-[11px] text-[#94A3B8] mt-1">{pay.date} • {pay.notes}</p>
                           </div>
                           <button
                             onClick={() => setReceiptData({
@@ -524,7 +526,7 @@ export default function StudentsPage() {
                               remaining: Math.max(0, (primaryEnrollment?.totalAmount || 0) - (primaryEnrollment?.totalPaid || 0)),
                               method: pay.method
                             })}
-                            className="btn btn-secondary btn-sm flex items-center gap-1 text-slate-700 border-slate-200"
+                            className="btn btn-secondary btn-sm flex items-center gap-1 text-slate-700 border-[#2A3B56]"
                           >
                             <Printer size={12} /> طباعة إيصال الدفع
                           </button>
@@ -534,19 +536,19 @@ export default function StudentsPage() {
                   </div>
 
                   {/* Installments Schedule */}
-                  <div className="pt-3 border-t border-slate-200">
-                    <h4 className="font-black text-sm text-slate-900 mb-3 flex items-center gap-1.5">
+                  <div className="pt-3 border-t border-[#2A3B56]">
+                    <h4 className="font-black text-sm text-[#F8FAFC] mb-3 flex items-center gap-1.5">
                       <Clock size={15} className="text-teal-400" /> جدول الأقساط المتبقية
                     </h4>
                     <div className="space-y-2">
                       {studentInstallments.map((inst, idx) => (
-                        <div key={inst.id} className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                        <div key={inst.id} className="p-3 bg-white border border-[#2A3B56] rounded-xl flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-slate-800">القسط #{idx + 1}</span>
-                            <span className="text-slate-500">تاريخ الاستحقاق: {inst.dueDate}</span>
+                            <span className="text-[#94A3B8]">تاريخ الاستحقاق: {inst.dueDate}</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-black text-slate-900">{inst.amount} ج</span>
+                            <span className="font-black text-[#F8FAFC]">{inst.amount} ج</span>
                             <span className={`badge text-[10px] ${inst.status === 'paid' ? 'badge-teal' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'}`}>
                               {inst.status === 'paid' ? 'مدفوع' : inst.status === 'overdue' ? 'متأخر' : 'معلق'}
                             </span>
@@ -563,8 +565,8 @@ export default function StudentsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-black text-sm text-slate-900">تقدم المنهج حسب موضوعات الدروس</h4>
-                      <p className="text-xs text-slate-500">مقرر: {primaryCourse?.name}</p>
+                      <h4 className="font-black text-sm text-[#F8FAFC]">تقدم المنهج حسب موضوعات الدروس</h4>
+                      <p className="text-xs text-[#94A3B8]">مقرر: {primaryCourse?.name}</p>
                     </div>
                     <span className="badge badge-teal text-xs font-bold">
                       {studentProgress.length} دروس مكتملة
@@ -579,12 +581,12 @@ export default function StudentsPage() {
                         <div
                           key={index}
                           className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                            completed ? 'bg-teal-500/10/70 border-teal-500/20' : 'bg-slate-50/50 border-slate-200'
+                            completed ? 'bg-teal-500/10/70 border-teal-500/20' : 'bg-slate-50/50 border-[#2A3B56]'
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                              completed ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-200 text-slate-500'
+                              completed ? 'bg-[#0D9488] text-white shadow-sm' : 'bg-slate-200 text-[#94A3B8]'
                             }`}>
                               {index + 1}
                             </div>
@@ -592,7 +594,7 @@ export default function StudentsPage() {
                               <p className={`text-xs font-bold ${completed ? 'text-blue-900' : 'text-slate-700'}`}>
                                 {topic}
                               </p>
-                              <p className="text-[10px] text-slate-500">موضوع الدرس المعتمد بالمنهج</p>
+                              <p className="text-[10px] text-[#94A3B8]">موضوع الدرس المعتمد بالمنهج</p>
                             </div>
                           </div>
 
@@ -607,9 +609,9 @@ export default function StudentsPage() {
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500 space-y-3 shadow-xs">
+            <div className="rounded-2xl border border-[#2A3B56] bg-[#1B2537] p-12 text-center text-[#94A3B8] space-y-3 shadow-sm">
               <Users size={48} className="mx-auto text-blue-300" />
-              <p className="font-bold text-slate-700">اختر طالباً من القائمة لعرض ملفه وعقده ومالياته</p>
+              <p className="font-bold text-[#F8FAFC]">اختر طالباً من القائمة لعرض ملفه وعقده ومالياته</p>
             </div>
           )}
         </div>
@@ -617,14 +619,14 @@ export default function StudentsPage() {
 
       {/* ================= MODAL: ADD STUDENT ================= */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl border border-blue-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
+        <div className="fixed inset-0 bg-[#0E1629]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1B2537] p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl border border-[#2A3B56] text-[#F8FAFC]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
+              <h3 className="font-black text-lg text-[#F8FAFC] flex items-center gap-2">
                 <Plus size={20} className="text-teal-400" />
                 تسجيل طالب جديد واستخراج وثيقة التعاقد
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-800 p-1">
+              <button onClick={() => setShowAddModal(false)} className="text-[#94A3B8] hover:text-slate-800 p-1">
                 <X size={18} />
               </button>
             </div>
@@ -681,7 +683,7 @@ export default function StudentsPage() {
               </div>
 
               {/* Guardian Info */}
-              <div className="space-y-2 pt-2 border-t border-slate-200">
+              <div className="space-y-2 pt-2 border-t border-[#2A3B56]">
                 <h4 className="font-black text-teal-300 text-sm">٢. بيانات ولي الأمر</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -708,7 +710,7 @@ export default function StudentsPage() {
               </div>
 
               {/* Course & Financial Agreement */}
-              <div className="space-y-2 pt-2 border-t border-slate-200">
+              <div className="space-y-2 pt-2 border-t border-[#2A3B56]">
                 <h4 className="font-black text-teal-300 text-sm">٣. الكورس المتفق عليه والماليات</h4>
                 <div>
                   <label className="block text-slate-600 mb-1 font-bold">اختر الكورس والمجموعة:</label>
@@ -733,7 +735,7 @@ export default function StudentsPage() {
                     <label className="block text-slate-600 mb-1 font-bold">إجمالي الرسوم (ج):</label>
                     <input
                       type="number"
-                      className="input text-xs font-black text-slate-900"
+                      className="input text-xs font-black text-[#F8FAFC]"
                       value={newStudentData.totalAmount}
                       onChange={e => setNewStudentData({ ...newStudentData, totalAmount: Number(e.target.value) })}
                     />
@@ -766,7 +768,7 @@ export default function StudentsPage() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex gap-2">
+              <div className="pt-3 border-t border-[#2A3B56] flex gap-2">
                 <button
                   type="submit"
                   disabled={isAddingStudent}
@@ -774,7 +776,7 @@ export default function StudentsPage() {
                 >
                   {isAddingStudent ? 'جاري الحفظ والتعاقد...' : 'حفظ الطالب واستخراج وثيقة التعاقد'}
                 </button>
-                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-secondary border-slate-200">
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-secondary border-[#2A3B56]">
                   إلغاء
                 </button>
               </div>
@@ -787,16 +789,16 @@ export default function StudentsPage() {
       {showPaymentModal && primaryEnrollment && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl border border-blue-100">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <h3 className="font-black text-base text-slate-900">تسجيل دفعة قسط دراسي</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-800 p-1">
+            <div className="flex items-center justify-between pb-2 border-b border-[#2A3B56]">
+              <h3 className="font-black text-base text-[#F8FAFC]">تسجيل دفعة قسط دراسي</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-[#94A3B8] hover:text-slate-800 p-1">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
               <p className="text-slate-700">
-                الطالب: <strong className="text-slate-900">{selectedStudent?.name}</strong>
+                الطالب: <strong className="text-[#F8FAFC]">{selectedStudent?.name}</strong>
               </p>
               <div className="p-3 bg-teal-500/10 rounded-xl border border-teal-500/20">
                 <span className="text-slate-600">المتبقي حالياً:</span>{' '}
@@ -838,7 +840,7 @@ export default function StudentsPage() {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-200 flex gap-2">
+            <div className="pt-3 border-t border-[#2A3B56] flex gap-2">
               <button
                 onClick={handleRecordPayment}
                 disabled={isRecordingPayment}
@@ -846,7 +848,7 @@ export default function StudentsPage() {
               >
                 {isRecordingPayment ? 'جاري تسجيل الدفعة...' : 'تأكيد الدفع وطباعة الإيصال'}
               </button>
-              <button onClick={() => setShowPaymentModal(false)} className="btn btn-secondary border-slate-200">
+              <button onClick={() => setShowPaymentModal(false)} className="btn btn-secondary border-[#2A3B56]">
                 إلغاء
               </button>
             </div>
@@ -857,10 +859,10 @@ export default function StudentsPage() {
       {/* ================= MODAL: PRINTABLE RECEIPT ================= */}
       {receiptData && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-teal-500/20">
+          <div className="bg-white text-[#F8FAFC] rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-teal-500/20">
             <button
               onClick={() => setReceiptData(null)}
-              className="absolute top-4 left-4 text-slate-400 hover:text-slate-800 p-1"
+              className="absolute top-4 left-4 text-[#94A3B8] hover:text-slate-800 p-1"
             >
               <X size={20} />
             </button>
@@ -869,16 +871,16 @@ export default function StudentsPage() {
               <div className="text-center border-b pb-4">
                 <h2 className="text-xl font-black text-blue-900">{settings.name}</h2>
                 <p className="text-xs text-slate-600 mt-0.5">إيصال سداد رسوم تدريبية</p>
-                <p className="text-xs text-slate-500">{settings.address} • {settings.phone}</p>
+                <p className="text-xs text-[#94A3B8]">{settings.address} • {settings.phone}</p>
                 <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-blue-800 border border-teal-500/20">
                   إيصال رقم: {receiptData.receiptNumber}
                 </div>
               </div>
 
-              <div className="text-xs space-y-2 text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div className="text-xs space-y-2 text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-[#2A3B56]">
                 <div className="flex justify-between">
                   <span>اسم الطالب:</span>
-                  <strong className="text-slate-900">{receiptData.studentName}</strong>
+                  <strong className="text-[#F8FAFC]">{receiptData.studentName}</strong>
                 </div>
                 <div className="flex justify-between">
                   <span>الدورة التدريبية:</span>
@@ -894,8 +896,8 @@ export default function StudentsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-b border-slate-200 py-3 flex justify-between items-center">
-                <span className="font-black text-sm text-slate-900">المبلغ المدفوع:</span>
+              <div className="border-t border-b border-[#2A3B56] py-3 flex justify-between items-center">
+                <span className="font-black text-sm text-[#F8FAFC]">المبلغ المدفوع:</span>
                 <span className="font-black text-2xl text-teal-300">{receiptData.amount} ج</span>
               </div>
 
@@ -904,19 +906,19 @@ export default function StudentsPage() {
                 <strong className="text-slate-800 font-bold">{receiptData.remaining} ج</strong>
               </div>
 
-              <p className="text-center text-[10px] text-slate-500 pt-2 border-t border-slate-200">
+              <p className="text-center text-[10px] text-[#94A3B8] pt-2 border-t border-[#2A3B56]">
                 هذا الإيصال معتمد رسمي من إدارة المرسم ومسجل بالسجلات المحاسبية
               </p>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-200 flex gap-2">
+            <div className="mt-5 pt-3 border-t border-[#2A3B56] flex gap-2">
               <button
                 onClick={() => window.print()}
                 className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white flex-1 flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Printer size={16} /> طباعة إيصال الدفع
               </button>
-              <button onClick={() => setReceiptData(null)} className="btn btn-secondary border-slate-200">
+              <button onClick={() => setReceiptData(null)} className="btn btn-secondary border-[#2A3B56]">
                 إغلاق
               </button>
             </div>

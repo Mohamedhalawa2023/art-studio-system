@@ -61,12 +61,12 @@ export function Pagination({
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-2 text-sm text-slate-600 ${className}`}>
+    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-2 text-sm text-[#94A3B8] ${className}`}>
       {/* Information text */}
-      <div className="font-medium text-slate-500">
-        عرض <span className="font-bold text-slate-800">{startItem}</span> إلى{' '}
-        <span className="font-bold text-slate-800">{endItem}</span> من إجمالي{' '}
-        <span className="font-bold text-teal-300">{totalItems}</span> سجل
+      <div className="font-medium text-xs text-[#94A3B8]">
+        عرض <span className="font-bold text-[#F8FAFC]">{startItem}</span> إلى{' '}
+        <span className="font-bold text-[#F8FAFC]">{endItem}</span> من إجمالي{' '}
+        <span className="font-bold text-[#D97706] font-mono">{totalItems}</span> سجل
       </div>
 
       {/* Navigation Buttons */}
@@ -76,7 +76,7 @@ export function Pagination({
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
           title="الصفحة الأولى"
-          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition"
+          className="p-1.5 rounded-lg border border-[#2A3B56] bg-[#1B2537] hover:bg-[#111827] hover:text-[#F8FAFC] disabled:opacity-30 disabled:cursor-not-allowed text-[#94A3B8] transition"
         >
           <ChevronsRight className="w-4 h-4" />
         </button>
@@ -86,7 +86,7 @@ export function Pagination({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           title="الصفحة السابقة"
-          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition"
+          className="p-1.5 rounded-lg border border-[#2A3B56] bg-[#1B2537] hover:bg-[#111827] hover:text-[#F8FAFC] disabled:opacity-30 disabled:cursor-not-allowed text-[#94A3B8] transition"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -96,7 +96,7 @@ export function Pagination({
           {getPageNumbers().map((page, idx) => {
             if (page === '...') {
               return (
-                <span key={`dots-${idx}`} className="px-2 text-slate-400 select-none">
+                <span key={`dots-${idx}`} className="px-2 text-[#94A3B8] select-none">
                   ...
                 </span>
               );
@@ -107,10 +107,10 @@ export function Pagination({
               <button
                 key={pageNum}
                 onClick={() => onPageChange(pageNum)}
-                className={`min-w-[34px] h-[34px] px-2 rounded-lg text-sm font-semibold transition ${
+                className={`min-w-[34px] h-[34px] px-2 rounded-lg text-xs font-bold transition ${
                   isActive
-                    ? 'bg-teal-600 text-white shadow-sm shadow-blue-200'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'bg-[#0D9488] text-white shadow-sm shadow-[#0D9488]/30 border border-[#0D9488]'
+                    : 'bg-[#1B2537] border border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#111827]'
                 }`}
               >
                 {pageNum}
@@ -124,7 +124,7 @@ export function Pagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           title="الصفحة التالية"
-          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition"
+          className="p-1.5 rounded-lg border border-[#2A3B56] bg-[#1B2537] hover:bg-[#111827] hover:text-[#F8FAFC] disabled:opacity-30 disabled:cursor-not-allowed text-[#94A3B8] transition"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -134,7 +134,7 @@ export function Pagination({
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
           title="الصفحة الأخيرة"
-          className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition"
+          className="p-1.5 rounded-lg border border-[#2A3B56] bg-[#1B2537] hover:bg-[#111827] hover:text-[#F8FAFC] disabled:opacity-30 disabled:cursor-not-allowed text-[#94A3B8] transition"
         >
           <ChevronsLeft className="w-4 h-4" />
         </button>

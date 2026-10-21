@@ -53,9 +53,9 @@ export default function CoursesPage() {
                 </div>
                 <div className="text-left shrink-0 ml-2">
                   <p className="text-xl font-black text-teal-300">{course.price?.toLocaleString()} ج</p>
-                  <p className="text-[11px] text-slate-400">{course.sessionsCount} حصص</p>
+                  <p className="text-[11px] text-[#94A3B8]">{course.sessionsCount} حصص</p>
                 </div>
-                <div className="text-slate-400 shrink-0">
+                <div className="text-[#94A3B8] shrink-0">
                   {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </div>
               </button>
@@ -85,7 +85,7 @@ export default function CoursesPage() {
                   </div>
 
                   {courseGroups.length === 0 ? (
-                    <p className="text-slate-400 text-xs text-center py-4">لا توجد مجموعات مسجلة لهذا الكورس حالياً</p>
+                    <p className="text-[#94A3B8] text-xs text-center py-4">لا توجد مجموعات مسجلة لهذا الكورس حالياً</p>
                   ) : (
                     <div className="grid md:grid-cols-2 gap-3">
                       {courseGroups.map(group => {

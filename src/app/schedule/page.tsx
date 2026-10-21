@@ -85,7 +85,7 @@ export default function SchedulePage() {
                 className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-teal-500/20 transition-all"
               >
                 <div className="text-center w-12 shrink-0">
-                  <p className="text-xs text-slate-400">{new Date(sess.date).toLocaleDateString('ar-EG', { month: 'short' })}</p>
+                  <p className="text-xs text-[#94A3B8]">{new Date(sess.date).toLocaleDateString('ar-EG', { month: 'short' })}</p>
                   <p className="text-xl font-black text-teal-300 font-mono">{new Date(sess.date).getDate()}</p>
                 </div>
                 <div className="flex-1">

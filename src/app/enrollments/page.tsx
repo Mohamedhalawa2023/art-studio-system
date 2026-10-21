@@ -115,7 +115,7 @@ export default function EnrollmentsPage() {
                         <td className="p-3.5">
                           <div>
                             <p className="font-black text-teal-300">{enrollment.totalPaid?.toLocaleString()} ج</p>
-                            <p className="text-[10px] text-slate-400">من إجمالي {enrollment.totalAmount?.toLocaleString()} ج</p>
+                            <p className="text-[10px] text-[#94A3B8]">من إجمالي {enrollment.totalAmount?.toLocaleString()} ج</p>
                           </div>
                         </td>
                       </tr>
