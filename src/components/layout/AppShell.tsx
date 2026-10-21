@@ -33,7 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const lowStockCount = supplyItems.filter(i => i.stockQty <= i.minStock).length;
 
   return (
-    <div className="flex min-h-screen bg-[#0F172A] text-[#F3F4F6]">
+    <div className="flex min-h-screen bg-[#0E1629] text-[#F8FAFC]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -44,26 +44,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Sidebar - Warm Atelier Slate */}
       <aside
-        className={`fixed top-0 right-0 h-full w-64 bg-[#131D2D] text-[#F3F4F6] z-50 flex flex-col justify-between transition-transform duration-200 border-l border-white/10 shadow-xl
+        className={`fixed top-0 right-0 h-full w-64 bg-[#1B2537] text-[#F8FAFC] z-50 flex flex-col justify-between transition-transform duration-200 border-l border-[#2A3B56] shadow-xl
           ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'} lg:static lg:translate-x-0`}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Studio Brand Header */}
-          <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#182335]">
+          <div className="p-4 border-b border-[#2A3B56] flex items-center justify-between shrink-0 bg-[#1B2537]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 text-white flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0D9488] to-[#0F766E] text-white flex items-center justify-center shadow-lg shadow-[#0D9488]/30 shrink-0">
                 <Palette size={22} />
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm font-black text-slate-100 tracking-tight truncate">
+                <h1 className="text-sm font-black text-[#F8FAFC] tracking-tight truncate">
                   {settings.name || 'مرسم الإبداع'}
                 </h1>
-                <p className="text-[11px] text-teal-400 font-bold">نظام المرسم المكتبي</p>
+                <p className="text-[11px] text-[#2DD4BF] font-bold">نظام المرسم المكتبي</p>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-slate-400 hover:text-white"
+              className="lg:hidden text-[#94A3B8] hover:text-white"
             >
               <X size={18} />
             </button>
@@ -85,12 +85,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/20 border border-white/15'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-[#0D9488] to-[#0D9488] text-white shadow-lg shadow-[#0D9488]/30 border border-[#0D9488]'
+                      : 'text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#111827]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon size={17} className={isActive ? 'text-white' : 'text-teal-400'} />
+                    <Icon size={17} className={isActive ? 'text-white' : 'text-[#2DD4BF]'} />
                     <span>{item.label}</span>
                   </div>
 
@@ -100,7 +100,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </span>
                   )}
                   {isStudents && (
-                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-white/5 text-slate-400">
+                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#111827] text-[#94A3B8]">
                       {students.length}
                     </span>
                   )}
@@ -111,13 +111,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Footer info in sidebar */}
-        <div className="p-3 border-t border-white/10 shrink-0 bg-[#0F172A]">
-          <div className="flex items-center justify-between text-xs text-slate-400 px-1 py-1">
-            <span className="flex items-center gap-1.5 font-bold text-slate-300">
-              <ShieldCheck size={14} className="text-emerald-400" />
+        <div className="p-3 border-t border-[#2A3B56] shrink-0 bg-[#0E1629]">
+          <div className="flex items-center justify-between text-xs text-[#94A3B8] px-1 py-1">
+            <span className="flex items-center gap-1.5 font-bold text-[#F8FAFC]">
+              <ShieldCheck size={14} className="text-[#2DD4BF]" />
               النسخة المحلية نشطة
             </span>
-            <span className="text-[10px] font-mono text-teal-400 font-bold">v1.2</span>
+            <span className="text-[10px] font-mono text-[#2DD4BF] font-bold">v1.2</span>
           </div>
         </div>
       </aside>
@@ -125,14 +125,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar on mobile */}
-        <header className="lg:hidden p-4 border-b border-white/10 flex items-center justify-between glass">
+        <header className="lg:hidden p-4 border-b border-[#2A3B56] flex items-center justify-between glass">
           <div className="flex items-center gap-2">
-            <Palette size={20} className="text-teal-400" />
-            <span className="font-bold text-sm text-slate-100">{settings.name}</span>
+            <Palette size={20} className="text-[#2DD4BF]" />
+            <span className="font-bold text-sm text-[#F8FAFC]">{settings.name}</span>
           </div>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg bg-white/5 text-slate-300"
+            className="p-2 rounded-lg bg-[#111827] text-[#F8FAFC]"
           >
             <Menu size={20} />
           </button>

@@ -68,8 +68,8 @@ export default function SuppliesPage() {
     minStock: 3
   });
 
-  // Invoice Modal
-  const [currentInvoice, setCurrentInvoice] = useState<any>(null);
+  // Printable Invoice State
+  const [currentInvoice, setCurrentInvoice] = useState<any | null>(null);
 
   // Barcode Sticker Modal State
   const [stickerProduct, setStickerProduct] = useState<any | null>(null);
@@ -280,37 +280,39 @@ export default function SuppliesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <ShoppingBag className="text-teal-400" size={26} />
+          <h1 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#0D9488]/20 border border-[#0D9488]/40 flex items-center justify-center text-[#2DD4BF]">
+              <ShoppingBag size={22} />
+            </div>
             متجر ومخزن الأدوات الفنية
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-[#94A3B8] text-xs mt-1">
             بيع الأدوات ومتابعة المخزون مع فصل مالي كامل عن حسابات الكورسات
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="flex gap-1.5 p-1.5 bg-[#111827] border border-[#2A3B56] rounded-xl shadow-md">
           <button
             onClick={() => setActiveTab('pos')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'pos' ? 'bg-teal-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-teal-400 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'pos' ? 'bg-[#0D9488] text-white shadow-md shadow-[#0D9488]/30 border border-[#0D9488]' : 'text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1B2537]'}`}
           >
             نقطة البيع (POS)
           </button>
           <button
             onClick={() => setActiveTab('inventory')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${activeTab === 'inventory' ? 'bg-teal-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-teal-400 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'inventory' ? 'bg-[#0D9488] text-white shadow-md shadow-[#0D9488]/30 border border-[#0D9488]' : 'text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1B2537]'}`}
           >
             المخزون
             {lowStockCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
+              <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
                 {lowStockCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab('financials')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'financials' ? 'bg-teal-600 text-white shadow-md shadow-blue-600/25' : 'text-slate-600 hover:text-teal-400 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'financials' ? 'bg-[#0D9488] text-white shadow-md shadow-[#0D9488]/30 border border-[#0D9488]' : 'text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1B2537]'}`}
           >
             الماليات والأرباح
           </button>
@@ -327,7 +329,7 @@ export default function SuppliesPage() {
               <div
                 className={`p-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all shadow-md ${
                   scanToast.type === 'success'
-                    ? 'bg-teal-600 text-white shadow-teal-500/20'
+                    ? 'bg-[#0D9488] text-white shadow-[#0D9488]/20'
                     : scanToast.type === 'error'
                     ? 'bg-red-600 text-white shadow-red-500/20'
                     : 'bg-amber-500 text-white shadow-amber-500/20'
@@ -346,19 +348,19 @@ export default function SuppliesPage() {
             {/* Search, Barcode & Quick Add Button */}
             <div className="grid sm:grid-cols-12 gap-3">
               <form onSubmit={handleBarcodeSubmit} className="relative sm:col-span-5">
-                <Barcode size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400" />
+                <Barcode size={18} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#2DD4BF]" />
                 <input
-                  className="input pr-10 text-sm font-mono"
-                  placeholder="امسح الباركود بالسكانر..."
+                  className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl pr-11 pl-4 py-2.5 text-xs font-mono text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#0D9488] transition-colors shadow-inner"
+                  placeholder="امسح الباركود بالسكانر واضغط Enter..."
                   value={barcodeInput}
                   onChange={e => setBarcodeInput(e.target.value)}
                   autoFocus
                 />
               </form>
               <div className="relative sm:col-span-4">
-                <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={18} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                 <input
-                  className="input pr-10 text-sm"
+                  className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl pr-11 pl-4 py-2.5 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#0D9488] transition-colors shadow-inner"
                   placeholder="بحث باسم الأداة..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
@@ -375,12 +377,12 @@ export default function SuppliesPage() {
             </div>
 
             {/* Categories Chips */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {categories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-teal-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-500/30 hover:text-teal-400'}`}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${selectedCategory === cat ? 'bg-[#0D9488] text-white shadow-sm border border-[#0D9488]' : 'bg-[#1B2537] border border-[#2A3B56] text-[#94A3B8] hover:border-[#0D9488]/40 hover:text-[#F8FAFC]'}`}
                 >
                   {cat === 'all' ? 'جميع الأدوات' : cat}
                 </button>
@@ -388,7 +390,7 @@ export default function SuppliesPage() {
             </div>
 
             {/* Products Grid */}
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3.5">
               {filteredItems.map(item => {
                 const isOutOfStock = item.stockQty <= 0;
                 const isLowStock = item.stockQty <= item.minStock && !isOutOfStock;
@@ -398,14 +400,14 @@ export default function SuppliesPage() {
                   <div
                     key={item.id}
                     onClick={() => !isOutOfStock && addToCart(item.id)}
-                    className={`glass p-4 rounded-xl flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group bg-white border border-slate-200 ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'hover:border-teal-500/40 hover:shadow-md hover:shadow-blue-500/5'}`}
+                    className={`bg-[#1B2537] border border-[#2A3B56] p-4 rounded-xl flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group shadow-md ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'hover:border-[#0D9488] hover:shadow-lg hover:shadow-[#0D9488]/5'}`}
                   >
                     {/* Card Header: Category & Quick Actions */}
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-teal-400 font-semibold">{item.category}</span>
+                      <span className="text-[11px] text-[#94A3B8] font-semibold">{item.category}</span>
                       <div className="flex items-center gap-1">
                         {inCart && (
-                          <span className="bg-teal-600 text-white font-bold text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-xs">
+                          <span className="bg-[#0D9488] text-white font-bold text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center shadow-xs">
                             {inCart.quantity}
                           </span>
                         )}
@@ -415,7 +417,7 @@ export default function SuppliesPage() {
                             e.stopPropagation();
                             setStickerProduct(item);
                           }}
-                          className="p-1 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+                          className="p-1 rounded-md text-[#94A3B8] hover:text-[#2DD4BF] hover:bg-[#111827] transition-colors"
                           title="طباعة استيكرات باركود للقطعة"
                         >
                           <Barcode size={13} />
@@ -435,7 +437,7 @@ export default function SuppliesPage() {
                               minStock: item.minStock
                             });
                           }}
-                          className="p-1 rounded-md text-slate-400 hover:text-teal-400 hover:bg-slate-100 transition-colors"
+                          className="p-1 rounded-md text-[#94A3B8] hover:text-[#2DD4BF] hover:bg-[#111827] transition-colors"
                           title="تعديل بيانات وسعر الأداة"
                         >
                           <Edit3 size={13} />
@@ -446,7 +448,7 @@ export default function SuppliesPage() {
                             e.stopPropagation();
                             setDeletingProduct(item);
                           }}
-                          className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          className="p-1 rounded-md text-[#94A3B8] hover:text-red-400 hover:bg-[#111827] transition-colors"
                           title="حذف الأداة من المخزن"
                         >
                           <Trash2 size={13} />
@@ -455,15 +457,15 @@ export default function SuppliesPage() {
                     </div>
 
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 mt-0.5 line-clamp-2">{item.name}</h4>
-                      <p className="text-xs text-slate-400 font-mono mt-1">كود: {item.barcode}</p>
+                      <h4 className="font-bold text-sm text-[#F8FAFC] mt-0.5 line-clamp-2 leading-snug">{item.name}</h4>
+                      <p className="text-[11px] text-[#94A3B8] font-mono mt-1">كود: {item.barcode}</p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div className="mt-4 pt-3 border-t border-[#2A3B56] flex items-center justify-between">
                       <div>
-                        <span className="text-lg font-black text-teal-300 font-mono">{item.sellPrice} ج</span>
+                        <span className="text-lg font-black text-[#2DD4BF] font-mono">{item.sellPrice} ج</span>
                       </div>
-                      <span className={`badge text-xs ${isOutOfStock ? 'badge-danger' : isLowStock ? 'badge-info' : 'badge-gray'}`}>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-lg font-semibold border ${isOutOfStock ? 'bg-red-500/10 border-red-500/30 text-red-400' : isLowStock ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-[#111827] border-[#2A3B56] text-[#94A3B8]'}`}>
                         {isOutOfStock ? 'نفد المخزون' : `متبقي ${item.stockQty}`}
                       </span>
                     </div>
@@ -474,45 +476,45 @@ export default function SuppliesPage() {
           </div>
 
           {/* Cart & Checkout Sidebar (1 Col) */}
-          <div className="glass p-5 rounded-2xl flex flex-col justify-between space-y-4 bg-white border border-slate-200">
+          <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-xl">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-teal-400" />
+              <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
+                <h3 className="font-bold text-base text-[#F8FAFC] flex items-center gap-2">
+                  <ShoppingBag size={18} className="text-[#2DD4BF]" />
                   فاتورة البيع الحالية
                 </h3>
                 {cart.length > 0 && (
-                  <button onClick={() => setCart([])} className="text-xs text-red-500 hover:underline">
+                  <button onClick={() => setCart([])} className="text-xs text-red-400 hover:text-red-300 hover:underline">
                     مسح السلة
                   </button>
                 )}
               </div>
 
               {/* Cart Items List */}
-              <div className="space-y-2 mt-4 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-2 mt-4 max-h-56 overflow-y-auto pr-1">
                 {cart.length === 0 ? (
-                  <div className="py-10 text-center text-slate-400 text-sm">
-                    السلة فارغة. اضغط على أداة أو امسح الباركود لإضافتها.
+                  <div className="py-10 text-center text-[#94A3B8] text-xs leading-relaxed">
+                    السلة فارغة.<br />اضغط على أداة أو امسح الباركود لإضافتها.
                   </div>
                 ) : (
                   cart.map(c => {
                     const product = supplyItems.find(p => p.id === c.productId);
                     if (!product) return null;
                     return (
-                      <div key={c.productId} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-sm">
+                      <div key={c.productId} className="flex items-center justify-between p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-xs">
                         <div className="flex-1 min-w-0 pr-2">
-                          <p className="font-semibold text-slate-800 truncate text-xs">{product.name}</p>
-                          <p className="text-xs text-teal-300 font-mono font-bold">{product.sellPrice * c.quantity} ج ({product.sellPrice} ج للقطعة)</p>
+                          <p className="font-semibold text-[#F8FAFC] truncate">{product.name}</p>
+                          <p className="text-[11px] text-[#2DD4BF] font-mono font-bold mt-0.5">{product.sellPrice * c.quantity} ج ({product.sellPrice} ج للقطعة)</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => updateCartQty(c.productId, -1)} className="p-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-600">
-                            <Minus size={12} />
+                          <button onClick={() => updateCartQty(c.productId, -1)} className="p-1 rounded-lg bg-[#1B2537] border border-[#2A3B56] hover:bg-[#2A3B56] text-[#F8FAFC] transition-colors">
+                            <Minus size={11} />
                           </button>
-                          <span className="font-bold text-xs w-5 text-center text-slate-800">{c.quantity}</span>
-                          <button onClick={() => updateCartQty(c.productId, 1)} className="p-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-600">
-                            <Plus size={12} />
+                          <span className="font-bold text-xs w-5 text-center text-[#F8FAFC]">{c.quantity}</span>
+                          <button onClick={() => updateCartQty(c.productId, 1)} className="p-1 rounded-lg bg-[#1B2537] border border-[#2A3B56] hover:bg-[#2A3B56] text-[#F8FAFC] transition-colors">
+                            <Plus size={11} />
                           </button>
-                          <button onClick={() => removeFromCart(c.productId)} className="p-1 text-red-500 hover:text-red-700 mr-1">
+                          <button onClick={() => removeFromCart(c.productId)} className="p-1 text-red-400 hover:text-red-300 mr-1 transition-colors">
                             <Trash2 size={13} />
                           </button>
                         </div>
@@ -523,17 +525,17 @@ export default function SuppliesPage() {
               </div>
 
               {/* Customer Selector */}
-              <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+              <div className="mt-4 pt-4 border-t border-[#2A3B56] space-y-3">
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCustomerType('student')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${customerType === 'student' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${customerType === 'student' ? 'bg-[#0D9488] text-white shadow-sm border border-[#0D9488]' : 'bg-[#111827] text-[#94A3B8] border border-[#2A3B56] hover:bg-[#1B2537]'}`}
                   >
                     طالب مقيد
                   </button>
                   <button
                     onClick={() => setCustomerType('walkin')}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${customerType === 'walkin' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${customerType === 'walkin' ? 'bg-[#0D9488] text-white shadow-sm border border-[#0D9488]' : 'bg-[#111827] text-[#94A3B8] border border-[#2A3B56] hover:bg-[#1B2537]'}`}
                   >
                     مشتري خارجي
                   </button>
@@ -541,23 +543,23 @@ export default function SuppliesPage() {
 
                 {customerType === 'student' ? (
                   <div>
-                    <label className="block text-xs text-slate-600 font-semibold mb-1">اختر الطالب:</label>
+                    <label className="block text-[11px] text-[#94A3B8] font-bold mb-1">اختر الطالب:</label>
                     <select
-                      className="input text-xs"
+                      className="w-full bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0D9488]"
                       value={selectedStudentId}
                       onChange={e => setSelectedStudentId(e.target.value)}
                     >
-                      <option value="">-- اختر من قائمة الطلاب --</option>
+                      <option value="" className="bg-[#111827] text-[#94A3B8]">-- اختر من قائمة الطلاب --</option>
                       {students.map(s => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.qrToken})</option>
+                        <option key={s.id} value={s.id} className="bg-[#111827] text-[#F8FAFC]">{s.name} ({s.qrToken})</option>
                       ))}
                     </select>
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs text-slate-600 font-semibold mb-1">اسم المشتري الخارجي:</label>
+                    <label className="block text-[11px] text-[#94A3B8] font-bold mb-1">اسم المشتري الخارجي:</label>
                     <input
-                      className="input text-xs"
+                      className="w-full bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] placeholder-[#94A3B8] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0D9488]"
                       placeholder="مثال: أحمد مصطفى"
                       value={walkinName}
                       onChange={e => setWalkinName(e.target.value)}
@@ -567,38 +569,38 @@ export default function SuppliesPage() {
 
                 {/* Payment Method */}
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">طريقة الدفع:</label>
+                  <label className="block text-[11px] text-[#94A3B8] font-bold mb-1">طريقة الدفع:</label>
                   <select
-                    className="input text-xs"
+                    className="w-full bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0D9488]"
                     value={paymentMethod}
                     onChange={e => setPaymentMethod(e.target.value as any)}
                   >
-                    <option value="cash">نقداً (كاش للخزنة)</option>
-                    <option value="instapay">انستاباي (InstaPay)</option>
-                    <option value="vodafone">فودافون كاش</option>
-                    <option value="card">بطاقة بنكية / فيزا</option>
+                    <option value="cash" className="bg-[#111827] text-[#F8FAFC]">نقداً (كاش الخزينة)</option>
+                    <option value="instapay" className="bg-[#111827] text-[#F8FAFC]">انستاباي (InstaPay)</option>
+                    <option value="vodafone" className="bg-[#111827] text-[#F8FAFC]">فودافون كاش</option>
+                    <option value="card" className="bg-[#111827] text-[#F8FAFC]">بطاقة بنكية / فيزا</option>
                   </select>
                 </div>
               </div>
             </div>
 
             {/* Total and Checkout Button */}
-            <div className="pt-4 border-t border-slate-100 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500">إجمالي القطع:</span>
-                <span className="font-bold text-slate-800">{cartSummary.totalItems} قطع</span>
+            <div className="pt-4 border-t border-[#2A3B56] space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#94A3B8]">إجمالي القطع:</span>
+                <span className="font-bold text-[#F8FAFC]">{cartSummary.totalItems} قطع</span>
               </div>
-              <div className="flex items-center justify-between text-lg">
-                <span className="font-bold text-slate-800">المبلغ المطلوب:</span>
-                <span className="font-black text-2xl text-teal-300 font-mono">{cartSummary.subtotal} ج</span>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-sm text-[#F8FAFC]">إتمام المطلوب:</span>
+                <span className="font-black text-2xl text-[#2DD4BF] font-mono">{cartSummary.subtotal} ج</span>
               </div>
 
               <button
                 disabled={cart.length === 0 || isCheckingOut}
                 onClick={handleCheckout}
-                className="w-full btn btn-primary py-3 text-base flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-blue-600/25"
+                className="w-full bg-[#0D9488] hover:bg-[#0F766E] disabled:bg-[#111827] disabled:text-[#94A3B8] disabled:border-[#2A3B56] disabled:border text-white font-bold py-3 text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#0D9488]/20 transition-all disabled:shadow-none disabled:cursor-not-allowed"
               >
-                <Printer size={18} />
+                <Printer size={16} />
                 {isCheckingOut ? 'جاري إتمام البيع...' : 'إتمام البيع وطباعة الفاتورة'}
               </button>
             </div>
@@ -611,32 +613,32 @@ export default function SuppliesPage() {
         <div className="space-y-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="glass p-4 rounded-xl bg-white border border-slate-200">
-              <p className="text-xs text-slate-500 font-semibold">إجمالي الأصناف</p>
-              <p className="text-2xl font-black text-teal-300 mt-1">{supplyItems.length}</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-4 rounded-xl shadow-md">
+              <p className="text-xs text-[#94A3B8] font-semibold">إجمالي الأصناف</p>
+              <p className="text-2xl font-black text-[#2DD4BF] mt-1">{supplyItems.length}</p>
             </div>
-            <div className="glass p-4 rounded-xl bg-white border border-slate-200">
-              <p className="text-xs text-slate-500 font-semibold">إجمالي قطع المخزن</p>
-              <p className="text-2xl font-black text-teal-400 mt-1">
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-4 rounded-xl shadow-md">
+              <p className="text-xs text-[#94A3B8] font-semibold">إجمالي قطع المخزن</p>
+              <p className="text-2xl font-black text-[#F8FAFC] mt-1">
                 {supplyItems.reduce((acc, i) => acc + i.stockQty, 0)} قطعة
               </p>
             </div>
-            <div className="glass p-4 rounded-xl bg-white border border-slate-200">
-              <p className="text-xs text-slate-500 font-semibold">أصناف أوشكت على النفاد</p>
-              <p className="text-2xl font-black text-red-500 mt-1">{lowStockCount}</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-4 rounded-xl shadow-md">
+              <p className="text-xs text-[#94A3B8] font-semibold">أصناف أوشكت على النفاد</p>
+              <p className="text-2xl font-black text-red-400 mt-1">{lowStockCount}</p>
             </div>
-            <div className="glass p-4 rounded-xl bg-white border border-slate-200">
-              <p className="text-xs text-slate-500 font-semibold">قيمة المخزون (بسعر الشراء)</p>
-              <p className="text-2xl font-black text-blue-800 mt-1">{inventoryAssetValue.toLocaleString()} ج</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-4 rounded-xl shadow-md">
+              <p className="text-xs text-[#94A3B8] font-semibold">قيمة المخزون (بسعر الشراء)</p>
+              <p className="text-2xl font-black text-[#2DD4BF] mt-1">{inventoryAssetValue.toLocaleString()} ج</p>
             </div>
           </div>
 
           {/* Action and Search Bar */}
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
               <input
-                className="input pr-9 text-sm"
+                className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl pr-10 pl-4 py-2 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#0D9488]"
                 placeholder="بحث في المخزون بالاسم أو الباركود..."
                 value={search}
                 onChange={e => {
@@ -645,63 +647,70 @@ export default function SuppliesPage() {
                 }}
               />
             </div>
-            <button onClick={() => setShowAddProduct(true)} className="btn btn-primary text-sm flex items-center gap-1.5 shadow-md shadow-blue-600/20">
-              <Plus size={16} /> إضافة صنف جديد
+            <button
+              onClick={() => setShowAddProduct(true)}
+              className="bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-[#0D9488]/20 transition-all"
+            >
+              <Plus size={15} /> إضافة صنف جديد
             </button>
           </div>
 
           {/* Table */}
-          <div className="glass rounded-2xl overflow-hidden border border-slate-200 bg-white">
-            <table className="w-full text-right text-sm">
-              <thead className="bg-slate-50 text-slate-600 text-xs border-b border-slate-200">
+          <div className="bg-[#1B2537] border border-[#2A3B56] rounded-2xl overflow-hidden shadow-lg">
+            <table className="w-full text-right text-xs">
+              <thead className="bg-[#111827] text-[#94A3B8] font-bold border-b border-[#2A3B56]">
                 <tr>
-                  <th className="p-3">الباركود</th>
-                  <th className="p-3">اسم الأداة</th>
-                  <th className="p-3">القسم</th>
-                  <th className="p-3">سعر الشراء</th>
-                  <th className="p-3">سعر البيع</th>
-                  <th className="p-3">الربح المتوقع</th>
-                  <th className="p-3">الكمية بالمخزن</th>
-                  <th className="p-3 text-center">الرصيد السريع</th>
-                  <th className="p-3 text-center">إدارة الصنف</th>
+                  <th className="p-3.5">الباركود</th>
+                  <th className="p-3.5">اسم الأداة</th>
+                  <th className="p-3.5">القسم</th>
+                  <th className="p-3.5">سعر الشراء</th>
+                  <th className="p-3.5">سعر البيع</th>
+                  <th className="p-3.5">الربح المتوقع</th>
+                  <th className="p-3.5">الكمية بالمخزن</th>
+                  <th className="p-3.5 text-center">الرصيد السريع</th>
+                  <th className="p-3.5 text-center">إدارة الصنف</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#2A3B56]/50">
                 {paginatedInventory.map(item => {
                   const isLow = item.stockQty <= item.minStock;
                   return (
-                    <tr key={item.id} className="hover:bg-teal-500/10/30 transition-colors">
-                      <td className="p-3 font-mono text-xs text-teal-300 font-bold">{item.barcode}</td>
-                      <td className="p-3 font-semibold text-slate-800">{item.name}</td>
-                      <td className="p-3"><span className="badge badge-teal text-xs">{item.category}</span></td>
-                      <td className="p-3 text-slate-500">{item.costPrice} ج</td>
-                      <td className="p-3 font-bold text-slate-900">{item.sellPrice} ج</td>
-                      <td className="p-3 text-teal-300 font-bold font-mono">+{item.sellPrice - item.costPrice} ج</td>
-                      <td className="p-3">
-                        <span className={`badge ${item.stockQty === 0 ? 'badge-danger' : isLow ? 'badge-info' : 'badge-teal'}`}>
+                    <tr key={item.id} className="hover:bg-[#111827]/60 transition-colors">
+                      <td className="p-3.5 font-mono text-xs text-[#2DD4BF] font-bold">{item.barcode}</td>
+                      <td className="p-3.5 font-semibold text-[#F8FAFC]">{item.name}</td>
+                      <td className="p-3.5">
+                        <span className="bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] text-[11px] px-2.5 py-0.5 rounded-lg font-bold">
+                          {item.category}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-[#94A3B8]">{item.costPrice} ج</td>
+                      <td className="p-3.5 font-bold text-[#F8FAFC]">{item.sellPrice} ج</td>
+                      <td className="p-3.5 text-[#2DD4BF] font-bold font-mono">+{item.sellPrice - item.costPrice} ج</td>
+                      <td className="p-3.5">
+                        <span className={`text-[11px] px-2 py-0.5 rounded-lg font-bold border ${item.stockQty === 0 ? 'bg-red-500/10 border-red-500/30 text-red-400' : isLow ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-[#111827] border-[#2A3B56] text-[#2DD4BF]'}`}>
                           {item.stockQty} {isLow && item.stockQty > 0 && '(أوشك على النفاد)'}
                         </span>
                       </td>
-                      <td className="p-3 text-center">
-                        <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                      <td className="p-3.5 text-center">
+                        <div className="inline-flex items-center gap-1 bg-[#111827] border border-[#2A3B56] p-1 rounded-lg">
                           <button
                             onClick={() => updateSupplyStock(item.id, -1)}
-                            className="p-1 rounded hover:bg-slate-200 text-red-500"
+                            className="p-1 rounded hover:bg-red-500/20 text-red-400 transition-colors"
                             title="خصم قطعة"
                           >
-                            <Minus size={13} />
+                            <Minus size={12} />
                           </button>
-                          <span className="text-xs px-2 font-mono font-bold text-slate-800">{item.stockQty}</span>
+                          <span className="text-xs px-2 font-mono font-bold text-[#F8FAFC]">{item.stockQty}</span>
                           <button
                             onClick={() => updateSupplyStock(item.id, 1)}
-                            className="p-1 rounded hover:bg-slate-200 text-teal-300"
+                            className="p-1 rounded hover:bg-[#0D9488]/20 text-[#2DD4BF] transition-colors"
                             title="إضافة قطعة للمخزن"
                           >
-                            <Plus size={13} />
+                            <Plus size={12} />
                           </button>
                         </div>
                       </td>
-                      <td className="p-3 text-center">
+                      <td className="p-3.5 text-center">
                         <div className="inline-flex items-center gap-1.5">
                           <button
                             onClick={() => setStickerProduct(item)}
@@ -723,17 +732,17 @@ export default function SuppliesPage() {
                                 minStock: item.minStock
                               });
                             }}
-                            className="p-1.5 rounded-lg border border-teal-500/20 bg-teal-500/10 text-teal-300 hover:bg-teal-500/15 hover:border-teal-500/40 transition-all shadow-xs"
+                            className="p-1.5 rounded-lg border border-[#0D9488]/30 bg-[#0D9488]/10 text-[#2DD4BF] hover:bg-[#0D9488]/20 transition-all"
                             title="تعديل بيانات الأداة"
                           >
-                            <Edit3 size={14} />
+                            <Edit3 size={13} />
                           </button>
                           <button
                             onClick={() => setDeletingProduct(item)}
-                            className="p-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-400 transition-all shadow-xs"
+                            className="p-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
                             title="حذف الأداة نهائياً من المخزن"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
@@ -748,7 +757,7 @@ export default function SuppliesPage() {
               totalItems={filteredItems.length}
               pageSize={ITEMS_PER_PAGE}
               onPageChange={setInventoryPage}
-              className="p-3 border-t border-slate-100"
+              className="p-3 border-t border-[#2A3B56] bg-[#1B2537]"
             />
           </div>
         </div>
@@ -759,61 +768,61 @@ export default function SuppliesPage() {
         <div className="space-y-6">
           {/* Financial KPIs (Separated for Supplies only) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/60 bg-white">
-              <p className="text-xs text-slate-500 font-semibold">إجمالي مبيعات الأدوات</p>
-              <p className="text-2xl font-black text-teal-300 mt-1">{totalSalesRevenue.toLocaleString()} ج</p>
-              <p className="text-xs text-slate-400 mt-1">خزينة متجر الأدوات</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#0D9488]">
+              <p className="text-xs text-[#94A3B8] font-semibold">إجمالي مبيعات الأدوات</p>
+              <p className="text-2xl font-black text-[#2DD4BF] mt-1">{totalSalesRevenue.toLocaleString()} ج</p>
+              <p className="text-[11px] text-[#94A3B8] mt-1">خزينة متجر الأدوات</p>
             </div>
-            <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/40 bg-white">
-              <p className="text-xs text-slate-500 font-semibold">تكلفة البضاعة المباعة</p>
-              <p className="text-2xl font-black text-teal-400 mt-1">{totalSalesCost.toLocaleString()} ج</p>
-              <p className="text-xs text-slate-400 mt-1">رأس المال المسترد</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#0D9488]/60">
+              <p className="text-xs text-[#94A3B8] font-semibold">تكلفة البضاعة المباعة</p>
+              <p className="text-2xl font-black text-[#F8FAFC] mt-1">{totalSalesCost.toLocaleString()} ج</p>
+              <p className="text-[11px] text-[#94A3B8] mt-1">رأس المال المسترد</p>
             </div>
-            <div className="glass p-5 rounded-2xl border-r-4 border-teal-500/60 bg-white">
-              <p className="text-xs text-slate-500 font-semibold">صافي أرباح الأدوات فقط</p>
-              <p className="text-2xl font-black text-blue-800 mt-1">{totalSalesProfit.toLocaleString()} ج</p>
-              <p className="text-xs text-slate-400 mt-1">هامش ربح {profitMargin}%</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#2DD4BF]">
+              <p className="text-xs text-[#94A3B8] font-semibold">صافي أرباح الأدوات فقط</p>
+              <p className="text-2xl font-black text-[#2DD4BF] mt-1">{totalSalesProfit.toLocaleString()} ج</p>
+              <p className="text-[11px] text-[#94A3B8] mt-1">هامش ربح {profitMargin}%</p>
             </div>
-            <div className="glass p-5 rounded-2xl border-r-4 border-slate-300 bg-white">
-              <p className="text-xs text-slate-500 font-semibold">عدد فواتير الأدوات</p>
-              <p className="text-2xl font-black text-slate-800 mt-1">{supplySales.length}</p>
-              <p className="text-xs text-slate-400 mt-1">ترقيم SHP-2026</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#2A3B56]">
+              <p className="text-xs text-[#94A3B8] font-semibold">عدد فواتير الأدوات</p>
+              <p className="text-2xl font-black text-[#F8FAFC] mt-1">{supplySales.length}</p>
+              <p className="text-[11px] text-[#94A3B8] mt-1">ترقيم SHP-2026</p>
             </div>
           </div>
 
           {/* Invoices List */}
-          <div className="glass p-5 rounded-2xl bg-white border border-slate-200">
-            <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
-              <Tag size={18} className="text-teal-400" />
+          <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-xl">
+            <h3 className="font-bold text-base text-[#F8FAFC] mb-4 flex items-center gap-2">
+              <Tag size={18} className="text-[#2DD4BF]" />
               سجل فواتير بيع الأدوات (خزينة الأدوات المستقلة)
             </h3>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#2A3B56]">
               {paginatedSales.map(sale => (
                 <div key={sale.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded">
+                      <span className="font-mono text-xs font-bold text-[#2DD4BF] bg-[#111827] border border-[#2A3B56] px-2 py-0.5 rounded">
                         {sale.invoiceNumber}
                       </span>
-                      <span className="font-bold text-sm text-slate-800">{sale.customerName}</span>
-                      <span className="badge badge-gray text-xs">
+                      <span className="font-bold text-sm text-[#F8FAFC]">{sale.customerName}</span>
+                      <span className="bg-[#111827] border border-[#2A3B56] text-[#94A3B8] text-[11px] px-2 py-0.5 rounded font-semibold">
                         {sale.customerType === 'student' ? 'طالب' : 'خارجي'}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-[#94A3B8] mt-1">
                       {sale.date} • {sale.items.map(i => `${i.productName} (${i.quantity})`).join(', ')}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <p className="font-black text-sm text-teal-300 font-mono">{sale.totalAmount} ج</p>
-                      <p className="text-xs text-slate-400">ربح: +{sale.profit} ج</p>
+                      <p className="font-black text-sm text-[#2DD4BF] font-mono">{sale.totalAmount} ج</p>
+                      <p className="text-xs text-[#94A3B8]">ربح: +{sale.profit} ج</p>
                     </div>
                     <button
                       onClick={() => setCurrentInvoice(sale)}
-                      className="btn btn-secondary btn-sm flex items-center gap-1 text-teal-400 hover:text-teal-300 hover:border-teal-500/30"
+                      className="bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] hover:bg-[#2A3B56] hover:text-[#F8FAFC] px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 transition-colors"
                     >
                       <Printer size={13} />
                       عرض / طباعة
@@ -828,7 +837,7 @@ export default function SuppliesPage() {
               totalItems={supplySales.length}
               pageSize={ITEMS_PER_PAGE}
               onPageChange={setSalesPage}
-              className="pt-3 border-t border-slate-100"
+              className="pt-4 border-t border-[#2A3B56]"
             />
           </div>
         </div>
@@ -836,20 +845,20 @@ export default function SuppliesPage() {
 
       {/* ================= MODAL: ADD PRODUCT ================= */}
       {showAddProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-lg text-slate-900">إضافة أداة / منتج جديد</h3>
-              <button onClick={() => setShowAddProduct(false)} className="text-slate-400 hover:text-slate-700">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1B2537] border border-[#2A3B56] text-[#F8FAFC] shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
+              <h3 className="font-bold text-base text-[#F8FAFC]">إضافة أداة / منتج جديد</h3>
+              <button onClick={() => setShowAddProduct(false)} className="text-[#94A3B8] hover:text-white">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-600 font-semibold mb-1">اسم الأداة أو الخامة:</label>
+                <label className="block text-xs text-[#94A3B8] font-bold mb-1">اسم الأداة أو الخامة:</label>
                 <input
-                  className="input text-sm"
+                  className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#0D9488]"
                   placeholder="مثال: ألوان مائية فنانين 24 لون"
                   value={newProduct.name}
                   onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
@@ -858,35 +867,25 @@ export default function SuppliesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">القسم:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">القسم:</label>
                   <select
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={newProduct.category}
                     onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
                   >
-                    <option value="ألوان">ألوان</option>
-                    <option value="فرش وأدوات">فرش وأدوات</option>
-                    <option value="ورق وسكتشات">ورق وسكتشات</option>
-                    <option value="كانفاس ومجسمات">كانفاس ومجسمات</option>
-                    <option value="أقلام وفحم">أقلام وفحم</option>
-                    <option value="نحت وصلصال">نحت وصلصال</option>
+                    <option value="ألوان" className="bg-[#111827]">ألوان</option>
+                    <option value="فرش وأدوات" className="bg-[#111827]">فرش وأدوات</option>
+                    <option value="ورق وسكتشات" className="bg-[#111827]">ورق وسكتشات</option>
+                    <option value="كانفاس ومجسمات" className="bg-[#111827]">كانفاس ومجسمات</option>
+                    <option value="أقلام وفحم" className="bg-[#111827]">أقلام وفحم</option>
+                    <option value="نحت وصلصال" className="bg-[#111827]">نحت وصلصال</option>
                   </select>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs text-slate-600 font-semibold">كود الباركود:</label>
-                    <button
-                      type="button"
-                      onClick={() => setNewProduct({ ...newProduct, barcode: `ART-${Math.floor(100000 + Math.random() * 900000)}` })}
-                      className="text-[11px] text-teal-600 hover:underline font-bold"
-                      title="توليد كود باركود فريد للقطعة"
-                    >
-                      🎲 كود تلقائي
-                    </button>
-                  </div>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">الباركود (اختياري): اتركه فارغًا للتوليد التلقائي</label>
                   <input
-                    className="input text-sm font-mono"
-                    placeholder="امسح بالسكانر أو اضغط كود تلقائي"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs font-mono text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#0D9488]"
+                    placeholder="امسح بالسكانر أو اتركه فارغًا"
                     value={newProduct.barcode}
                     onChange={e => setNewProduct({ ...newProduct, barcode: e.target.value })}
                   />
@@ -895,19 +894,19 @@ export default function SuppliesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">سعر الشراء (التكلفة):</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر الشراء (التكلفة):</label>
                   <input
                     type="number"
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={newProduct.costPrice || ''}
                     onChange={e => setNewProduct({ ...newProduct, costPrice: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">سعر البيع للطالب:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر البيع للطالب:</label>
                   <input
                     type="number"
-                    className="input text-sm font-bold text-teal-300"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs font-bold text-[#2DD4BF] focus:outline-none focus:border-[#0D9488]"
                     value={newProduct.sellPrice || ''}
                     onChange={e => setNewProduct({ ...newProduct, sellPrice: Number(e.target.value) })}
                   />
@@ -916,19 +915,19 @@ export default function SuppliesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">الكمية الأولية بالمخزن:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">الكمية الأولية بالمخزن:</label>
                   <input
                     type="number"
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={newProduct.stockQty}
                     onChange={e => setNewProduct({ ...newProduct, stockQty: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">حد التنبيه بنقص المخزون:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">حد التنبيه بنقص المخزون:</label>
                   <input
                     type="number"
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={newProduct.minStock}
                     onChange={e => setNewProduct({ ...newProduct, minStock: Number(e.target.value) })}
                   />
@@ -936,7 +935,7 @@ export default function SuppliesPage() {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex gap-2">
+            <div className="pt-3 border-t border-[#2A3B56] flex gap-2">
               <button
                 disabled={isAddingProduct}
                 onClick={() => {
@@ -953,11 +952,14 @@ export default function SuppliesPage() {
                     });
                   });
                 }}
-                className="btn btn-primary flex-1 shadow-md shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="bg-[#0D9488] hover:bg-[#0F766E] text-white flex-1 py-2 rounded-xl text-xs font-bold shadow-md shadow-[#0D9488]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
               >
                 {isAddingProduct ? 'جاري الحفظ...' : 'حفظ الأداة في المخزون'}
               </button>
-              <button onClick={() => setShowAddProduct(false)} className="btn btn-secondary">
+              <button
+                onClick={() => setShowAddProduct(false)}
+                className="bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+              >
                 إلغاء
               </button>
             </div>
@@ -967,23 +969,23 @@ export default function SuppliesPage() {
 
       {/* ================= MODAL: EDIT PRODUCT ================= */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                <Edit3 size={18} className="text-teal-400" />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1B2537] border border-[#2A3B56] text-[#F8FAFC] shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
+              <h3 className="font-bold text-base text-[#F8FAFC] flex items-center gap-2">
+                <Edit3 size={18} className="text-[#2DD4BF]" />
                 تعديل بيانات الأداة / المنتج
               </h3>
-              <button onClick={() => setEditingProduct(null)} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => setEditingProduct(null)} className="text-[#94A3B8] hover:text-white">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleSaveEdit} className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-600 font-semibold mb-1">اسم الأداة أو الخامة:</label>
+                <label className="block text-xs text-[#94A3B8] font-bold mb-1">اسم الأداة أو الخامة:</label>
                 <input
-                  className="input text-sm"
+                  className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                   required
                   value={editForm.name}
                   onChange={e => setEditForm({ ...editForm, name: e.target.value })}
@@ -992,18 +994,18 @@ export default function SuppliesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">القسم / التصنيف:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">القسم / التصنيف:</label>
                   <input
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     required
                     value={editForm.category}
                     onChange={e => setEditForm({ ...editForm, category: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">كود الباركود:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">كود الباركود:</label>
                   <input
-                    className="input text-sm font-mono font-bold text-teal-300"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#2DD4BF] focus:outline-none focus:border-[#0D9488]"
                     required
                     value={editForm.barcode}
                     onChange={e => setEditForm({ ...editForm, barcode: e.target.value })}
@@ -1013,19 +1015,19 @@ export default function SuppliesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">سعر الشراء (التكلفة):</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر الشراء (التكلفة):</label>
                   <input
                     type="number"
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={editForm.costPrice}
                     onChange={e => setEditForm({ ...editForm, costPrice: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">سعر البيع للطالب:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر البيع للطالب:</label>
                   <input
                     type="number"
-                    className="input text-sm font-bold text-teal-300"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs font-bold text-[#2DD4BF] focus:outline-none focus:border-[#0D9488]"
                     required
                     value={editForm.sellPrice}
                     onChange={e => setEditForm({ ...editForm, sellPrice: Number(e.target.value) })}
@@ -1035,34 +1037,38 @@ export default function SuppliesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">الكمية الحالية بالمخزن:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">الكمية بالمخزن:</label>
                   <input
                     type="number"
-                    className="input text-sm font-bold"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={editForm.stockQty}
                     onChange={e => setEditForm({ ...editForm, stockQty: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 font-semibold mb-1">حد التنبيه بنقص المخزون:</label>
+                  <label className="block text-xs text-[#94A3B8] font-bold mb-1">حد التنبيه بنقص المخزون:</label>
                   <input
                     type="number"
-                    className="input text-sm"
+                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
                     value={editForm.minStock}
                     onChange={e => setEditForm({ ...editForm, minStock: Number(e.target.value) })}
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex gap-2">
+              <div className="pt-3 border-t border-[#2A3B56] flex gap-2">
                 <button
                   type="submit"
                   disabled={isUpdatingProduct}
-                  className="btn btn-primary flex-1 shadow-md shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="bg-[#0D9488] hover:bg-[#0F766E] text-white flex-1 py-2 rounded-xl text-xs font-bold shadow-md shadow-[#0D9488]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                 >
                   {isUpdatingProduct ? 'جاري حفظ التعديلات...' : 'حفظ التعديلات'}
                 </button>
-                <button type="button" onClick={() => setEditingProduct(null)} className="btn btn-secondary">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+                >
                   إلغاء
                 </button>
               </div>
@@ -1073,48 +1079,48 @@ export default function SuppliesPage() {
 
       {/* ================= MODAL: DELETE CONFIRMATION ================= */}
       {deletingProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-red-100 shadow-2xl p-6 rounded-2xl max-w-sm w-full space-y-4">
-            <div className="flex items-center gap-3 text-red-600 border-b border-slate-100 pb-3">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0 border border-red-200">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1B2537] border border-[#2A3B56] text-[#F8FAFC] shadow-2xl p-6 rounded-2xl max-w-sm w-full space-y-4">
+            <div className="flex items-center gap-3 text-red-400 border-b border-[#2A3B56] pb-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/30">
                 <Trash2 size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-base text-slate-900">تأكيد حذف الأداة</h3>
-                <p className="text-xs text-slate-500">سيتم إزالة الصنف من قائمة المخزون</p>
+                <h3 className="font-bold text-base text-[#F8FAFC]">تأكيد حذف الأداة</h3>
+                <p className="text-xs text-[#94A3B8]">سيتم إزالة الصنف من قائمة المخزون</p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">اسم الأداة:</span>
-                <strong className="text-slate-900">{deletingProduct.name}</strong>
+                <span className="text-[#94A3B8]">اسم الأداة:</span>
+                <strong className="text-[#F8FAFC]">{deletingProduct.name}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">كود الباركود:</span>
-                <span className="font-mono text-teal-300 font-bold">{deletingProduct.barcode}</span>
+                <span className="text-[#94A3B8]">كود الباركود:</span>
+                <span className="font-mono text-[#2DD4BF] font-bold">{deletingProduct.barcode}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">الرصيد بالمخزن:</span>
-                <span className="font-bold text-slate-800">{deletingProduct.stockQty} قطعة</span>
+                <span className="text-[#94A3B8]">الرصيد بالمخزن:</span>
+                <span className="font-bold text-[#F8FAFC]">{deletingProduct.stockQty} قطعة</span>
               </div>
             </div>
 
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#94A3B8]">
               هل أنت متأكد من رغبتك في حذف هذا الصنف نهائياً من قاعدة بيانات المخزن؟
             </div>
 
-            <div className="pt-2 border-t border-slate-100 flex gap-2">
+            <div className="pt-2 border-t border-[#2A3B56] flex gap-2">
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeletingProduct}
-                className="btn btn-danger bg-red-600 hover:bg-red-700 text-white flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold shadow-sm"
+                className="bg-red-600 hover:bg-red-700 text-white flex-1 py-2 rounded-xl text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold shadow-md transition-colors"
               >
                 {isDeletingProduct ? 'جاري الحذف...' : 'تأكيد الحذف'}
               </button>
               <button
                 onClick={() => setDeletingProduct(null)}
-                className="btn btn-secondary border-slate-200 text-slate-700"
+                className="bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
               >
                 إلغاء
               </button>
@@ -1125,8 +1131,8 @@ export default function SuppliesPage() {
 
       {/* ================= MODAL: PRINTABLE INVOICE ================= */}
       {currentInvoice && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-200">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-[#0D9488]/40">
             <button
               onClick={() => setCurrentInvoice(null)}
               className="absolute top-4 left-4 text-slate-400 hover:text-slate-800"
@@ -1140,7 +1146,7 @@ export default function SuppliesPage() {
                 <h2 className="text-xl font-black text-slate-900">{settings.name}</h2>
                 <p className="text-xs text-slate-500 mt-0.5">قسم متجر ومبيعات الأدوات الفنية</p>
                 <p className="text-xs text-slate-400">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-teal-300 border border-teal-500/20">
+                <div className="mt-2 inline-block bg-[#0D9488]/10 px-3 py-1 rounded text-xs font-mono font-bold text-[#0D9488] border border-[#0D9488]/20">
                   فاتورة رقم: {currentInvoice.invoiceNumber}
                 </div>
               </div>
@@ -1174,7 +1180,7 @@ export default function SuppliesPage() {
                     <tr key={idx} className="py-1.5">
                       <td className="py-1.5 text-slate-800">{item.productName}</td>
                       <td className="py-1.5 text-center font-bold text-slate-900">{item.quantity}</td>
-                      <td className="py-1.5 text-left font-bold text-teal-300 font-mono">{item.total} ج</td>
+                      <td className="py-1.5 text-left font-bold text-[#0D9488] font-mono">{item.total} ج</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1183,7 +1189,7 @@ export default function SuppliesPage() {
               {/* Total */}
               <div className="border-t pt-3 flex justify-between items-center">
                 <span className="font-black text-sm text-slate-900">إجمالي الفاتورة:</span>
-                <span className="font-black text-xl text-teal-300 font-mono">{currentInvoice.totalAmount} ج</span>
+                <span className="font-black text-xl text-[#0D9488] font-mono">{currentInvoice.totalAmount} ج</span>
               </div>
 
               <p className="text-center text-[10px] text-slate-400 pt-2 border-t">
@@ -1195,11 +1201,14 @@ export default function SuppliesPage() {
             <div className="mt-5 pt-3 border-t flex gap-2">
               <button
                 onClick={() => window.print()}
-                className="btn btn-primary flex-1 flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20"
+                className="bg-[#0D9488] hover:bg-[#0F766E] text-white flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-[#0D9488]/20 transition-colors"
               >
                 <Printer size={16} /> طباعة الفاتورة (طابعة حرارية / A5)
               </button>
-              <button onClick={() => setCurrentInvoice(null)} className="btn btn-secondary">
+              <button
+                onClick={() => setCurrentInvoice(null)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors"
+              >
                 إغلاق
               </button>
             </div>

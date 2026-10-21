@@ -192,7 +192,7 @@ export default function ProgressPage() {
                         </div>
                         <div>
                           <p className="font-bold text-sm text-slate-900">{student.name}</p>
-                          <span className="text-[10px] text-slate-400 font-mono">{student.qrToken}</span>
+                          <span className="text-[10px] text-[#94A3B8] font-mono">{student.qrToken}</span>
                         </div>
                       </div>
 
@@ -271,7 +271,7 @@ export default function ProgressPage() {
           {/* Search bar */}
           <div className="glass p-3 rounded-xl border border-slate-200 bg-white">
             <div className="relative">
-              <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+              <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={17} />
               <input
                 className="input pr-10 text-xs"
                 placeholder="بحث باسم الطالب لعرض سجل تقييماته السابقة..."
@@ -304,7 +304,7 @@ export default function ProgressPage() {
                   </div>
 
                   {studentEvals.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-3">
+                    <p className="text-xs text-[#94A3B8] text-center py-3">
                       لا توجد تقييمات مسجلة لهذا الطالب بعد. يمكنك تسجيل تقييم جديد من تبويب &quot;تسجيل تقييم حصة&quot;.
                     </p>
                   ) : (
@@ -335,7 +335,7 @@ export default function ProgressPage() {
                             </p>
                           )}
 
-                          <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200 flex justify-between">
+                          <div className="text-[10px] text-[#94A3B8] pt-1 border-t border-slate-200 flex justify-between">
                             <span>تاريخ التقييم:</span>
                             <span className="font-mono">{evalItem.date}</span>
                           </div>

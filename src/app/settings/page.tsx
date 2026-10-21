@@ -164,7 +164,7 @@ export default function SettingsPage() {
           />
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-[#94A3B8]">
               أي تعديل هنا سينعكس فوراً على كل العقود التي سيتم طباعتها لاحقاً.
             </p>
             <button

@@ -2,32 +2,35 @@
 
 :root {
   /* ========================================================
-     🎨 ثيم كحلي وسليت وتيل بترولي — Slate & Petrol Teal
-     5 ألوان متناسقة ومريحة جداً للعين للعمل المكتبي الطويل
+     🎨 باليتة مرسم الإبداع للفنون التشكيلية المعتمدة
      ======================================================== */
-  --bg: #0F172A;                /* 1. خلفية التطبيق العميقة (Slate 900) */
-  --surface: #1E293B;           /* 2. سطح الكروت والقوائم (Slate 800) */
-  --surface-card: #1E293B;      /* سطح الكروت الافتراضي */
-  --surface-card2: #243247;     /* سطح ثانوي للبطاقات الداخلية */
-  --surface-hover: #29384D;     /* تأثير التحويم الهادئ */
+  --bg: #0E1629;                /* 1. الخلفية العامة (Main Background) */
+  --surface: #1B2537;           /* 2. القائمة الجانبية والكروت (Sidebar & Cards) */
+  --surface-card: #1B2537;
+  --surface-card2: #111827;     /* 3. الخلفيات الداكنة جداً داخل الجداول والصفوف */
+  --border: #2A3B56;            /* 4. الحدود الرفيعة (Borders) */
+  --border-accent: #0D9488;
 
-  --primary: #0D9488;           /* 3. اللون الأساسي للأزرار والتركيز (Teal 600) */
-  --primary-hover: #0F766E;     /* Teal 700 */
+  --primary: #0D9488;           /* 5. التركواز الأساسي (النشط والأزرار) */
+  --primary-hover: #0F766E;
   --primary-light: rgba(13, 148, 136, 0.15);
 
-  --accent: #14B8A6;            /* 4. لمسة التمييز والتأكيد (Teal 500) */
-  --accent-light: rgba(20, 184, 166, 0.15);
+  --accent: #2DD4BF;            /* 6. التركواز الفاتح (القيم الإيجابية والبادجات) */
+  --accent-light: rgba(45, 212, 191, 0.15);
 
-  --text: #F1F5F9;              /* 5. نصوص القراءة المريحة (Slate 100) */
-  --text-muted: #94A3B8;        /* نصوص فرعية رمادية ناعمة (Slate 400) */
-  --border: rgba(255, 255, 255, 0.08); /* حدود ناعمة غير مزعجة */
-  --border-accent: rgba(20, 184, 166, 0.35);
+  --gold: #D97706;              /* 7. الذهبي الدافئ (الإحصائيات الرئيسية) */
+  --gold-light: #F59E0B;
 
-  /* ألوان الحالات بهدوء تام وبدون فقع بصري */
-  --success: #10B981;           /* Soft Emerald */
-  --danger: #F43F5E;            /* Soft Rose */
-  --warning: #F59E0B;           /* Muted Amber */
-  --info: #0EA5E9;              /* Soft Sky */
+  --text: #F8FAFC;              /* 8. الأبيض الثلجي (النصوص الأساسية) */
+  --text-muted: #94A3B8;        /* 9. الرمادي الباهت (النصوص الثانوية) */
+
+  /* كارت الأقساط المتأخرة والتحذيرات */
+  --card-overdue-bg: #450A0A;
+  --card-overdue-border: #7F1D1D;
+  --card-overdue-text: #FCA5A5;
+  --danger: #EF4444;
+  --success: #2DD4BF;
+  --warning: #D97706;
 }
 
 * {
@@ -41,88 +44,25 @@ html {
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: #0E1629;
+  color: #F8FAFC;
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-image: 
-    radial-gradient(ellipse at 15% 15%, rgba(13, 148, 136, 0.07) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 85%, rgba(20, 184, 166, 0.05) 0%, transparent 45%);
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(13, 148, 136, 0.35); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(20, 184, 166, 0.65); }
+::-webkit-scrollbar-thumb { background: #2A3B56; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #0D9488; }
 
-/* Glass Card */
-.glass {
-  background: rgba(30, 41, 59, 0.85);
-  backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.glass-dark {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-}
-
+/* Studio Card */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #1B2537;
+  border: 1px solid #2A3B56;
   border-radius: 16px;
-}
-
-/* Gradient Title */
-.gradient-text {
-  background: linear-gradient(135deg, #FFFFFF 20%, #2DD4BF 70%, #14B8A6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Harmonious Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-.badge-teal, .badge-primary, .badge-terracotta, .badge-blue, .badge-info, .badge-purple {
-  background: rgba(13, 148, 136, 0.14);
-  color: #2DD4BF;
-  border: 1px solid rgba(20, 184, 166, 0.3);
-}
-.badge-success {
-  background: rgba(16, 185, 129, 0.14);
-  color: #34D399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-.badge-danger {
-  background: rgba(244, 63, 94, 0.14);
-  color: #FB7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
-}
-.badge-warning {
-  background: rgba(245, 158, 11, 0.14);
-  color: #FBBF24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-.badge-gray {
-  background: rgba(148, 163, 184, 0.12);
-  color: #94A3B8;
-  border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 /* Buttons */
@@ -141,46 +81,32 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
-  color: #ffffff;
+  background: #0D9488;
+  color: #FFFFFF;
   box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+  background: #0F766E;
   box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
-  transform: translateY(-1px);
-}
-.btn-primary:active {
-  transform: translateY(0);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: transparent;
+  color: #94A3B8;
+  border: 1px solid #2A3B56;
 }
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-}
-
-.btn-success {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-}
-.btn-success:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #2DD4BF;
+  color: #F8FAFC;
 }
 
 /* Inputs */
 .input {
   width: 100%;
   background: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text);
+  border: 1px solid #2A3B56;
+  color: #F8FAFC;
   border-radius: 12px;
   padding: 9px 14px;
   font-size: 0.8125rem;
@@ -192,14 +118,45 @@ body {
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.22);
 }
 .input::placeholder {
-  color: rgba(148, 163, 184, 0.6);
+  color: #94A3B8;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.badge-teal, .badge-primary {
+  background: rgba(13, 148, 136, 0.18);
+  color: #2DD4BF;
+  border: 1px solid rgba(45, 212, 191, 0.3);
+}
+.badge-gold, .badge-warning {
+  background: rgba(217, 119, 6, 0.18);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.badge-danger {
+  background: rgba(239, 68, 68, 0.18);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-gray {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94A3B8;
+  border: 1px solid #2A3B56;
 }
 
 /* Modal Overlay */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 12, 18, 0.82);
+  background: rgba(14, 22, 41, 0.85);
   backdrop-filter: blur(8px);
   z-index: 50;
   display: flex;
