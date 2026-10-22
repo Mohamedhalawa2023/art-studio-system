@@ -41,8 +41,9 @@ export interface CreateSupplyReturnDTO {
   saleId: string;
   returnedBy: string;
   reason: string;
+  reasonCategory?: SupplyReturn['reasonCategory'];
   paymentMethod: SupplySale['paymentMethod'];
-  items: Array<{ productId: string; quantity: number; restockQuantity: number }>;
+  items: Array<{ productId: string; quantity: number; restockQuantity: number; condition?: SupplyReturn['items'][number]['condition'] }>;
 }
 
 export class PosService {
@@ -217,6 +218,8 @@ export class PosService {
     const reason = Validators.requireText(dto.reason, 'سبب الإرجاع', 3, 300);
     const returnedBy = Validators.requireText(dto.returnedBy, 'مسؤول الإرجاع', 1, 100);
     if (!PAYMENT_METHODS.includes(dto.paymentMethod)) throw new Error('طريقة رد المبلغ غير صالحة.');
+    const reasonCategories: NonNullable<SupplyReturn['reasonCategory']>[] = ['changed_mind', 'wrong_item', 'damaged', 'quality', 'other'];
+    if (dto.reasonCategory && !reasonCategories.includes(dto.reasonCategory)) throw new Error('تصنيف سبب الإرجاع غير صالح.');
 
     return this.db.executeTransaction('CREATE_SUPPLY_RETURN', draft => {
       const sale = draft.supplySales.find(item => item.id === dto.saleId);
@@ -228,6 +231,8 @@ export class PosService {
       for (const requestedItem of dto.items) {
         const quantity = Validators.requireNonNegativeInteger(requestedItem.quantity, 'كمية الإرجاع');
         const restockQuantity = Validators.requireNonNegativeInteger(requestedItem.restockQuantity, 'الكمية الصالحة لإعادة المخزون');
+        const conditions: NonNullable<SupplyReturn['items'][number]['condition']>[] = ['sealed', 'opened', 'damaged'];
+        if (requestedItem.condition && !conditions.includes(requestedItem.condition)) throw new Error('حالة الصنف المرتجع غير صالحة.');
         if (quantity === 0) continue;
         if (restockQuantity > quantity) throw new Error('الكمية المعادة للمخزون لا يمكن أن تتجاوز كمية الإرجاع.');
         const existing = requested.get(requestedItem.productId) || { quantity: 0, restockQuantity: 0 };
@@ -295,6 +300,7 @@ export class PosService {
           productName: saleLine.productName,
           quantity: requestedItem.quantity,
           restockQuantity: requestedItem.restockQuantity,
+          condition: requestedItem.condition,
           unitPrice: saleLine.unitPrice,
           costPrice: saleLine.costPrice,
           grossAmount: grossAmountCents / 100,
@@ -335,6 +341,7 @@ export class PosService {
         returnedAt: formatLocalDateTime(now),
         returnedBy,
         reason,
+        reasonCategory: dto.reasonCategory,
         paymentMethod: dto.paymentMethod,
         items: lineItems,
         totalRefund: totalRefundCents / 100,

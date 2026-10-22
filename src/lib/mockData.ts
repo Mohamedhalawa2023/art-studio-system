@@ -199,6 +199,7 @@ export interface SupplyReturnItem {
   productName: string;
   quantity: number;
   restockQuantity: number;
+  condition?: 'sealed' | 'opened' | 'damaged';
   unitPrice: number;
   costPrice: number;
   grossAmount: number;
@@ -215,6 +216,7 @@ export interface SupplyReturn {
   returnedAt: string;
   returnedBy: string;
   reason: string;
+  reasonCategory?: 'changed_mind' | 'wrong_item' | 'damaged' | 'quality' | 'other';
   paymentMethod: SupplySale['paymentMethod'];
   items: SupplyReturnItem[];
   totalRefund: number;
