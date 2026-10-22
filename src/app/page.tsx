@@ -11,7 +11,7 @@ import { formatLocalDate } from '@/lib/dates';
 
 export default function Dashboard() {
   const {
-    students, enrollments, installments, payments, supplySales, supplyItems,
+    students, enrollments, installments, payments, supplySales, supplyReturns, supplyItems,
     settings, exportDatabase
   } = useMarsam();
   const [today, setToday] = useState<string | null>(null);
@@ -24,8 +24,10 @@ export default function Dashboard() {
   // Financial calculations
   const totalCourseRevenue = payments.filter(p => p.status === 'valid').reduce((s, p) => s + p.amount, 0);
   const validSupplySales = supplySales.filter(sale => sale.status !== 'voided');
-  const totalSuppliesSales = validSupplySales.reduce((s, p) => s + p.totalAmount, 0);
-  const totalSuppliesProfit = validSupplySales.reduce((s, p) => s + p.profit, 0);
+  const totalSuppliesSales = validSupplySales.reduce((s, p) => s + p.totalAmount, 0)
+    - supplyReturns.reduce((sum, item) => sum + item.totalRefund, 0);
+  const totalSuppliesProfit = validSupplySales.reduce((s, p) => s + p.profit, 0)
+    - supplyReturns.reduce((sum, item) => sum + item.totalRefund - item.restockedCost, 0);
   const outstandingAmount = (installment: typeof installments[number]) => Math.max(
     0,
     (installment.originalAmount ?? installment.amount) - (installment.paidAmount ?? (installment.status === 'paid' ? installment.amount : 0))
@@ -240,7 +242,13 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-2 mt-3">
-              {supplySales.slice(0, 4).map(sale => (
+              {supplySales.slice(0, 4).map(sale => {
+                const returns = supplyReturns.filter(item => item.saleId === sale.id);
+                const refunded = returns.reduce((sum, item) => sum + item.totalRefund, 0);
+                const restockedCost = returns.reduce((sum, item) => sum + item.restockedCost, 0);
+                const netAmount = sale.totalAmount - refunded;
+                const netProfit = sale.profit - refunded + restockedCost;
+                return (
                 <div key={sale.id} className="p-3 rounded-xl bg-[#111827] border border-[#2A3B56] flex items-center justify-between text-xs">
                   <div className="flex-1 min-w-0 pr-1 text-right">
                     <div className="flex items-center gap-2 text-right">
@@ -254,12 +262,14 @@ export default function Dashboard() {
                         {sale.items.length} صنف
                       </span>
                       {sale.status === 'voided' && <span className="badge badge-danger text-[10px]">ملغاة</span>}
+                      {sale.status === 'partially_returned' && <span className="badge text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30">مرتجع جزئي</span>}
+                      {sale.status === 'returned' && <span className="badge text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30">مرتجعة بالكامل</span>}
                     </div>
-                    <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{sale.date}{sale.status === 'voided' ? ' • أُعيدت للمخزون' : ` • ربح: +${sale.profit} ج`}</p>
+                    <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{sale.date}{sale.status === 'voided' ? ' • أُعيدت للمخزون' : refunded > 0 ? ` • مسترد ${refunded} ج • صافي الربح: ${netProfit} ج` : ` • ربح: +${sale.profit} ج`}</p>
                   </div>
-                  <span className={`font-black text-sm font-mono shrink-0 mr-3 ${sale.status === 'voided' ? 'text-slate-500 line-through' : 'text-[#D97706]'}`}>{sale.totalAmount} ج</span>
+                  <span className={`font-black text-sm font-mono shrink-0 mr-3 ${sale.status === 'voided' ? 'text-slate-500 line-through' : 'text-[#D97706]'}`}>{sale.status === 'voided' ? sale.totalAmount : netAmount} ج</span>
                 </div>
-              ))}
+              );})}
             </div>
           </div>
 

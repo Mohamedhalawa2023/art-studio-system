@@ -84,6 +84,12 @@ export class BackupService {
       }
       if (parsed.expenses === undefined) parsed.expenses = [];
 
+      // Return records were added after older backups were created.
+      if (parsed.supplyReturns !== undefined && !Array.isArray(parsed.supplyReturns)) {
+        return { valid: false, error: 'ملف النسخة الاحتياطية غير متوافق: جدول المرتجعات بصيغة غير صالحة.' };
+      }
+      if (parsed.supplyReturns === undefined) parsed.supplyReturns = [];
+
       // Check settings object
       if (!parsed.settings || typeof parsed.settings !== 'object') {
         parsed.settings = {

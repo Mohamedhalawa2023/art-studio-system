@@ -188,10 +188,38 @@ export interface SupplySale {
   profit: number;
   paymentMethod: 'cash' | 'transfer' | 'instapay' | 'vodafone' | 'card';
   notes?: string;
-  status?: 'valid' | 'voided';
+  status?: 'valid' | 'partially_returned' | 'returned' | 'voided';
   voidedAt?: string;
   voidedBy?: string;
   voidReason?: string;
+}
+
+export interface SupplyReturnItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  restockQuantity: number;
+  unitPrice: number;
+  costPrice: number;
+  grossAmount: number;
+  discountShare: number;
+  refundAmount: number;
+}
+
+export interface SupplyReturn {
+  id: string;
+  returnNumber: string;
+  saleId: string;
+  invoiceNumber: string;
+  customerName: string;
+  returnedAt: string;
+  returnedBy: string;
+  reason: string;
+  paymentMethod: SupplySale['paymentMethod'];
+  items: SupplyReturnItem[];
+  totalRefund: number;
+  totalCost: number;
+  restockedCost: number;
 }
 
 export interface PortfolioItem {

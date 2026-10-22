@@ -99,6 +99,7 @@ function validateDatabaseIntegrity(data: any): boolean {
     }
   }
   if (data.expenses !== undefined && !Array.isArray(data.expenses)) return false;
+  if (data.supplyReturns !== undefined && !Array.isArray(data.supplyReturns)) return false;
   return true;
 }
 

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { useMarsam } from '@/lib/store';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
@@ -10,7 +11,7 @@ import { printInvoice, type InvoicePaperSize } from '@/lib/printing';
 import { playScanSuccessBeep, playScanErrorBeep } from '@/lib/audio/beep';
 import {
   ShoppingBag, Search, Plus, Minus, Trash2, Printer,
-  Barcode, Tag, X, Edit3, Volume2, Ban
+  Barcode, Tag, X, Edit3, Volume2, Ban, RotateCcw
 } from 'lucide-react';
 
 const paymentMethodLabels: Record<string, string> = {
@@ -37,7 +38,7 @@ function toCents(amount: number) {
 
 export default function SuppliesPage() {
   const {
-    supplyItems, supplySales, students,
+    supplyItems, supplySales, supplyReturns, students,
     addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale, voidSupplySale, settings, currentUser
   } = useMarsam();
 
@@ -316,8 +317,10 @@ export default function SuppliesPage() {
 
   // Financial calculations
   const validSales = supplySales.filter(sale => sale.status !== 'voided');
-  const totalSalesRevenue = validSales.reduce((acc, sale) => acc + toCents(sale.totalAmount), 0) / 100;
-  const totalSalesCost = validSales.reduce((acc, sale) => acc + toCents(sale.totalCost), 0) / 100;
+  const totalSalesRevenue = (validSales.reduce((acc, sale) => acc + toCents(sale.totalAmount), 0)
+    - supplyReturns.reduce((acc, item) => acc + toCents(item.totalRefund), 0)) / 100;
+  const totalSalesCost = (validSales.reduce((acc, sale) => acc + toCents(sale.totalCost), 0)
+    - supplyReturns.reduce((acc, item) => acc + toCents(item.restockedCost), 0)) / 100;
   const totalSalesProfit = totalSalesRevenue - totalSalesCost;
   const profitMargin = totalSalesRevenue > 0 ? Math.round((totalSalesProfit / totalSalesRevenue) * 100) : 0;
   const inventoryAssetValue = supplyItems.reduce((acc, item) => acc + toCents(item.costPrice) * item.stockQty, 0) / 100;
@@ -350,6 +353,11 @@ export default function SuppliesPage() {
             بيع الأدوات ومتابعة المخزون مع فصل مالي كامل عن حسابات الكورسات
           </p>
         </div>
+
+        <Link href="/returns" className="btn btn-secondary border border-amber-700/40 bg-amber-950/20 text-amber-200 hover:bg-amber-900/30">
+          <RotateCcw size={16} /> مرتجعات المبيعات
+          {supplyReturns.length > 0 && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-black">{supplyReturns.length}</span>}
+        </Link>
 
         {/* Tab Switcher */}
         <div className="flex gap-1.5 p-1.5 bg-[#111827] border border-[#2A3B56] rounded-xl shadow-md">
@@ -896,7 +904,12 @@ export default function SuppliesPage() {
             </h3>
 
             <div className="divide-y divide-[#2A3B56]">
-              {paginatedSales.map(sale => (
+              {paginatedSales.map(sale => {
+                const saleReturns = supplyReturns.filter(item => item.saleId === sale.id);
+                const refunded = saleReturns.reduce((sum, item) => sum + item.totalRefund, 0);
+                const restockedCost = saleReturns.reduce((sum, item) => sum + item.restockedCost, 0);
+                const netProfit = sale.totalAmount - refunded - sale.totalCost + restockedCost;
+                return (
                 <div key={sale.id} className={`py-3.5 flex items-center justify-between gap-4 ${sale.status === 'voided' ? 'opacity-60' : ''}`}>
                   <div>
                     <div className="flex items-center gap-2">
@@ -905,6 +918,8 @@ export default function SuppliesPage() {
                       </span>
                       <span className="font-bold text-sm text-[#F8FAFC]">{sale.customerName}</span>
                       {sale.status === 'voided' && <span className="badge badge-danger">ملغاة</span>}
+                      {sale.status === 'partially_returned' && <span className="badge bg-amber-500/10 text-amber-300 border border-amber-500/30">مرتجع جزئي</span>}
+                      {sale.status === 'returned' && <span className="badge bg-amber-500/10 text-amber-300 border border-amber-500/30">مرتجعة بالكامل</span>}
                       <span className="bg-[#111827] border border-[#2A3B56] text-[#94A3B8] text-[11px] px-2 py-0.5 rounded font-semibold">
                         {sale.customerType === 'student' ? 'طالب' : 'خارجي'}
                       </span>
@@ -917,10 +932,11 @@ export default function SuppliesPage() {
                   <div className="flex items-center gap-4">
                     <div className="text-left">
                       <p className="font-black text-sm text-[#2DD4BF] font-mono">{formatInvoiceMoney(sale.totalAmount)}</p>
+                      {refunded > 0 && <p className="text-xs text-amber-300">مبلغ المرتجع: {formatInvoiceMoney(refunded)}</p>}
                       {(sale.discountAmount ?? 0) > 0 && (
                         <p className="text-xs text-amber-300">خصم الفاتورة: {formatInvoiceMoney(sale.discountAmount ?? 0)}</p>
                       )}
-                      <p className="text-xs text-[#94A3B8]">مجمل الربح: {formatInvoiceMoney(sale.totalAmount - sale.totalCost)}</p>
+                      <p className="text-xs text-[#94A3B8]">مجمل الربح بعد المرتجع: {formatInvoiceMoney(netProfit)}</p>
                       {sale.status === 'voided' && <p className="text-[10px] text-red-300">سبب الإلغاء: {sale.voidReason || 'غير مسجل'}</p>}
                     </div>
                     <button
@@ -931,10 +947,11 @@ export default function SuppliesPage() {
                       <Printer size={13} />
                       عرض / طباعة
                     </button>
-                    {sale.status !== 'voided' && <button type="button" onClick={() => handleVoidSale(sale)} className="bg-red-950/60 border border-red-800 text-red-300 hover:bg-red-900 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"><Ban size={13} />إلغاء الفاتورة</button>}
+                    {sale.status !== 'voided' && sale.status !== 'returned' && <Link href="/returns" className="bg-amber-950/40 border border-amber-800/60 text-amber-200 hover:bg-amber-900/50 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"><RotateCcw size={13} />إرجاع أصناف</Link>}
+                    {sale.status !== 'voided' && saleReturns.length === 0 && <button type="button" onClick={() => handleVoidSale(sale)} className="bg-red-950/60 border border-red-800 text-red-300 hover:bg-red-900 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"><Ban size={13} />إلغاء الفاتورة</button>}
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
 
             <Pagination

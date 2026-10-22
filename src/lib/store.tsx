@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from 'react';
 import {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment, OperatingExpense, Announcement,
-  Attendance, Progress, SupplyItem, SupplySale, PortfolioItem,
+  Attendance, Progress, SupplyItem, SupplySale, SupplyReturn, PortfolioItem,
   mockUsers, mockStudents, mockCourses, mockGroups, mockSessions,
   mockAnnouncements,
   mockEnrollments, mockInstallments, mockPayments, mockAttendance, mockProgress,
@@ -12,7 +12,7 @@ import { DatabaseEngine, DatabaseState, normalizeDatabaseState } from '@/lib/db/
 import { StudentService, RegisterStudentDTO, UpdateStudentDTO } from '@/lib/services/student.service';
 import { FinanceService, RecordExpenseDTO, RecordPaymentDTO, ReversePaymentDTO, UpdateExpenseDTO } from '@/lib/services/finance.service';
 import { EnrollmentService, CreateEnrollmentDTO, UpdateEnrollmentDTO } from '@/lib/services/enrollment.service';
-import { PosService, CreateSaleDTO, VoidSaleDTO } from '@/lib/services/pos.service';
+import { PosService, CreateSaleDTO, CreateSupplyReturnDTO, VoidSaleDTO } from '@/lib/services/pos.service';
 import { AttendanceService, BarcodeScanResult } from '@/lib/services/attendance.service';
 import { AnnouncementDTO, CatalogService, CreateCourseDTO, CreateGroupDTO, UpdateCourseDTO, UpdateGroupDTO } from '@/lib/services/catalog.service';
 import { BackupService } from '@/lib/services/backup.service';
@@ -21,7 +21,7 @@ import { formatLocalDate } from '@/lib/dates';
 
 export type {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment,
-  Attendance, Progress, SupplyItem, SupplySale, PortfolioItem, OperatingExpense
+  Attendance, Progress, SupplyItem, SupplySale, SupplyReturn, PortfolioItem, OperatingExpense
 };
 
 export interface AcademySettings {
@@ -55,6 +55,7 @@ interface MarsamContextType {
   progress: Progress[];
   supplyItems: SupplyItem[];
   supplySales: SupplySale[];
+  supplyReturns: SupplyReturn[];
   portfolio: PortfolioItem[];
   customDiplomas: Record<string, unknown>;
   settings: AcademySettings;
@@ -80,6 +81,7 @@ interface MarsamContextType {
   updateSupplyStock: (id: string, deltaQty: number) => void;
   createSupplySale: (params: CreateSaleDTO) => SupplySale;
   voidSupplySale: (params: VoidSaleDTO) => SupplySale;
+  createSupplyReturn: (params: CreateSupplyReturnDTO) => SupplyReturn;
   createCourse: (params: CreateCourseDTO) => Course;
   updateCourse: (id: string, params: UpdateCourseDTO) => Course;
   deleteCourse: (id: string) => void;
@@ -145,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<Progress[]>(mockProgress);
   const [supplyItems, setSupplyItems] = useState<SupplyItem[]>(mockSupplyItems);
   const [supplySales, setSupplySales] = useState<SupplySale[]>(mockSupplySales);
+  const [supplyReturns, setSupplyReturns] = useState<SupplyReturn[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(mockPortfolio);
   const [customDiplomas, setCustomDiplomas] = useState<Record<string, unknown>>({});
   const [settings, setSettings] = useState<AcademySettings>(initialSettings);
@@ -168,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       progress: mockProgress,
       supplyItems: mockSupplyItems,
       supplySales: mockSupplySales,
+      supplyReturns: [],
       portfolio: mockPortfolio,
       customDiplomas: {},
       settings: initialSettings
@@ -200,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProgress([...committedState.progress]);
     setSupplyItems([...committedState.supplyItems]);
     setSupplySales([...committedState.supplySales]);
+    setSupplyReturns([...(committedState.supplyReturns || [])]);
     setPortfolio([...committedState.portfolio]);
     setCustomDiplomas({ ...committedState.customDiplomas });
     setSettings({ ...committedState.settings });
@@ -257,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       users, students, courses, groups, sessions, announcements,
       enrollments, installments, payments, expenses, attendance,
       progress, supplyItems, supplySales, portfolio,
+      supplyReturns,
       customDiplomas, settings
     };
 
@@ -283,7 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [
     isHydrated, dbEngine, users, students, courses, groups, sessions,
     enrollments, installments, payments, expenses, attendance,
-    progress, supplyItems, supplySales, portfolio, announcements, customDiplomas, settings
+    progress, supplyItems, supplySales, supplyReturns, portfolio, announcements, customDiplomas, settings
   ]);
 
   const toggleTheme = () => {
@@ -472,6 +478,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const voidSupplySale = (params: VoidSaleDTO) => {
     try { return posService.voidSupplySale(params, syncFromEngine); }
+    catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  const createSupplyReturn = (params: CreateSupplyReturnDTO) => {
+    try { return posService.createSupplyReturn(params, syncFromEngine); }
     catch (error) {
       const userMessage = logger.formatUserError(error);
       alert(userMessage);
@@ -695,6 +710,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       users, students, courses, groups, sessions, announcements,
       enrollments, installments, payments, expenses, attendance,
       progress, supplyItems, supplySales, portfolio,
+      supplyReturns,
       customDiplomas, settings
     };
     await BackupService.exportDatabaseAsync(state);
@@ -750,6 +766,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       progress: mockProgress,
       supplyItems: mockSupplyItems,
       supplySales: mockSupplySales,
+      supplyReturns: [],
       portfolio: mockPortfolio,
       customDiplomas: {},
       settings: initialSettings
@@ -763,11 +780,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       theme, toggleTheme,
       users, students, courses, groups, sessions, announcements,
       enrollments, installments, payments, expenses, attendance,
-      progress, supplyItems, supplySales, portfolio, customDiplomas, settings,
+      progress, supplyItems, supplySales, supplyReturns, portfolio, customDiplomas, settings,
       addStudentWithEnrollment, updateStudent, deleteStudent, createEnrollment, updateEnrollment, deleteEnrollment, addCoursePayment, reverseCoursePayment, addOperatingExpense,
       updateOperatingExpense, deleteOperatingExpense,
       recordStudentAttendance, deleteAttendance, processBarcodeScan,
-      addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale, voidSupplySale,
+      addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale, voidSupplySale, createSupplyReturn,
       createCourse, updateCourse, deleteCourse, createGroup, updateGroup, deleteGroup, createAnnouncement, updateAnnouncement, deleteAnnouncement,
       cancelSession, createMakeupSession, updateSession, deleteSession,
       updateStudentProgress, deleteStudentProgress, addPortfolioItem, updatePortfolioItem, deletePortfolioItem, updatePortfolioStatus,

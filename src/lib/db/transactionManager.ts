@@ -7,7 +7,7 @@
 import {
   Student, User, Course, Group, Session, Enrollment,
   Installment, Payment, OperatingExpense, Attendance, Progress, SupplyItem,
-  SupplySale, PortfolioItem, Announcement, mockAnnouncements
+  SupplySale, SupplyReturn, PortfolioItem, Announcement, mockAnnouncements
 } from '@/lib/mockData';
 import { logger } from '@/lib/logger/logger';
 import { AcademySettings } from '@/lib/store';
@@ -26,6 +26,7 @@ export interface DatabaseState {
   progress: Progress[];
   supplyItems: SupplyItem[];
   supplySales: SupplySale[];
+  supplyReturns: SupplyReturn[];
   portfolio: PortfolioItem[];
   announcements: Announcement[];
   customDiplomas: Record<string, unknown>;
@@ -42,6 +43,7 @@ export function normalizeDatabaseState(value: unknown): DatabaseState {
     ...state,
     announcements: Array.isArray(state.announcements) ? state.announcements : mockAnnouncements,
     expenses: Array.isArray(state.expenses) ? state.expenses : [],
+    supplyReturns: Array.isArray(state.supplyReturns) ? state.supplyReturns : [],
   } as DatabaseState;
 }
 
@@ -163,6 +165,7 @@ export class DatabaseEngine {
     const studentIds = new Set(draft.students.map(s => s.id));
     const groupIds = new Set(draft.groups.map(g => g.id));
     const enrollmentIds = new Set(draft.enrollments.map(e => e.id));
+    const supplySaleIds = new Set(draft.supplySales.map(sale => sale.id));
 
     // Check Enrollments -> Students & Groups
     for (const enr of draft.enrollments) {
@@ -178,6 +181,12 @@ export class DatabaseEngine {
     for (const pay of draft.payments) {
       if (!enrollmentIds.has(pay.enrollmentId)) {
         throw new TransactionError(`FOREIGN_KEY_VIOLATION: الإيصال ${pay.receiptNumber} يشير إلى اشتراك غير موجود (${pay.enrollmentId})`);
+      }
+    }
+
+    for (const returned of draft.supplyReturns || []) {
+      if (!supplySaleIds.has(returned.saleId)) {
+        throw new TransactionError(`FOREIGN_KEY_VIOLATION: المرتجع ${returned.returnNumber} يشير إلى فاتورة بيع غير موجودة (${returned.saleId})`);
       }
     }
 

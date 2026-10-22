@@ -59,7 +59,7 @@ function parseReportDate(value: string): Date | null {
 
 export default function FinancialReportsPage() {
   const {
-    payments, enrollments, supplySales, supplyItems,
+    payments, enrollments, supplySales, supplyReturns, supplyItems,
     students, courses, groups, settings, expenses, addOperatingExpense,
     updateOperatingExpense, deleteOperatingExpense, currentUser
   } = useMarsam();
@@ -185,6 +185,14 @@ export default function FinancialReportsPage() {
     }).sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0));
   }, [supplySales, filterDateRange]);
 
+  const filteredReturns = useMemo(() => {
+    if (!filterDateRange) return [];
+    return supplyReturns.filter(item => {
+      const date = parseReportDate(item.returnedAt);
+      return date !== null && date >= filterDateRange.startDate && date <= filterDateRange.endDate;
+    }).sort((a, b) => (parseReportDate(b.returnedAt)?.getTime() || 0) - (parseReportDate(a.returnedAt)?.getTime() || 0));
+  }, [supplyReturns, filterDateRange]);
+
   const filteredExpenses = useMemo(() => {
     if (!filterDateRange) return [];
     return expenses.filter(expense => {
@@ -199,12 +207,14 @@ export default function FinancialReportsPage() {
   }, [filteredPayments]);
 
   const suppliesRevenue = useMemo(() => {
-    return fromCents(filteredSales.reduce((acc, s) => acc + toCents(s.totalAmount), 0));
-  }, [filteredSales]);
+    return fromCents(filteredSales.reduce((acc, s) => acc + toCents(s.totalAmount), 0)
+      - filteredReturns.reduce((acc, item) => acc + toCents(item.totalRefund), 0));
+  }, [filteredSales, filteredReturns]);
 
   const suppliesCost = useMemo(() => {
-    return fromCents(filteredSales.reduce((acc, s) => acc + toCents(s.totalCost), 0));
-  }, [filteredSales]);
+    return fromCents(filteredSales.reduce((acc, s) => acc + toCents(s.totalCost), 0)
+      - filteredReturns.reduce((acc, item) => acc + toCents(item.restockedCost), 0));
+  }, [filteredSales, filteredReturns]);
 
   const suppliesProfit = useMemo(() => {
     return suppliesRevenue - suppliesCost;
@@ -247,6 +257,10 @@ export default function FinancialReportsPage() {
       map[s.paymentMethod] = (map[s.paymentMethod] || 0) + toCents(s.totalAmount);
     });
 
+    filteredReturns.forEach(item => {
+      map[item.paymentMethod] = (map[item.paymentMethod] || 0) - toCents(item.totalRefund);
+    });
+
     const labels: Record<string, string> = {
       cash: 'نقدًا',
       instapay: 'إنستاباي',
@@ -260,7 +274,7 @@ export default function FinancialReportsPage() {
       name: labels[key] || key,
       value: fromCents(value)
     })).filter(m => m.value > 0);
-  }, [filteredPayments, filteredSales]);
+  }, [filteredPayments, filteredSales, filteredReturns]);
 
   // Revenue by Category Pie
   const revenueSourcesPie = useMemo(() => {
@@ -306,7 +320,27 @@ export default function FinancialReportsPage() {
       });
     });
 
+    filteredReturns.forEach(item => {
+      item.items.forEach(line => {
+        const existing = itemMap.get(line.productId) || {
+          name: line.productName,
+          qty: 0,
+          revenueCents: 0,
+          profitCents: 0
+        };
+        const refundCents = toCents(line.refundAmount);
+        const restockedCostCents = toCents(line.costPrice) * line.restockQuantity;
+        itemMap.set(line.productId, {
+          name: line.productName,
+          qty: Math.max(0, existing.qty - line.quantity),
+          revenueCents: existing.revenueCents - refundCents,
+          profitCents: existing.profitCents - refundCents + restockedCostCents
+        });
+      });
+    });
+
     return Array.from(itemMap.values())
+      .filter(item => item.qty > 0 || item.revenueCents > 0)
       .sort((a, b) => b.revenueCents - a.revenueCents)
       .slice(0, 5)
       .map(item => ({
@@ -315,7 +349,7 @@ export default function FinancialReportsPage() {
         revenue: fromCents(item.revenueCents),
         profit: fromCents(item.profitCents),
       }));
-  }, [filteredSales]);
+  }, [filteredSales, filteredReturns]);
 
   // Export CSV
   const handleExportCSV = () => {
@@ -329,6 +363,11 @@ export default function FinancialReportsPage() {
       ...filteredSales.map(s => {
         return ['بيع أدوات', s.invoiceNumber, s.customerName, s.date, s.totalAmount, s.discountAmount ?? 0, PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod, s.totalAmount - s.totalCost];
       }),
+      ...filteredReturns.map(item => [
+        'مرتجع أدوات', item.returnNumber, item.customerName, item.returnedAt,
+        -item.totalRefund, '', PAYMENT_METHOD_LABELS[item.paymentMethod] || item.paymentMethod,
+        -(item.totalRefund - item.restockedCost)
+      ]),
       ...filteredExpenses.map(expense => [
         'مصروف تشغيل', EXPENSE_CATEGORY_LABELS[expense.category] + ': ' + expense.description, '', expense.date,
         -expense.amount, '', PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod, ''
@@ -742,6 +781,15 @@ export default function FinancialReportsPage() {
                     amount: s.totalAmount,
                     isPositive: true
                   })),
+                  ...filteredReturns.map(item => ({
+                    type: 'مرتجع متجر',
+                    ref: item.returnNumber,
+                    name: item.customerName,
+                    date: item.returnedAt,
+                    method: PAYMENT_METHOD_LABELS[item.paymentMethod] || item.paymentMethod,
+                    amount: -item.totalRefund,
+                    isPositive: false
+                  })),
                   ...filteredExpenses.map(expense => ({
                     type: 'مصروف',
                     ref: EXPENSE_CATEGORY_LABELS[expense.category],
@@ -757,7 +805,7 @@ export default function FinancialReportsPage() {
                   .map((row, idx) => (
                     <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                       <td className="p-3">
-                        <span className={`badge ${row.type === 'كورس' ? 'badge-teal' : row.type === 'مصروف' ? 'badge-gray' : 'badge-info'}`}>
+                        <span className={`badge ${row.type === 'كورس' ? 'badge-teal' : row.type === 'مصروف' ? 'badge-gray' : row.type === 'مرتجع متجر' ? 'bg-amber-500/10 text-amber-400' : 'badge-info'}`}>
                           {row.type}
                         </span>
                       </td>
@@ -788,12 +836,20 @@ export default function FinancialReportsPage() {
                   <th className="p-3">طريقة الدفع</th>
                   <th className="p-3">الخصم</th>
                   <th className="p-3">إجمالي الفاتورة</th>
+                  <th className="p-3">المسترد</th>
+                  <th className="p-3">صافي البيع</th>
                   <th className="p-3">تكلفة البضاعة</th>
                   <th className="p-3 text-left">مجمل الربح</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {filteredSales.map(s => (
+                {filteredSales.map(s => {
+                  const saleReturns = filteredReturns.filter(item => item.saleId === s.id);
+                  const refunded = saleReturns.reduce((sum, item) => sum + item.totalRefund, 0);
+                  const restockedCost = saleReturns.reduce((sum, item) => sum + item.restockedCost, 0);
+                  const netRevenue = s.totalAmount - refunded;
+                  const netCost = s.totalCost - restockedCost;
+                  return (
                   <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                     <td className="p-3 font-mono font-bold text-teal-400">{s.invoiceNumber}</td>
                     <td className="p-3 font-semibold text-slate-900 dark:text-white">{s.customerName}</td>
@@ -804,10 +860,12 @@ export default function FinancialReportsPage() {
                     <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod}</span></td>
                     <td className="p-3 font-mono text-amber-600 dark:text-amber-300">{(s.discountAmount ?? 0).toLocaleString()} ج</td>
                     <td className="p-3 font-bold text-slate-900 dark:text-white font-mono">{s.totalAmount} ج</td>
-                    <td className="p-3 text-slate-400 font-mono">{s.totalCost} ج</td>
-                    <td className="p-3 text-left font-black text-teal-400 font-mono">{(s.totalAmount - s.totalCost).toLocaleString()} ج</td>
+                    <td className="p-3 font-mono text-amber-400">{refunded > 0 ? `−${refunded.toLocaleString()} ج` : '—'}</td>
+                    <td className="p-3 font-bold text-slate-900 dark:text-white font-mono">{netRevenue.toLocaleString()} ج</td>
+                    <td className="p-3 text-slate-400 font-mono">{netCost.toLocaleString()} ج</td>
+                    <td className="p-3 text-left font-black text-teal-400 font-mono">{(netRevenue - netCost).toLocaleString()} ج</td>
                   </tr>
-                ))}
+                );})}
               </tbody>
             </table>
           </div>

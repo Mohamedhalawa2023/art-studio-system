@@ -3,7 +3,7 @@
  * Manages atomic store checkout, stock depletion, margin calculation, and POS invoice numbers.
  */
 
-import { SupplySale, SupplyItem, Payment } from '@/lib/mockData';
+import { SupplySale, SupplyItem, SupplyReturn, Payment } from '@/lib/mockData';
 import { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
@@ -35,6 +35,14 @@ export interface VoidSaleDTO {
   saleId: string;
   voidedBy: string;
   reason: string;
+}
+
+export interface CreateSupplyReturnDTO {
+  saleId: string;
+  returnedBy: string;
+  reason: string;
+  paymentMethod: SupplySale['paymentMethod'];
+  items: Array<{ productId: string; quantity: number; restockQuantity: number }>;
 }
 
 export class PosService {
@@ -185,6 +193,9 @@ export class PosService {
       const sale = draft.supplySales.find(item => item.id === dto.saleId);
       if (!sale) throw new Error('فاتورة البيع المطلوبة غير موجودة.');
       if (sale.status === 'voided') throw new Error('الفاتورة ملغاة بالفعل.');
+      if ((draft.supplyReturns || []).some(item => item.saleId === sale.id)) {
+        throw new Error('تم تسجيل مرتجع جزئي لهذه الفاتورة. أكمل إرجاع الكميات المتبقية من قسم المرتجعات بدل إلغاء الفاتورة بالكامل.');
+      }
       for (const line of sale.items) {
         const product = draft.supplyItems.find(item => item.id === line.productId);
         if (!product) throw new Error(`لا يمكن إلغاء الفاتورة لأن الصنف «${line.productName}» لم يعد موجودًا بالمخزون.`);
@@ -196,6 +207,151 @@ export class PosService {
       sale.voidReason = reason;
       logger.info('PosService', `Sale voided: ${sale.invoiceNumber}. Reason: ${reason}`);
       return sale;
+    }, onStateCommit);
+  }
+
+  public createSupplyReturn(
+    dto: CreateSupplyReturnDTO,
+    onStateCommit?: (state: DatabaseState) => void
+  ): SupplyReturn {
+    const reason = Validators.requireText(dto.reason, 'سبب الإرجاع', 3, 300);
+    const returnedBy = Validators.requireText(dto.returnedBy, 'مسؤول الإرجاع', 1, 100);
+    if (!PAYMENT_METHODS.includes(dto.paymentMethod)) throw new Error('طريقة رد المبلغ غير صالحة.');
+
+    return this.db.executeTransaction('CREATE_SUPPLY_RETURN', draft => {
+      const sale = draft.supplySales.find(item => item.id === dto.saleId);
+      if (!sale) throw new Error('فاتورة البيع المطلوبة غير موجودة.');
+      if (sale.status === 'voided') throw new Error('لا يمكن إرجاع أصناف من فاتورة ملغاة.');
+      if (!Array.isArray(dto.items) || dto.items.length === 0) throw new Error('حدد صنفًا واحدًا على الأقل للإرجاع.');
+
+      const requested = new Map<string, { quantity: number; restockQuantity: number }>();
+      for (const requestedItem of dto.items) {
+        const quantity = Validators.requireNonNegativeInteger(requestedItem.quantity, 'كمية الإرجاع');
+        const restockQuantity = Validators.requireNonNegativeInteger(requestedItem.restockQuantity, 'الكمية الصالحة لإعادة المخزون');
+        if (quantity === 0) continue;
+        if (restockQuantity > quantity) throw new Error('الكمية المعادة للمخزون لا يمكن أن تتجاوز كمية الإرجاع.');
+        const existing = requested.get(requestedItem.productId) || { quantity: 0, restockQuantity: 0 };
+        existing.quantity += quantity;
+        existing.restockQuantity += restockQuantity;
+        if (!Number.isSafeInteger(existing.quantity) || !Number.isSafeInteger(existing.restockQuantity)) {
+          throw new Error('إجمالي كمية الإرجاع يتجاوز الحد المسموح.');
+        }
+        requested.set(requestedItem.productId, existing);
+      }
+      if (requested.size === 0) throw new Error('أدخل كمية أكبر من صفر لصنف واحد على الأقل.');
+
+      const priorReturns = (draft.supplyReturns || []).filter(item => item.saleId === sale.id);
+      const previouslyReturned = new Map<string, number>();
+      let previousRefundCents = 0;
+      for (const previousReturn of priorReturns) {
+        previousRefundCents += Math.round(previousReturn.totalRefund * 100);
+        for (const line of previousReturn.items) {
+          previouslyReturned.set(line.productId, (previouslyReturned.get(line.productId) || 0) + line.quantity);
+        }
+      }
+
+      const itemSubtotalCents = sale.items.reduce((sum, line) => sum + Math.round(line.total * 100), 0);
+      const grossSubtotalCents = Math.round((sale.subtotalAmount ?? itemSubtotalCents / 100) * 100);
+      const impliedDiscountCents = Math.max(0, grossSubtotalCents - Math.round(sale.totalAmount * 100));
+      const discountCents = Math.min(
+        Math.max(Math.round((sale.discountAmount ?? 0) * 100), impliedDiscountCents),
+        grossSubtotalCents
+      );
+      const lineItems: SupplyReturn['items'] = [];
+      let totalRefundCents = 0;
+      let totalCostCents = 0;
+      let restockedCostCents = 0;
+
+      for (const [productId, requestedItem] of requested) {
+        const saleLine = sale.items.find(item => item.productId === productId);
+        if (!saleLine) throw new Error('الصنف المحدد غير موجود ضمن الفاتورة.');
+        const remainingQuantity = saleLine.quantity - (previouslyReturned.get(productId) || 0);
+        if (requestedItem.quantity > remainingQuantity) {
+          throw new Error(`الكمية المتاحة للإرجاع من «${saleLine.productName}» هي ${Math.max(0, remainingQuantity)} فقط.`);
+        }
+
+        const grossLineCents = Math.round(saleLine.total * 100);
+        const grossAmountCents = Math.round(grossLineCents * requestedItem.quantity / saleLine.quantity);
+        const discountShareCents = grossSubtotalCents > 0
+          ? Math.round(discountCents * grossAmountCents / grossSubtotalCents)
+          : 0;
+        let refundAmountCents = Math.max(0, grossAmountCents - discountShareCents);
+
+        if (requestedItem.restockQuantity > 0) {
+          const product = draft.supplyItems.find(item => item.id === productId);
+          if (!product) throw new Error(`الصنف «${saleLine.productName}» لم يعد موجودًا بالمخزون، ولا يمكن إعادته للمخزون.`);
+          product.stockQty = Validators.requireNonNegativeInteger(product.stockQty + requestedItem.restockQuantity, 'الكمية بعد الإرجاع');
+        }
+
+        const costUnitCents = Math.round(saleLine.costPrice * 100);
+        const lineCostCents = costUnitCents * requestedItem.quantity;
+        const restockedLineCostCents = costUnitCents * requestedItem.restockQuantity;
+        if (!Number.isSafeInteger(lineCostCents) || !Number.isSafeInteger(restockedLineCostCents)) {
+          throw new Error('قيمة تكلفة المرتجع تتجاوز الحد المالي المسموح.');
+        }
+
+        lineItems.push({
+          productId,
+          productName: saleLine.productName,
+          quantity: requestedItem.quantity,
+          restockQuantity: requestedItem.restockQuantity,
+          unitPrice: saleLine.unitPrice,
+          costPrice: saleLine.costPrice,
+          grossAmount: grossAmountCents / 100,
+          discountShare: discountShareCents / 100,
+          refundAmount: refundAmountCents / 100,
+        });
+        totalRefundCents += refundAmountCents;
+        totalCostCents += lineCostCents;
+        restockedCostCents += restockedLineCostCents;
+      }
+
+      const remainingRefundCents = Math.max(0, Math.round(sale.totalAmount * 100) - previousRefundCents);
+      if (totalRefundCents > remainingRefundCents) {
+        let excess = totalRefundCents - remainingRefundCents;
+        for (let index = lineItems.length - 1; index >= 0 && excess > 0; index--) {
+          const line = lineItems[index];
+          const lineRefundCents = Math.round(line.refundAmount * 100);
+          const reduction = Math.min(lineRefundCents, excess);
+          line.refundAmount = (lineRefundCents - reduction) / 100;
+          line.discountShare = Math.round((line.grossAmount - line.refundAmount) * 100) / 100;
+          excess -= reduction;
+        }
+        totalRefundCents = remainingRefundCents;
+      }
+      const now = new Date();
+      const year = now.getFullYear();
+      const prefix = `RET-${year}-`;
+      const sequence = (draft.supplyReturns || []).reduce((highest, item) => {
+        const match = new RegExp(`^RET-${year}-(\\d+)$`).exec(item.returnNumber);
+        return match ? Math.max(highest, Number(match[1])) : highest;
+      }, 0) + 1;
+      const returned: SupplyReturn = {
+        id: createId('return'),
+        returnNumber: `${prefix}${String(sequence).padStart(4, '0')}`,
+        saleId: sale.id,
+        invoiceNumber: sale.invoiceNumber,
+        customerName: sale.customerName,
+        returnedAt: formatLocalDateTime(now),
+        returnedBy,
+        reason,
+        paymentMethod: dto.paymentMethod,
+        items: lineItems,
+        totalRefund: totalRefundCents / 100,
+        totalCost: totalCostCents / 100,
+        restockedCost: restockedCostCents / 100,
+      };
+      if (!Array.isArray(draft.supplyReturns)) draft.supplyReturns = [];
+      draft.supplyReturns.push(returned);
+
+      const allSaleReturned = sale.items.every(line => {
+        const returnedQuantity = previouslyReturned.get(line.productId) || 0;
+        const currentQuantity = requested.get(line.productId)?.quantity || 0;
+        return returnedQuantity + currentQuantity >= line.quantity;
+      });
+      sale.status = allSaleReturned ? 'returned' : 'partially_returned';
+      logger.info('PosService', `Supply return recorded: ${returned.returnNumber} for invoice ${sale.invoiceNumber} (${returned.totalRefund} EGP)`);
+      return returned;
     }, onStateCommit);
   }
 
