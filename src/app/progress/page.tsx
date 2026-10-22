@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useMarsam } from '@/lib/store';
-import { TrendingUp, Star, CheckCircle, Award, Calendar, Search, Filter, Sparkles, BookOpen } from 'lucide-react';
+import { TrendingUp, Star, CheckCircle, Award, Calendar, Search, Trash2 } from 'lucide-react';
 
 const levels = [
   'المستوى الأول — أسس الخطوط والنسب',
@@ -15,8 +15,8 @@ const ratings = [1, 2, 3, 4, 5];
 
 export default function ProgressPage() {
   const {
-    students, progress, sessions, groups, courses,
-    updateStudentProgress
+    students, progress, sessions, groups, courses, enrollments,
+    updateStudentProgress, deleteStudentProgress
   } = useMarsam();
 
   const [selectedSessionId, setSelectedSessionId] = useState(sessions[0]?.id || 'ses1');
@@ -30,8 +30,10 @@ export default function ProgressPage() {
   const activeGroup = groups.find(g => g.id === activeSession?.groupId);
   const activeCourse = courses.find(c => c.id === activeGroup?.courseId);
 
-  // Students in this session (or fallback to all students if no explicit group enrollment)
-  const currentStudents = students;
+  // Only assess students enrolled in the group that owns the selected session.
+  const currentStudents = activeGroup
+    ? students.filter(student => enrollments.some(enrollment => enrollment.studentId === student.id && enrollment.groupId === activeGroup.id))
+    : [];
 
   const setStudentRatingField = (studentId: string, field: 'level' | 'rating' | 'notes', value: string | number) => {
     setRatingsMap(prev => {
@@ -47,6 +49,7 @@ export default function ProgressPage() {
   };
 
   const handleSaveAll = () => {
+    if (currentStudents.length === 0) return;
     const studentIds = Object.keys(ratingsMap);
     if (studentIds.length === 0) {
       // Save defaults for active session
@@ -74,6 +77,12 @@ export default function ProgressPage() {
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 4000);
+  };
+
+  const handleDeleteProgress = (id: string) => {
+    if (!window.confirm('حذف سجل التقييم الدراسي؟')) return;
+    try { deleteStudentProgress(id); }
+    catch (error) { alert(error instanceof Error ? error.message : 'تعذر حذف التقييم.'); }
   };
 
   // History filtering
@@ -165,6 +174,7 @@ export default function ProgressPage() {
               </div>
               <button
                 onClick={handleSaveAll}
+                disabled={currentStudents.length === 0}
                 className="btn btn-primary text-xs font-bold shadow-md shadow-blue-600/20"
               >
                 <CheckCircle size={15} />
@@ -173,6 +183,11 @@ export default function ProgressPage() {
             </div>
 
             <div className="space-y-3">
+              {currentStudents.length === 0 && (
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-500">
+                  لا يوجد طلاب مسجلون في مجموعة هذه الحصة.
+                </p>
+              )}
               {currentStudents.map(student => {
                 const current = ratingsMap[student.id] || {
                   level: student.level || levels[0],
@@ -338,6 +353,9 @@ export default function ProgressPage() {
                           <div className="text-[10px] text-[#94A3B8] pt-1 border-t border-slate-200 flex justify-between">
                             <span>تاريخ التقييم:</span>
                             <span className="font-mono">{evalItem.date}</span>
+                          </div>
+                          <div className="flex justify-end">
+                            <button type="button" className="btn btn-secondary btn-sm text-red-600" onClick={() => handleDeleteProgress(evalItem.id)}><Trash2 size={12} />حذف التقييم</button>
                           </div>
                         </div>
                       ))}

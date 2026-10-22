@@ -1,31 +1,19 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMarsam } from '@/lib/store';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Pagination } from '@/components/common/Pagination';
+import { PaymentReceiptModal, type CoursePaymentReceipt } from '@/components/finance/PaymentReceiptModal';
+import type { Payment } from '@/lib/mockData';
+import { formatLocalDate } from '@/lib/dates';
 import {
-  CreditCard, Plus, CheckCircle, Clock, AlertCircle, Banknote,
-  Smartphone, ArrowRightLeft, X, Printer, Search, Calendar, ShieldCheck
+  CreditCard, Plus, CheckCircle, Clock, AlertCircle, X, Printer
 } from 'lucide-react';
-
-const methodIcons: Record<string, React.ReactNode> = {
-  cash: <Banknote size={14} />,
-  instapay: <Smartphone size={14} />,
-  vodafone: <Smartphone size={14} />,
-  transfer: <ArrowRightLeft size={14} />,
-};
-
-const methodLabel: Record<string, string> = {
-  cash: 'نقداً (كاش)',
-  instapay: 'انستاباي',
-  vodafone: 'فودافون كاش',
-  transfer: 'تحويل بنكي',
-};
 
 export default function PaymentsPage() {
   const {
     payments, installments, enrollments, students, courses, groups,
-    settings, addCoursePayment
+    settings, currentUser, addCoursePayment, reverseCoursePayment
   } = useMarsam();
 
   const [showAddPayment, setShowAddPayment] = useState(false);
@@ -33,18 +21,30 @@ export default function PaymentsPage() {
   const [payAmount, setPayAmount] = useState(400);
   const [payMethod, setPayMethod] = useState<'cash' | 'instapay' | 'vodafone' | 'transfer'>('cash');
   const [payNotes, setPayNotes] = useState('');
-  const [search, setSearch] = useState('');
   const [receiptPage, setReceiptPage] = useState(1);
   const RECEIPTS_PER_PAGE = 15;
+  const [reversalTarget, setReversalTarget] = useState<Payment | null>(null);
+  const [reversalReason, setReversalReason] = useState('');
+  const [today, setToday] = useState<string | null>(null);
+  useEffect(() => {
+    // Next 16 defers current-time reads in Client Components until after prerendering.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setToday(formatLocalDate(new Date()));
+  }, []);
 
   const { isSubmitting, execute: executeRecordPayment } = useAsyncAction();
+  const { isSubmitting: isReversing, execute: executeReversePayment } = useAsyncAction();
 
   // Receipt Modal
-  const [currentReceipt, setCurrentReceipt] = useState<any>(null);
+  const [currentReceipt, setCurrentReceipt] = useState<CoursePaymentReceipt | null>(null);
 
   const totalCollected = payments.filter(p => p.status === 'valid').reduce((s, p) => s + p.amount, 0);
-  const pendingInstallmentsCount = installments.filter(i => i.status === 'pending').length;
-  const overdueInstallmentsCount = installments.filter(i => i.status === 'overdue').length;
+  const remainingInstallmentAmount = (installment: typeof installments[number]) => Math.max(
+    0,
+    (installment.originalAmount ?? installment.amount) - (installment.paidAmount ?? (installment.status === 'paid' ? installment.amount : 0))
+  );
+  const pendingInstallmentsCount = today ? installments.filter(i => i.dueDate >= today && remainingInstallmentAmount(i) > 0).length : 0;
+  const overdueInstallmentsCount = today ? installments.filter(i => i.dueDate < today && remainingInstallmentAmount(i) > 0).length : 0;
 
   const paginatedPayments = useMemo(() => {
     const start = (receiptPage - 1) * RECEIPTS_PER_PAGE;
@@ -82,10 +82,29 @@ export default function PaymentsPage() {
           method: newPay.method,
           notes: newPay.notes
         });
-      } catch (err: any) {
-        alert(err.message || 'حدث خطأ أثناء تسجيل السداد');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'حدث خطأ أثناء تسجيل السداد';
+        alert(message);
       }
     });
+  };
+
+  const handleReversePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reversalTarget || !reversalReason.trim()) return;
+    try {
+      await executeReversePayment(async () => {
+        reverseCoursePayment({
+          paymentId: reversalTarget.id,
+          reason: reversalReason.trim(),
+          recordedBy: currentUser?.id || 'admin'
+        });
+        setReversalTarget(null);
+        setReversalReason('');
+      });
+    } catch {
+      // The store already shows the validation error to the user.
+    }
   };
 
   return (
@@ -120,7 +139,7 @@ export default function PaymentsPage() {
         {/* 1. عدد إيصالات الدفع المصدرة (Rightmost) */}
         <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm text-right">
           <p className="text-xs text-[#94A3B8] font-bold">عدد إيصالات الدفع المصدرة</p>
-          <p className="text-2xl font-black text-[#2DD4BF] mt-1 font-mono">{payments.length} إيصال</p>
+          <p className="text-2xl font-black text-[#2DD4BF] mt-1 font-mono">{payments.filter(payment => !payment.reversalOf).length} إيصال</p>
           <p className="text-xs text-[#94A3B8] mt-1">ترتيب الكورسات والتدريب</p>
         </div>
 
@@ -163,6 +182,14 @@ export default function PaymentsPage() {
               const student = students.find(s => s.id === enr?.studentId);
               const group = groups.find(g => g.id === enr?.groupId);
               const course = courses.find(c => c.id === group?.courseId);
+              const installmentRemaining = remainingInstallmentAmount(inst);
+              const installmentStatus = installmentRemaining <= 0
+                ? 'paid'
+                : today && inst.dueDate < today
+                  ? 'overdue'
+                  : (inst.paidAmount ?? 0) > 0
+                    ? 'partial'
+                    : 'pending';
 
               return (
                 <div
@@ -170,8 +197,8 @@ export default function PaymentsPage() {
                   className="p-3.5 rounded-xl border border-[#2A3B56] bg-[#111827] hover:border-[#0D9488]/50 flex items-center justify-between text-xs transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${inst.status === 'paid' ? 'bg-[#115E59]/40 border border-[#0D9488]/40 text-[#2DD4BF]' : inst.status === 'overdue' ? 'bg-[#450A0A] border border-[#7F1D1D] text-[#EF4444]' : 'bg-[#78350F]/40 border border-[#D97706]/40 text-[#D97706]'}`}>
-                      {inst.status === 'paid' ? <CheckCircle size={18} /> : inst.status === 'overdue' ? <AlertCircle size={18} /> : <Clock size={18} />}
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${installmentStatus === 'paid' ? 'bg-[#115E59]/40 border border-[#0D9488]/40 text-[#2DD4BF]' : installmentStatus === 'overdue' ? 'bg-[#450A0A] border border-[#7F1D1D] text-[#EF4444]' : installmentStatus === 'partial' ? 'bg-[#0D9488]/20 border border-[#0D9488]/40 text-[#2DD4BF]' : 'bg-[#78350F]/40 border border-[#D97706]/40 text-[#D97706]'}`}>
+                      {installmentStatus === 'paid' ? <CheckCircle size={18} /> : installmentStatus === 'overdue' ? <AlertCircle size={18} /> : <Clock size={18} />}
                     </div>
                     <div>
                       <p className="font-bold text-sm text-[#F8FAFC]">{student?.name || 'طالب'}</p>
@@ -183,17 +210,17 @@ export default function PaymentsPage() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <p className="font-bold text-sm text-[#F8FAFC] font-mono">{inst.amount} ج</p>
-                      <span className={`badge text-[10px] mt-0.5 ${inst.status === 'paid' ? 'bg-[#115E59] border border-[#0D9488]/40 text-[#2DD4BF] font-bold' : inst.status === 'overdue' ? 'bg-[#450A0A] border border-[#7F1D1D] text-[#EF4444] font-bold' : 'bg-[#78350F] border border-[#D97706]/40 text-[#D97706] font-bold'}`}>
-                        {inst.status === 'paid' ? 'تم السداد' : inst.status === 'overdue' ? 'متأخر ⚠️' : 'قيد الانتظار'}
+                      <p className="font-bold text-sm text-[#F8FAFC] font-mono">متبقي {installmentRemaining} ج</p>
+                      <span className={`badge text-[10px] mt-0.5 ${installmentStatus === 'paid' ? 'bg-[#115E59] border border-[#0D9488]/40 text-[#2DD4BF] font-bold' : installmentStatus === 'overdue' ? 'bg-[#450A0A] border border-[#7F1D1D] text-[#EF4444] font-bold' : installmentStatus === 'partial' ? 'bg-[#115E59]/40 border border-[#0D9488]/40 text-[#2DD4BF] font-bold' : 'bg-[#78350F] border border-[#D97706]/40 text-[#D97706] font-bold'}`}>
+                        {installmentStatus === 'paid' ? 'تم السداد' : installmentStatus === 'overdue' ? 'متأخر ⚠️' : installmentStatus === 'partial' ? 'سداد جزئي' : 'قادم / مستحق اليوم'}
                       </span>
                     </div>
 
-                    {inst.status !== 'paid' && enr && (
+                    {installmentRemaining > 0 && enr && (
                       <button
                         onClick={() => {
                           setSelectedEnrollmentId(enr.id);
-                          setPayAmount(inst.amount);
+                          setPayAmount(installmentRemaining);
                           setShowAddPayment(true);
                         }}
                         className="btn bg-[#0D9488] hover:bg-[#0F766E] text-white btn-sm text-xs py-1.5 px-3.5 rounded-xl font-bold shadow-sm shadow-[#0D9488]/25 transition-all"
@@ -215,7 +242,7 @@ export default function PaymentsPage() {
               <CreditCard size={18} className="text-teal-400" />
               سجل إيصالات السداد (CRS)
             </h3>
-            <span className="text-xs text-[#94A3B8] font-bold">{payments.length} إيصال</span>
+            <span className="text-xs text-[#94A3B8] font-bold">{payments.filter(payment => !payment.reversalOf).length} إيصال</span>
           </div>
 
           <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
@@ -224,6 +251,8 @@ export default function PaymentsPage() {
               const student = students.find(s => s.id === enr?.studentId);
               const group = groups.find(g => g.id === enr?.groupId);
               const course = courses.find(c => c.id === group?.courseId);
+              const linkedReversal = pay.reversalOf ? undefined : payments.find(payment => payment.reversalOf === pay.id);
+              const reversedPayment = pay.reversalOf ? payments.find(payment => payment.id === pay.reversalOf) : undefined;
 
               return (
                 <div key={pay.id} className="p-3 rounded-xl bg-[#111827] border border-[#2A3B56] hover:border-[#0D9488]/40 text-xs space-y-2 transition-all">
@@ -234,27 +263,46 @@ export default function PaymentsPage() {
                       </span>
                       <strong className="text-[#F8FAFC] font-bold mr-2">{student?.name}</strong>
                     </div>
-                    <span className="font-black text-sm text-[#2DD4BF] font-mono">{pay.amount} ج</span>
+                    <span className={`font-black text-sm font-mono ${pay.amount < 0 ? 'text-red-400' : linkedReversal ? 'text-slate-400 line-through' : 'text-[#2DD4BF]'}`}>
+                      {pay.amount < 0 ? '−' : ''}{Math.abs(pay.amount)} ج
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between text-[#94A3B8] text-[11px]">
                     <span>{course?.name} • {pay.date}</span>
-                    <button
-                      onClick={() => setCurrentReceipt({
-                        receiptNumber: pay.receiptNumber,
-                        date: pay.date,
-                        studentName: student?.name,
-                        courseName: course?.name,
-                        amount: pay.amount,
-                        remaining: Math.max(0, (enr?.totalAmount || 0) - (enr?.totalPaid || 0)),
-                        method: pay.method,
-                        notes: pay.notes
-                      })}
-                      className="text-[#D97706] hover:text-[#F59E0B] flex items-center gap-1 font-bold"
-                    >
-                      <Printer size={12} className="text-[#D97706]" /> طباعة الإيصال
-                    </button>
+                    {pay.reversalOf ? (
+                      <span className="text-red-300">رد إيصال {reversedPayment?.receiptNumber || ''}</span>
+                    ) : linkedReversal ? (
+                      <span className="text-red-300">تم الرد بسبب: {linkedReversal.reversalReason}</span>
+                    ) : pay.status !== 'valid' ? (
+                      <span className="text-red-300">إيصال ملغي</span>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setCurrentReceipt({
+                            receiptNumber: pay.receiptNumber,
+                            date: pay.date,
+                            studentName: student?.name || 'الطالب',
+                            courseName: course?.name || 'دورة تدريبية',
+                            amount: pay.amount,
+                            remaining: Math.max(0, (enr?.totalAmount || 0) - (enr?.totalPaid || 0)),
+                            method: pay.method,
+                            notes: pay.notes
+                          })}
+                          className="text-[#D97706] hover:text-[#F59E0B] flex items-center gap-1 font-bold"
+                        >
+                          <Printer size={12} className="text-[#D97706]" /> طباعة الإيصال
+                        </button>
+                        <button
+                          onClick={() => { setReversalTarget(pay); setReversalReason(''); }}
+                          className="text-red-400 hover:text-red-300 font-bold"
+                        >
+                          رد / تصحيح
+                        </button>
+                      </div>
+                    )}
                   </div>
+                  {pay.reversalReason && <p className="text-[11px] text-red-300">سبب الرد: {pay.reversalReason}</p>}
                 </div>
               );
             })}
@@ -323,7 +371,7 @@ export default function PaymentsPage() {
                 <select
                   className="input text-xs"
                   value={payMethod}
-                  onChange={e => setPayMethod(e.target.value as any)}
+                  onChange={e => setPayMethod(e.target.value as typeof payMethod)}
                 >
                   <option value="cash">نقداً (كاش للخزنة)</option>
                   <option value="instapay">انستاباي (InstaPay)</option>
@@ -359,80 +407,51 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      {reversalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0E1629]/80 p-4 backdrop-blur-sm">
+          <form onSubmit={handleReversePayment} className="w-full max-w-md space-y-4 rounded-2xl border border-[#2A3B56] bg-[#1B2537] p-6 text-[#F8FAFC] shadow-2xl">
+            <div className="flex items-start justify-between gap-3 border-b border-[#2A3B56] pb-3">
+              <div>
+                <h3 className="font-bold text-lg">رد / تصحيح إيصال سداد</h3>
+                <p className="mt-1 text-xs text-[#94A3B8]">{reversalTarget.receiptNumber} • {reversalTarget.amount.toLocaleString()} ج</p>
+              </div>
+              <button type="button" onClick={() => setReversalTarget(null)} className="text-[#94A3B8] hover:text-white" aria-label="إغلاق">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs leading-relaxed text-[#CBD5E1]">
+              سيُحفظ الإيصال الأصلي ويُضاف له قيد عكسي بالمبلغ نفسه. اكتب سبب الرد ليظهر في سجل الحركات.
+            </p>
+            <div>
+              <label htmlFor="payment-reversal-reason" className="mb-1 block text-xs font-bold text-[#CBD5E1]">سبب الرد أو التصحيح</label>
+              <textarea
+                id="payment-reversal-reason"
+                className="input min-h-24 w-full text-sm"
+                minLength={3}
+                maxLength={300}
+                required
+                value={reversalReason}
+                onChange={event => setReversalReason(event.target.value)}
+                placeholder="مثال: تسجيل مبلغ غير صحيح بالخطأ"
+              />
+            </div>
+            <div className="flex gap-2 border-t border-[#2A3B56] pt-3">
+              <button type="submit" disabled={isReversing || reversalReason.trim().length < 3} className="btn flex-1 bg-red-600 font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                {isReversing ? 'جاري تسجيل الرد...' : 'تأكيد الرد وتسجيله'}
+              </button>
+              <button type="button" onClick={() => setReversalTarget(null)} className="btn btn-secondary">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* ================= MODAL: PRINTABLE RECEIPT ================= */}
       {currentReceipt && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-200">
-            <button
-              onClick={() => setCurrentReceipt(null)}
-              className="absolute top-4 left-4 text-[#94A3B8] hover:text-slate-800"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="space-y-4">
-              <div className="text-center border-b pb-4">
-                <h2 className="text-xl font-black text-slate-900">{settings.name}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">إيصال سداد رسوم دورة تدريبية</p>
-                <p className="text-xs text-[#94A3B8]">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-teal-300 border border-teal-500/20">
-                  إيصال رقم: {currentReceipt.receiptNumber}
-                </div>
-              </div>
-
-              <div className="text-xs space-y-2 text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <div className="flex justify-between">
-                  <span>اسم الطالب:</span>
-                  <strong className="text-slate-900">{currentReceipt.studentName}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span>الدورة التدريبية:</span>
-                  <span className="font-semibold">{currentReceipt.courseName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>التاريخ والوقت:</span>
-                  <span>{currentReceipt.date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>طريقة السداد:</span>
-                  <span>{methodLabel[currentReceipt.method] || currentReceipt.method}</span>
-                </div>
-                {currentReceipt.notes && (
-                  <div className="flex justify-between text-slate-500">
-                    <span>ملاحظات:</span>
-                    <span>{currentReceipt.notes}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-b py-3 flex justify-between items-center">
-                <span className="font-black text-sm text-slate-900">المبلغ المدفوع:</span>
-                <span className="font-black text-2xl text-teal-300 font-mono">{currentReceipt.amount} ج</span>
-              </div>
-
-              <div className="flex justify-between text-xs text-slate-600">
-                <span>المتبقي بعد هذا السداد:</span>
-                <strong className="text-red-600 font-mono text-sm">{currentReceipt.remaining} ج</strong>
-              </div>
-
-              <p className="text-center text-[10px] text-[#94A3B8] pt-2 border-t">
-                هذا الإيصال مسجل ومعتمد رسمي بنظام الإدارة المالي لمرسم الإبداع
-              </p>
-            </div>
-
-            <div className="mt-5 pt-3 border-t flex gap-2">
-              <button
-                onClick={() => window.print()}
-                className="btn btn-primary flex-1 flex items-center justify-center gap-1.5"
-              >
-                <Printer size={16} /> طباعة الإيصال (حراري / A5)
-              </button>
-              <button onClick={() => setCurrentReceipt(null)} className="btn btn-secondary">
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
+        <PaymentReceiptModal
+          receipt={currentReceipt}
+          settings={settings}
+          onClose={() => setCurrentReceipt(null)}
+        />
       )}
     </div>
   );

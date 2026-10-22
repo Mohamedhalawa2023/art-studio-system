@@ -76,6 +76,9 @@ export interface Payment {
   recordedBy: string;
   status: 'valid' | 'cancelled';
   notes?: string;
+  /** Negative ledger entry linked to the receipt it reverses. */
+  reversalOf?: string;
+  reversalReason?: string;
 }
 
 export interface Installment {
@@ -83,8 +86,36 @@ export interface Installment {
   enrollmentId: string;
   amount: number;
   dueDate: string;
-  status: 'paid' | 'pending' | 'overdue';
+  status: 'paid' | 'pending' | 'overdue' | 'partial';
   paidDate?: string;
+  /** Stable scheduled amount, kept separate from the portion already paid. */
+  originalAmount?: number;
+  paidAmount?: number;
+  /** Extra receivable created when a receipt without a payment schedule is reversed. */
+  isAdjustment?: boolean;
+}
+
+export type OperatingExpenseCategory =
+  | 'rent'
+  | 'salaries'
+  | 'materials'
+  | 'utilities'
+  | 'maintenance'
+  | 'transport'
+  | 'marketing'
+  | 'other';
+
+export interface OperatingExpense {
+  id: string;
+  date: string;
+  category: OperatingExpenseCategory;
+  description: string;
+  amount: number;
+  paymentMethod: Payment['method'];
+  recordedBy: string;
+  recordedAt: string;
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
 export interface Attendance {
@@ -148,11 +179,19 @@ export interface SupplySale {
   customerName: string;
   customerId?: string;
   items: SupplySaleItem[];
+  /** Gross item total before any invoice-level discount. Optional for older saved invoices. */
+  subtotalAmount?: number;
+  /** Fixed EGP discount applied to the invoice total. Optional for older saved invoices. */
+  discountAmount?: number;
   totalAmount: number;
   totalCost: number;
   profit: number;
   paymentMethod: 'cash' | 'transfer' | 'instapay' | 'vodafone' | 'card';
   notes?: string;
+  status?: 'valid' | 'voided';
+  voidedAt?: string;
+  voidedBy?: string;
+  voidReason?: string;
 }
 
 export interface PortfolioItem {

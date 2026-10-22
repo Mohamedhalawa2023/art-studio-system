@@ -43,6 +43,25 @@ export const Validators = {
     return Math.round(num * 100) / 100; // 2 decimal precision
   },
 
+  requireNonNegativeMoney(amount: unknown, fieldName = 'المبلغ'): number {
+    const num = Number(amount);
+    if (!Number.isFinite(num) || num < 0) {
+      throw new ValidationError(`قيمة ${fieldName} يجب ألا تكون سالبة.`, fieldName);
+    }
+    if (num > 1_000_000) {
+      throw new ValidationError(`قيمة ${fieldName} تتجاوز الحد المنطقي المسموح به.`, fieldName);
+    }
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+  },
+
+  requireNonNegativeInteger(value: unknown, fieldName: string): number {
+    const num = Number(value);
+    if (!Number.isSafeInteger(num) || num < 0) {
+      throw new ValidationError(`قيمة ${fieldName} يجب أن تكون عددًا صحيحًا موجبًا أو صفرًا.`, fieldName);
+    }
+    return num;
+  },
+
   /**
    * Validates non-negative quantity or money (>= 0)
    */
@@ -89,11 +108,22 @@ export const Validators = {
     if (!dateStr || typeof dateStr !== 'string') {
       throw new ValidationError(`حقل ${fieldName} غير صحيح أو فارغ (INVALID_DATE).`, fieldName);
     }
-    const timestamp = Date.parse(dateStr);
+    const clean = dateStr.trim();
+    const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean);
+    if (isoDate) {
+      const [, year, month, day] = isoDate;
+      const parsedIsoDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+      if (Number.isNaN(parsedIsoDate.getTime()) || parsedIsoDate.toISOString().slice(0, 10) !== clean) {
+        throw new ValidationError(`صيغة ${fieldName} غير صالحة (INVALID_DATE).`, fieldName);
+      }
+      return clean;
+    }
+
+    const timestamp = Date.parse(clean);
     if (isNaN(timestamp)) {
       throw new ValidationError(`صيغة ${fieldName} غير صالحة (INVALID_DATE).`, fieldName);
     }
-    return dateStr.trim();
+    return clean;
   },
 
   /**
@@ -118,19 +148,32 @@ export const Validators = {
       throw new ValidationError('سلة المشتريات فارغة، يرجى إضافة صنف واحد على الأقل.', 'items');
     }
 
+    const requestedByProduct = new Map<string, number>();
     for (const item of items) {
+      if (!item || typeof item !== 'object') {
+        throw new ValidationError('يوجد صنف غير صالح في سلة المشتريات.', 'items');
+      }
       if (!item.productId) {
         throw new ValidationError('يوجد صنف غير معرف في سلة المشتريات.', 'productId');
       }
-      if (!item.quantity || item.quantity <= 0) {
-        throw new ValidationError('كمية الصنف يجب أن تكون 1 على الأقل.', 'quantity');
+      if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
+        throw new ValidationError('كمية الصنف يجب أن تكون عدداً صحيحاً موجباً.', 'quantity');
       }
 
       const inv = inventoryMap.get(item.productId);
       if (!inv) {
         throw new ValidationError(`الصنف ذو الكود ${item.productId} غير موجود في المخزن (FOREIGN_KEY_VIOLATION).`, 'productId');
       }
-      if (inv.stockQty < item.quantity) {
+      const requested = (requestedByProduct.get(item.productId) || 0) + item.quantity;
+      if (!Number.isSafeInteger(requested)) {
+        throw new ValidationError('إجمالي الكمية المطلوبة أكبر من الحد المسموح.', 'quantity');
+      }
+      requestedByProduct.set(item.productId, requested);
+    }
+
+    for (const [productId, requested] of requestedByProduct) {
+      const inv = inventoryMap.get(productId);
+      if (inv && inv.stockQty < requested) {
         throw new ValidationError(`الكمية المطلوبة من "${inv.name}" غير متوفرة حالياً (المتاح في المخزن: ${inv.stockQty}) (INSUFFICIENT_STOCK).`, 'quantity');
       }
     }

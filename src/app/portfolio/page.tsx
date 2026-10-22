@@ -3,19 +3,20 @@ import { useState, useRef } from 'react';
 import { useMarsam } from '@/lib/store';
 import {
   Sparkles, CheckCircle, Clock, X, Upload, Palette,
-  Eye, Filter, Plus, Trash2, ShieldCheck, Image as ImageIcon
+  Eye, Filter, Plus, Trash2, ShieldCheck, Image as ImageIcon, Pencil
 } from 'lucide-react';
 
 export default function PortfolioPage() {
   const {
     portfolio, users, currentUser,
-    addPortfolioItem, updatePortfolioStatus
+    addPortfolioItem, updatePortfolioStatus, updatePortfolioItem, deletePortfolioItem
   } = useMarsam();
 
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedArtwork, setSelectedArtwork] = useState<any | null>(null);
+  const [editingArtwork, setEditingArtwork] = useState<(typeof portfolio)[number] | null>(null);
 
   // Form State
   const [newTitle, setNewTitle] = useState('');
@@ -47,22 +48,36 @@ export default function PortfolioPage() {
       return;
     }
 
-    const imgToSave = previewImage || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600&auto=format&fit=crop&q=80';
+    const imgToSave = previewImage || editingArtwork?.imageUrl || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600&auto=format&fit=crop&q=80';
     const supId = newSupervisorId || supervisors[0]?.id || 'u2';
 
-    addPortfolioItem({
-      title: newTitle,
-      description: newDescription,
-      supervisorId: supId,
-      imageUrl: imgToSave,
-      status: 'pending'
-    });
+    if (editingArtwork) {
+      updatePortfolioItem(editingArtwork.id, { title: newTitle, description: newDescription, supervisorId: supId, imageUrl: imgToSave });
+    } else {
+      addPortfolioItem({ title: newTitle, description: newDescription, supervisorId: supId, imageUrl: imgToSave, status: 'pending' });
+    }
 
     // Reset & close
     setNewTitle('');
     setNewDescription('');
     setPreviewImage(null);
+    setEditingArtwork(null);
     setShowUploadModal(false);
+  };
+
+  const beginArtworkEdit = (item: (typeof portfolio)[number]) => {
+    setEditingArtwork(item);
+    setNewTitle(item.title);
+    setNewDescription(item.description || '');
+    setNewSupervisorId(item.supervisorId);
+    setPreviewImage(null);
+    setShowUploadModal(true);
+  };
+
+  const removeArtwork = (item: (typeof portfolio)[number]) => {
+    if (!window.confirm(`حذف العمل الفني «${item.title}» من المعرض؟`)) return;
+    try { deletePortfolioItem(item.id); }
+    catch (error) { alert(error instanceof Error ? error.message : 'تعذر حذف العمل الفني.'); }
   };
 
   return (
@@ -216,6 +231,8 @@ export default function PortfolioPage() {
 
                   {/* Administrative Action Buttons */}
                   <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5">
+                    <button type="button" onClick={() => beginArtworkEdit(item)} className="btn btn-secondary text-[11px] py-1.5" title="تعديل العمل الفني"><Pencil size={13} />تعديل</button>
+                    <button type="button" onClick={() => removeArtwork(item)} className="btn btn-secondary text-red-600 text-[11px] py-1.5" title="حذف العمل الفني"><Trash2 size={13} />حذف</button>
                     {item.status === 'pending' ? (
                       <>
                         <button
@@ -253,15 +270,15 @@ export default function PortfolioPage() {
       {/* ================= MODAL: UPLOAD ARTWORK ================= */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-slate-800">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+          <div className="bg-[#1B2537] p-6 rounded-2xl max-w-lg w-full border border-[#2A3B56] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-[#F8FAFC]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
+              <h3 className="font-bold text-base text-[#F8FAFC] flex items-center gap-2">
                 <Upload size={18} className="text-teal-400" />
-                إضافة عمل فني جديد إلى المعرض
+                {editingArtwork ? 'تعديل العمل الفني' : 'إضافة عمل فني جديد إلى المعرض'}
               </h3>
               <button
-                onClick={() => setShowUploadModal(false)}
-                className="text-[#94A3B8] hover:text-slate-700"
+                onClick={() => { setShowUploadModal(false); setEditingArtwork(null); setPreviewImage(null); }}
+                className="text-[#94A3B8] hover:text-white"
               >
                 <X size={18} />
               </button>
@@ -270,18 +287,18 @@ export default function PortfolioPage() {
             <form onSubmit={handleUploadSubmit} className="space-y-4 text-xs">
               {/* Image Uploader */}
               <div>
-                <label className="block text-slate-700 font-bold mb-1.5">
+                <label className="block text-[#CBD5E1] font-bold mb-1.5">
                   صورة العمل الفني *:
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-200 hover:border-teal-500/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-teal-500/10/20"
+                  className="border-2 border-dashed border-[#2A3B56] hover:border-[#0D9488] rounded-xl p-6 text-center cursor-pointer transition-colors bg-[#111827]"
                 >
-                  {previewImage ? (
+                  {previewImage || editingArtwork ? (
                     <div className="space-y-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={previewImage}
+                        src={previewImage || editingArtwork?.imageUrl || ''}
                         alt="Preview"
                         className="max-h-48 mx-auto rounded-lg object-contain shadow-md"
                       />
@@ -290,7 +307,7 @@ export default function PortfolioPage() {
                   ) : (
                     <div className="space-y-1">
                       <Upload size={32} className="mx-auto text-teal-400 mb-1" />
-                      <p className="font-bold text-xs text-slate-800">اختر صورة العمل الفني من جهازك</p>
+                      <p className="font-bold text-xs text-[#F8FAFC]">اختر صورة العمل الفني من جهازك</p>
                       <p className="text-[10px] text-[#94A3B8]">PNG, JPG, JPEG (يتم حفظها في قاعدة البيانات المحلية)</p>
                     </div>
                   )}
@@ -306,7 +323,7 @@ export default function PortfolioPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-slate-700 font-bold mb-1">
+                <label className="block text-[#CBD5E1] font-bold mb-1">
                   عنوان العمل الفني / اللوحة *:
                 </label>
                 <input
@@ -320,7 +337,7 @@ export default function PortfolioPage() {
 
               {/* Supervisor */}
               <div>
-                <label className="block text-slate-700 font-bold mb-1">
+                <label className="block text-[#CBD5E1] font-bold mb-1">
                   المشرف أو الفنان المنفذ:
                 </label>
                 <select
@@ -336,7 +353,7 @@ export default function PortfolioPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-slate-700 font-bold mb-1">
+                <label className="block text-[#CBD5E1] font-bold mb-1">
                   وصف العمل والخامات المستخدمة:
                 </label>
                 <textarea
@@ -350,13 +367,13 @@ export default function PortfolioPage() {
               <div className="pt-2 flex gap-2">
                 <button
                   type="submit"
-                  className="btn btn-primary flex-1 text-xs font-bold shadow-md shadow-blue-600/20"
+                  className="btn btn-primary flex-1 text-xs font-bold shadow-md shadow-teal-600/20"
                 >
-                  حفظ العمل بالمعرض
+                  {editingArtwork ? 'حفظ التعديلات' : 'حفظ العمل بالمعرض'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowUploadModal(false)}
+                  onClick={() => { setShowUploadModal(false); setEditingArtwork(null); setPreviewImage(null); }}
                   className="btn btn-secondary text-xs"
                 >
                   إلغاء

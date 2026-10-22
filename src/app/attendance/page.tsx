@@ -6,13 +6,13 @@ import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { Pagination } from '@/components/common/Pagination';
 import {
   QrCode, Search, CheckCircle, XCircle, Clock, Camera,
-  UserCheck, AlertTriangle, Barcode, BookOpen, Volume2, Sparkles
+  UserCheck, AlertTriangle, Barcode, BookOpen, Volume2, Sparkles, Trash2
 } from 'lucide-react';
 
 export default function AttendancePage() {
   const {
     students, courses, groups, sessions, attendance,
-    enrollments, recordStudentAttendance, processBarcodeScan
+    enrollments, recordStudentAttendance, deleteAttendance, processBarcodeScan
   } = useMarsam();
 
   const [mode, setMode] = useState<'scan' | 'list'>('scan');
@@ -123,6 +123,12 @@ export default function AttendancePage() {
         lessonTopic: status === 'present' ? selectedLessonTopic : undefined
       });
     });
+  };
+
+  const handleDeleteAttendance = (attendanceId: string) => {
+    if (!window.confirm('حذف سجل الحضور لهذا الطالب من الحصة؟')) return;
+    try { deleteAttendance(attendanceId); }
+    catch (error) { alert(error instanceof Error ? error.message : 'تعذر حذف سجل الحضور.'); }
   };
 
   return (
@@ -386,6 +392,7 @@ export default function AttendancePage() {
                         >
                           غائب
                         </button>
+                        {att && <button type="button" onClick={() => handleDeleteAttendance(att.id)} className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white text-red-600 border border-red-200 hover:bg-red-50" title="حذف سجل الحضور" aria-label="حذف سجل الحضور"><Trash2 size={12} /></button>}
                       </div>
                     </td>
                   </tr>

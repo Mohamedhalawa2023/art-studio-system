@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Electron's main entry is CommonJS. */
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const http = require('http');
@@ -40,13 +41,23 @@ function logMessage(msg) {
     const line = `[${time}] ${msg}\n`;
     fs.appendFileSync(getLogFilePath(), line, 'utf-8');
     console.log(line.trim());
-  } catch (e) {}
+  } catch {}
 }
 
 function pingServer(url, timeoutMs = 1200) {
   return new Promise((resolve) => {
     const req = http.get(url, (res) => {
-      resolve(true);
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const payload = JSON.parse(body);
+          resolve(res.statusCode === 200 && payload.service === 'marsam' && payload.status === 'ok');
+        } catch {
+          resolve(false);
+        }
+      });
     });
     req.on('error', () => resolve(false));
     req.setTimeout(timeoutMs, () => {
@@ -64,7 +75,13 @@ function getStandaloneDir() {
 }
 
 async function startStandaloneServer() {
-  const isAlive = await pingServer(APP_URL);
+  if (serverProcess && serverProcess.exitCode === null) {
+    logMessage('Standalone server process is already running; waiting for its health endpoint.');
+    return;
+  }
+
+  const healthUrl = `${APP_URL}/api/health`;
+  const isAlive = await pingServer(healthUrl);
   if (isAlive) {
     logMessage(`Server is already alive on ${APP_URL}`);
     return;
@@ -90,6 +107,7 @@ async function startStandaloneServer() {
     PORT: String(PORT),
     HOSTNAME: HOST,
     NODE_ENV: 'production',
+    MARSAM_DESKTOP: '1',
     ELECTRON_RUN_AS_NODE: '1'
   });
 
@@ -100,15 +118,22 @@ async function startStandaloneServer() {
     windowsHide: true
   });
 
-  if (serverProcess.stdout) {
-    serverProcess.stdout.on('data', (d) => logMessage(`[Next.js Server] ${d.toString().trim()}`));
+  const spawnedServer = serverProcess;
+
+  spawnedServer.on('error', (error) => {
+    logMessage(`ERROR: Could not start standalone server: ${error.stack || error.message}`);
+  });
+
+  if (spawnedServer.stdout) {
+    spawnedServer.stdout.on('data', (d) => logMessage(`[Next.js Server] ${d.toString().trim()}`));
   }
-  if (serverProcess.stderr) {
-    serverProcess.stderr.on('data', (d) => logMessage(`[Next.js Error] ${d.toString().trim()}`));
+  if (spawnedServer.stderr) {
+    spawnedServer.stderr.on('data', (d) => logMessage(`[Next.js Error] ${d.toString().trim()}`));
   }
 
-  serverProcess.on('exit', (code, signal) => {
+  spawnedServer.on('exit', (code, signal) => {
     logMessage(`Server process exited with code ${code}, signal ${signal}`);
+    if (serverProcess === spawnedServer) serverProcess = null;
   });
 }
 
@@ -120,7 +145,7 @@ function stopServer() {
       if (process.platform === 'win32' && serverProcess.pid) {
         spawn('taskkill', ['/pid', String(serverProcess.pid), '/f', '/t']);
       }
-    } catch (e) {}
+    } catch {}
     serverProcess = null;
   }
 }
@@ -190,6 +215,72 @@ const splashHtml = `
   </html>
 `;
 
+const startupErrorHtml = `
+  <!DOCTYPE html>
+  <html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8">
+    <title>تعذر تشغيل مرسم</title>
+    <style>
+      body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: "Segoe UI", sans-serif; background: #f8fafc; color: #0f172a; }
+      .card { max-width: 520px; padding: 36px; border: 1px solid #e2e8f0; border-radius: 16px; background: white; text-align: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,.05); }
+      h1 { color: #1d4ed8; font-size: 22px; }
+      p { color: #64748b; line-height: 1.8; }
+      a { display: inline-block; margin-top: 12px; padding: 11px 22px; border-radius: 10px; background: #1d4ed8; color: white; text-decoration: none; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>تعذر تشغيل مرسم</h1>
+      <p>لم يستجب الخادم المحلي بعد. أعد المحاولة، وإذا تكرر الخطأ أرسل سجل التشغيل للدعم.</p>
+      <a href="marsam://retry">إعادة المحاولة</a>
+    </main>
+  </body>
+  </html>
+`;
+
+let startupAttemptInProgress = false;
+
+async function waitForServerReady(timeoutMs = 60000) {
+  const deadline = Date.now() + timeoutMs;
+  const healthUrl = `${APP_URL}/api/health`;
+
+  while (mainWindow && Date.now() < deadline) {
+    if (await pingServer(healthUrl, 2500)) return true;
+    if (!serverProcess && Date.now() + 1000 < deadline) {
+      await startStandaloneServer();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  }
+
+  return false;
+}
+
+async function connectToApp() {
+  if (!mainWindow || startupAttemptInProgress) return;
+  startupAttemptInProgress = true;
+
+  try {
+    await startStandaloneServer();
+    const serverReady = await waitForServerReady();
+
+    if (serverReady && mainWindow) {
+      logMessage('Health endpoint responded successfully, loading app URL...');
+      await mainWindow.loadURL(APP_URL);
+    } else if (mainWindow) {
+      logMessage('ERROR: Health endpoint did not respond within 60 seconds.');
+      await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(startupErrorHtml));
+    }
+  } catch (error) {
+    logMessage(`ERROR: Desktop startup failed: ${error.stack || error.message}`);
+    if (mainWindow) {
+      await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(startupErrorHtml));
+    }
+  } finally {
+    startupAttemptInProgress = false;
+  }
+}
+
 async function createWindow() {
   const iconPath = app.isPackaged
     ? path.join(process.resourcesPath, 'public', 'icon.ico')
@@ -215,27 +306,13 @@ async function createWindow() {
   // Show splash immediately
   mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(splashHtml));
 
-  // Smart polling loader: waits for the server to be completely healthy before loading
-  let serverReady = false;
-  let attempts = 0;
-  const maxAttempts = 35;
-
-  while (!serverReady && attempts < maxAttempts) {
-    serverReady = await pingServer(APP_URL);
-    if (!serverReady) {
-      await new Promise((r) => setTimeout(r, 800));
-      attempts++;
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url === 'marsam://retry') {
+      event.preventDefault();
+      mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(splashHtml));
+      void connectToApp();
     }
-  }
-
-  if (serverReady) {
-    logMessage('Server responded successfully, loading app URL...');
-    mainWindow.loadURL(APP_URL).catch((err) => {
-      logMessage(`Failed to load URL: ${err}`);
-    });
-  } else {
-    logMessage('ERROR: Server did not respond after maximum attempts.');
-  }
+  });
 
   // Open external links in default web browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -246,9 +323,13 @@ async function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  void connectToApp();
 }
 
 app.whenReady().then(async () => {
+  if (!gotTheLock) return;
+
   await startStandaloneServer();
   await createWindow();
 

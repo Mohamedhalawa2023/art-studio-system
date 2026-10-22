@@ -1,30 +1,30 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useMarsam } from '@/lib/store';
+import type { Payment, Student } from '@/lib/mockData';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { Pagination } from '@/components/common/Pagination';
+import { PaymentReceiptModal, type CoursePaymentReceipt } from '@/components/finance/PaymentReceiptModal';
 import {
-  Users, Search, Plus, QrCode, Phone, Baby, ChevronRight,
-  FileText, CreditCard, Award, Calendar, CheckCircle, Clock,
-  AlertCircle, Printer, X, Shield, Sparkles, HeartPulse, Camera
+  Users, Search, Plus, QrCode,
+  FileText, CreditCard, Award, Clock,
+  Printer, X, Shield, HeartPulse, Pencil, Trash2
 } from 'lucide-react';
 import ArtDiplomaModal from '@/components/diploma/ArtDiplomaModal';
 
 export default function StudentsPage() {
   const {
     students, users, enrollments, courses, groups, installments, payments,
-    progress, settings, addStudentWithEnrollment, addCoursePayment
+    progress, settings, addStudentWithEnrollment, addCoursePayment, updateStudent, deleteStudent
   } = useMarsam();
 
   const [search, setSearch] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!selectedStudentId && students.length > 0) {
-      setSelectedStudentId(students[0].id);
-    }
-  }, [students, selectedStudentId]);
+  const activeStudentId = selectedStudentId ?? students[0]?.id ?? null;
   const [profileTab, setProfileTab] = useState<'info' | 'contract' | 'financials' | 'progress'>('info');
+  const [isEditingStudent, setIsEditingStudent] = useState(false);
+  const [studentEditError, setStudentEditError] = useState('');
+  const [studentDraft, setStudentDraft] = useState({ name: '', birthDate: '', level: '', guardianName: '', guardianPhone: '', guardianEmail: '', healthNotes: '', publishConsent: false });
   const [studentPage, setStudentPage] = useState(1);
   const STUDENTS_PER_PAGE = 15;
 
@@ -33,10 +33,11 @@ export default function StudentsPage() {
 
   // Luxury Art Diploma Modal State
   const [showDiplomaModal, setShowDiplomaModal] = useState(false);
-  const [diplomaStudent, setDiplomaStudent] = useState<any>(null);
+  const [diplomaStudent, setDiplomaStudent] = useState<Student | null>(null);
 
   // Add Student Modal State
   const [showAddModal, setShowAddModal] = useState(false);
+  const [contractAccepted, setContractAccepted] = useState(false);
   const [newStudentData, setNewStudentData] = useState({
     name: '',
     birthDate: '2016-05-10',
@@ -47,10 +48,20 @@ export default function StudentsPage() {
     groupId: 'g1',
     totalAmount: 1200,
     initialPayment: 600,
-    paymentMethod: 'cash' as const,
+    paymentMethod: 'cash' as Payment['method'],
     healthNotes: '',
-    publishConsent: true
+    publishConsent: false
   });
+  const groupCapacity = (group: typeof groups[number]) =>
+    Number.isSafeInteger(group.capacity) && group.capacity > 0 ? group.capacity : 10;
+  const isGroupAvailable = (group: typeof groups[number]) =>
+    group.status !== 'completed' && (group.enrolled || 0) < groupCapacity(group);
+  const availableGroups = groups.filter(isGroupAvailable);
+  const selectedGroupId = newStudentData.groupId === ''
+    ? ''
+    : availableGroups.some(group => group.id === newStudentData.groupId)
+      ? newStudentData.groupId
+      : availableGroups[0]?.id || '';
 
   // Quick Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -59,10 +70,8 @@ export default function StudentsPage() {
   const [payNotes, setPayNotes] = useState('');
 
   // Receipt Modal State
-  const [receiptData, setReceiptData] = useState<any>(null);
+  const [receiptData, setReceiptData] = useState<CoursePaymentReceipt | null>(null);
 
-  // Guardians
-  const guardians = users.filter(u => u.role === 'guardian');
   const filteredStudents = useMemo(() => {
     return students.filter(s => {
       const guardian = users.find(u => u.id === s.guardianId);
@@ -75,7 +84,7 @@ export default function StudentsPage() {
     return filteredStudents.slice(start, start + STUDENTS_PER_PAGE);
   }, [filteredStudents, studentPage]);
 
-  const selectedStudent = students.find(s => s.id === selectedStudentId);
+  const selectedStudent = students.find(s => s.id === activeStudentId);
   const selectedGuardian = selectedStudent ? users.find(u => u.id === selectedStudent.guardianId) : null;
   const studentEnrollments = selectedStudent ? enrollments.filter(e => e.studentId === selectedStudent.id) : [];
   const primaryEnrollment = studentEnrollments[0];
@@ -86,10 +95,51 @@ export default function StudentsPage() {
   const studentPayments = primaryEnrollment ? payments.filter(p => p.enrollmentId === primaryEnrollment.id) : [];
   const studentProgress = selectedStudent ? progress.filter(p => p.studentId === selectedStudent.id) : [];
 
+  const beginStudentEdit = () => {
+    if (!selectedStudent) return;
+    setStudentDraft({
+      name: selectedStudent.name,
+      birthDate: selectedStudent.birthDate,
+      level: selectedStudent.level || '',
+      guardianName: selectedGuardian?.name || '',
+      guardianPhone: selectedGuardian?.phone || '',
+      guardianEmail: selectedGuardian?.email || '',
+      healthNotes: selectedStudent.healthNotes || '',
+      publishConsent: selectedStudent.publishConsent,
+    });
+    setStudentEditError('');
+    setIsEditingStudent(true);
+    setProfileTab('info');
+  };
+
+  const saveStudentEdit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedStudent) return;
+    try {
+      updateStudent(selectedStudent.id, studentDraft);
+      setIsEditingStudent(false);
+      setStudentEditError('');
+    } catch (error) { setStudentEditError(error instanceof Error ? error.message : 'تعذر حفظ بيانات الطالب.'); }
+  };
+
+  const removeStudent = () => {
+    if (!selectedStudent || !window.confirm(`حذف ملف الطالب «${selectedStudent.name}»؟ سيتم حذف السجلات الدراسية التابعة، مع الاحتفاظ بالملف إذا كانت له إيصالات مالية.`)) return;
+    try {
+      deleteStudent(selectedStudent.id);
+      setSelectedStudentId(null);
+      setIsEditingStudent(false);
+      setStudentEditError('');
+    } catch (error) { setStudentEditError(error instanceof Error ? error.message : 'تعذر حذف الطالب.'); }
+  };
+
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStudentData.name.trim() || !newStudentData.guardianName.trim() || !newStudentData.guardianPhone.trim()) {
       alert('برجاء استكمال اسم الطالب، واسم ولي الأمر، ورقم هاتفه');
+      return;
+    }
+    if (selectedGroupId && !contractAccepted) {
+      alert('يرجى قراءة بنود التعاقد وتسجيل موافقة ولي الأمر قبل إنشاء الاشتراك.');
       return;
     }
 
@@ -100,7 +150,8 @@ export default function StudentsPage() {
         guardianName: newStudentData.guardianName,
         guardianPhone: newStudentData.guardianPhone,
         guardianEmail: newStudentData.guardianEmail,
-        groupId: newStudentData.groupId,
+        groupId: selectedGroupId,
+        contractAccepted,
         totalAmount: Number(newStudentData.totalAmount),
         initialPayment: Number(newStudentData.initialPayment),
         paymentMethod: newStudentData.paymentMethod,
@@ -110,6 +161,16 @@ export default function StudentsPage() {
       });
 
       setShowAddModal(false);
+      setContractAccepted(false);
+      setNewStudentData(current => ({
+        ...current,
+        name: '',
+        guardianName: '',
+        guardianPhone: '',
+        guardianEmail: '',
+        healthNotes: '',
+        publishConsent: false,
+      }));
       setSelectedStudentId(student.id);
       setProfileTab('contract');
 
@@ -118,7 +179,7 @@ export default function StudentsPage() {
           receiptNumber: payment.receiptNumber,
           date: payment.date,
           studentName: student.name,
-          courseName: courses.find(c => c.id === groups.find(g => g.id === newStudentData.groupId)?.courseId)?.name || 'دورة تدريبية',
+          courseName: courses.find(c => c.id === groups.find(g => g.id === selectedGroupId)?.courseId)?.name || 'دورة تدريبية',
           amount: payment.amount,
           remaining: Math.max(0, Number(newStudentData.totalAmount) - Number(newStudentData.initialPayment)),
           method: payment.method
@@ -134,7 +195,7 @@ export default function StudentsPage() {
       const payment = addCoursePayment({
         enrollmentId: primaryEnrollment.id,
         amount: payAmount,
-        method: payMethod as any,
+        method: payMethod,
         notes: payNotes
       });
 
@@ -165,8 +226,8 @@ export default function StudentsPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
-          className="btn bg-[#0D9488] hover:bg-[#0F766E] text-white flex items-center gap-2 shadow-md shadow-[#0D9488]/30 rounded-xl transition-all font-bold text-xs py-2.5 px-4"
+          onClick={() => { setContractAccepted(false); setShowAddModal(true); }}
+          className="btn btn-primary flex items-center gap-2 shadow-md shadow-blue-600/20"
         >
           <Plus size={18} />
           تسجيل طالب جديد
@@ -201,12 +262,12 @@ export default function StudentsPage() {
               const guardian = users.find(u => u.id === student.guardianId);
               const enr = enrollments.find(e => e.studentId === student.id);
               const remaining = enr ? Math.max(0, enr.totalAmount - enr.totalPaid) : 0;
-              const isSelected = selectedStudentId === student.id;
+              const isSelected = activeStudentId === student.id;
 
               return (
                 <div
                   key={student.id}
-                  onClick={() => setSelectedStudentId(student.id)}
+                  onClick={() => { setSelectedStudentId(student.id); setIsEditingStudent(false); setStudentEditError(''); }}
                   className={`p-3.5 rounded-xl cursor-pointer transition-all border ${isSelected ? 'border-[#0D9488] bg-[#111827] shadow-md shadow-[#0D9488]/20' : 'border-[#2A3B56] bg-[#1B2537] hover:border-[#0D9488]/60'}`}
                 >
                   <div className="flex items-center gap-3">
@@ -264,6 +325,7 @@ export default function StudentsPage() {
         <div className="lg:col-span-2">
           {selectedStudent ? (
             <div className="p-6 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-6">
+              {studentEditError && !isEditingStudent && <p role="alert" className="text-xs text-red-400">{studentEditError}</p>}
               {/* Profile Header */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between pb-4 border-b border-[#2A3B56] gap-4">
                 <div className="flex items-center gap-4">
@@ -285,6 +347,8 @@ export default function StudentsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={beginStudentEdit} className="btn btn-secondary text-xs flex items-center gap-1.5"><Pencil size={14} />تعديل البيانات</button>
+                  <button type="button" onClick={removeStudent} className="btn btn-secondary text-red-400 text-xs flex items-center gap-1.5"><Trash2 size={14} />حذف الملف</button>
                   <button
                     onClick={() => {
                       setDiplomaStudent(selectedStudent);
@@ -330,6 +394,23 @@ export default function StudentsPage() {
 
               {/* TAB 1: INFO & ID BADGE */}
               {profileTab === 'info' && (
+                isEditingStudent ? (
+                  <form onSubmit={saveStudentEdit} className="space-y-4 rounded-2xl border border-[#2A3B56] bg-[#111827] p-5">
+                    <h3 className="font-bold text-[#F8FAFC]">تعديل ملف الطالب وبيانات ولي الأمر</h3>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <label className="text-xs text-[#CBD5E1]">اسم الطالب<input className="input mt-1" required minLength={3} value={studentDraft.name} onChange={e => setStudentDraft({ ...studentDraft, name: e.target.value })} /></label>
+                      <label className="text-xs text-[#CBD5E1]">تاريخ الميلاد<input className="input mt-1" type="date" required value={studentDraft.birthDate} onChange={e => setStudentDraft({ ...studentDraft, birthDate: e.target.value })} /></label>
+                      <label className="text-xs text-[#CBD5E1]">المستوى<input className="input mt-1" value={studentDraft.level} onChange={e => setStudentDraft({ ...studentDraft, level: e.target.value })} /></label>
+                      <label className="text-xs text-[#CBD5E1]">اسم ولي الأمر<input className="input mt-1" required minLength={3} value={studentDraft.guardianName} onChange={e => setStudentDraft({ ...studentDraft, guardianName: e.target.value })} /></label>
+                      <label className="text-xs text-[#CBD5E1]">هاتف ولي الأمر<input className="input mt-1" required value={studentDraft.guardianPhone} onChange={e => setStudentDraft({ ...studentDraft, guardianPhone: e.target.value })} /></label>
+                      <label className="text-xs text-[#CBD5E1]">بريد ولي الأمر<input className="input mt-1" type="email" value={studentDraft.guardianEmail} onChange={e => setStudentDraft({ ...studentDraft, guardianEmail: e.target.value })} /></label>
+                    </div>
+                    <label className="block text-xs text-[#CBD5E1]">ملاحظات صحية<textarea className="input mt-1" rows={3} value={studentDraft.healthNotes} onChange={e => setStudentDraft({ ...studentDraft, healthNotes: e.target.value })} /></label>
+                    <label className="flex items-center gap-2 text-xs text-[#CBD5E1]"><input type="checkbox" checked={studentDraft.publishConsent} onChange={e => setStudentDraft({ ...studentDraft, publishConsent: e.target.checked })} />موافقة على نشر الأعمال بالمعرض الفني</label>
+                    {studentEditError && <p role="alert" className="text-xs text-red-400">{studentEditError}</p>}
+                    <div className="flex gap-2"><button className="btn btn-primary text-xs" type="submit">حفظ التعديلات</button><button className="btn btn-secondary text-xs" type="button" onClick={() => { setIsEditingStudent(false); setStudentEditError(''); }}>إلغاء</button></div>
+                  </form>
+                ) :
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Student ID Card (Printable) */}
                   <div className="p-6 rounded-2xl border border-[#2A3B56] flex flex-col items-center justify-between text-center relative overflow-hidden bg-[#111827] border-[#2A3B56] text-[#F8FAFC] shadow-sm">
@@ -626,7 +707,7 @@ export default function StudentsPage() {
                 <Plus size={20} className="text-teal-400" />
                 تسجيل طالب جديد واستخراج وثيقة التعاقد
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-[#94A3B8] hover:text-slate-800 p-1">
+              <button onClick={() => { setShowAddModal(false); setContractAccepted(false); }} className="text-[#94A3B8] hover:text-[#F8FAFC] p-1">
                 <X size={18} />
               </button>
             </div>
@@ -637,7 +718,7 @@ export default function StudentsPage() {
                 <h4 className="font-black text-teal-300 text-sm">١. بيانات الطالب</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">اسم الطالب الرباعي *:</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">اسم الطالب الرباعي *:</label>
                     <input
                       className="input text-xs"
                       placeholder="مثال: يوسف خالد إبراهيم"
@@ -647,7 +728,7 @@ export default function StudentsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">تاريخ الميلاد:</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">تاريخ الميلاد:</label>
                     <input
                       type="date"
                       className="input text-xs"
@@ -659,7 +740,7 @@ export default function StudentsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">مستوى الرسم:</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">مستوى الرسم:</label>
                     <select
                       className="input text-xs"
                       value={newStudentData.level}
@@ -671,7 +752,7 @@ export default function StudentsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">ملاحظات صحية (إن وجد):</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">ملاحظات صحية (إن وجد):</label>
                     <input
                       className="input text-xs"
                       placeholder="حساسية، نظارة، الخ"
@@ -687,7 +768,7 @@ export default function StudentsPage() {
                 <h4 className="font-black text-teal-300 text-sm">٢. بيانات ولي الأمر</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">اسم ولي الأمر *:</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">اسم ولي الأمر *:</label>
                     <input
                       className="input text-xs"
                       placeholder="السيد/ة ولي الأمر"
@@ -697,7 +778,7 @@ export default function StudentsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">رقم الهاتف (واتساب) *:</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">رقم الهاتف (واتساب) *:</label>
                     <input
                       className="input text-xs font-mono"
                       placeholder="01xxxxxxxxx"
@@ -713,26 +794,30 @@ export default function StudentsPage() {
               <div className="space-y-2 pt-2 border-t border-[#2A3B56]">
                 <h4 className="font-black text-teal-300 text-sm">٣. الكورس المتفق عليه والماليات</h4>
                 <div>
-                  <label className="block text-slate-600 mb-1 font-bold">اختر الكورس والمجموعة:</label>
+                  <label className="block text-[#CBD5E1] mb-1 font-bold">اختر الكورس والمجموعة:</label>
                   <select
                     className="input text-xs"
-                    value={newStudentData.groupId}
+                    value={selectedGroupId}
                     onChange={e => setNewStudentData({ ...newStudentData, groupId: e.target.value })}
                   >
+                    <option value="">تسجيل الطالب بدون مجموعة الآن</option>
                     {groups.map(g => {
                       const c = courses.find(course => course.id === g.courseId);
+                      const capacity = groupCapacity(g);
+                      const available = isGroupAvailable(g);
                       return (
-                        <option key={g.id} value={g.id}>
-                          {c?.name} — {g.schedule} ({c?.price} ج)
+                        <option key={g.id} value={g.id} disabled={!available}>
+                          {c?.name} — {g.schedule} ({c?.price} ج) · {available ? `متاح ${capacity - (g.enrolled || 0)} مقعد` : 'المجموعة مكتملة'}
                         </option>
                       );
                     })}
                   </select>
+                  {availableGroups.length === 0 && <p className="mt-1 text-xs text-amber-300">لا توجد مقاعد متاحة حاليًا؛ يمكنك حفظ ملف الطالب وإلحاقه بمجموعة لاحقًا.</p>}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">إجمالي الرسوم (ج):</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">إجمالي الرسوم (ج):</label>
                     <input
                       type="number"
                       className="input text-xs font-black text-[#F8FAFC]"
@@ -741,7 +826,7 @@ export default function StudentsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">المدفوع الآن (مقدم):</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">المدفوع الآن (مقدم):</label>
                     <input
                       type="number"
                       className="input text-xs font-black text-teal-300"
@@ -750,33 +835,49 @@ export default function StudentsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 mb-1 font-bold">طريقة الدفع:</label>
+                    <label className="block text-[#CBD5E1] mb-1 font-bold">طريقة الدفع:</label>
                     <select
                       className="input text-xs"
                       value={newStudentData.paymentMethod}
-                      onChange={e => setNewStudentData({ ...newStudentData, paymentMethod: e.target.value as any })}
+                      onChange={e => setNewStudentData({ ...newStudentData, paymentMethod: e.target.value as Payment['method'] })}
                     >
                       <option value="cash">نقداً (كاش)</option>
+                      <option value="transfer">تحويل بنكي</option>
                       <option value="instapay">انستاباي</option>
                       <option value="vodafone">فودافون كاش</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-blue-900">
+                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-[#CBD5E1]">
                   سيتم توليد باركود تلقائي للطالب وعقد اشتراك رسمي، وتقسيم المتبقي ({Math.max(0, newStudentData.totalAmount - newStudentData.initialPayment)} ج) على قسطين تلقائياً.
                 </div>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-[#2A3B56] bg-[#111827] p-4">
+                <details>
+                  <summary className="cursor-pointer font-bold text-[#F8FAFC]">قراءة بنود التعاقد</summary>
+                  <p className="mt-3 whitespace-pre-line leading-6 text-[#CBD5E1]">{settings.contractTerms}</p>
+                </details>
+                <label className="flex items-start gap-2 border-t border-[#2A3B56] pt-3 text-[#CBD5E1]">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4 accent-teal-700" checked={contractAccepted} onChange={event => setContractAccepted(event.target.checked)} />
+                  <span>أقر بأن ولي الأمر اطّلع على بنود التعاقد ووافق عليها.</span>
+                </label>
               </div>
 
               <div className="pt-3 border-t border-[#2A3B56] flex gap-2">
                 <button
                   type="submit"
-                  disabled={isAddingStudent}
+                  disabled={isAddingStudent || Boolean(selectedGroupId && !contractAccepted)}
                   className="btn btn-primary bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex-1 py-2.5 font-bold shadow-sm flex items-center justify-center gap-2"
                 >
-                  {isAddingStudent ? 'جاري الحفظ والتعاقد...' : 'حفظ الطالب واستخراج وثيقة التعاقد'}
+                  {isAddingStudent
+                    ? 'جاري حفظ التسجيل...'
+                    : selectedGroupId && !contractAccepted
+                      ? 'وافق على العقد لإتمام التسجيل'
+                      : 'حفظ الطالب وتسجيل الموافقة'}
                 </button>
-                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-secondary border-[#2A3B56]">
+                <button type="button" onClick={() => { setShowAddModal(false); setContractAccepted(false); }} className="btn btn-secondary border-[#2A3B56]">
                   إلغاء
                 </button>
               </div>
@@ -820,9 +921,10 @@ export default function StudentsPage() {
                 <select
                   className="input text-xs"
                   value={payMethod}
-                  onChange={e => setPayMethod(e.target.value as any)}
+                  onChange={e => setPayMethod(e.target.value as typeof payMethod)}
                 >
                   <option value="cash">نقداً (كاش)</option>
+                  <option value="transfer">تحويل بنكي</option>
                   <option value="instapay">انستاباي</option>
                   <option value="vodafone">فودافون كاش</option>
                   <option value="transfer">تحويل بنكي</option>
@@ -858,72 +960,11 @@ export default function StudentsPage() {
 
       {/* ================= MODAL: PRINTABLE RECEIPT ================= */}
       {receiptData && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-[#F8FAFC] rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-teal-500/20">
-            <button
-              onClick={() => setReceiptData(null)}
-              className="absolute top-4 left-4 text-[#94A3B8] hover:text-slate-800 p-1"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="space-y-4">
-              <div className="text-center border-b pb-4">
-                <h2 className="text-xl font-black text-blue-900">{settings.name}</h2>
-                <p className="text-xs text-slate-600 mt-0.5">إيصال سداد رسوم تدريبية</p>
-                <p className="text-xs text-[#94A3B8]">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-teal-500/10 px-3 py-1 rounded text-xs font-mono font-bold text-blue-800 border border-teal-500/20">
-                  إيصال رقم: {receiptData.receiptNumber}
-                </div>
-              </div>
-
-              <div className="text-xs space-y-2 text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-[#2A3B56]">
-                <div className="flex justify-between">
-                  <span>اسم الطالب:</span>
-                  <strong className="text-[#F8FAFC]">{receiptData.studentName}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span>الدورة التدريبية:</span>
-                  <span className="font-semibold text-slate-800">{receiptData.courseName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>التاريخ والوقت:</span>
-                  <span className="font-mono text-slate-700">{receiptData.date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>طريقة السداد:</span>
-                  <span className="font-semibold text-teal-300">{receiptData.method}</span>
-                </div>
-              </div>
-
-              <div className="border-t border-b border-[#2A3B56] py-3 flex justify-between items-center">
-                <span className="font-black text-sm text-[#F8FAFC]">المبلغ المدفوع:</span>
-                <span className="font-black text-2xl text-teal-300">{receiptData.amount} ج</span>
-              </div>
-
-              <div className="flex justify-between text-xs text-slate-600">
-                <span>المتبقي بعد هذا السداد:</span>
-                <strong className="text-slate-800 font-bold">{receiptData.remaining} ج</strong>
-              </div>
-
-              <p className="text-center text-[10px] text-[#94A3B8] pt-2 border-t border-[#2A3B56]">
-                هذا الإيصال معتمد رسمي من إدارة المرسم ومسجل بالسجلات المحاسبية
-              </p>
-            </div>
-
-            <div className="mt-5 pt-3 border-t border-[#2A3B56] flex gap-2">
-              <button
-                onClick={() => window.print()}
-                className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white flex-1 flex items-center justify-center gap-1.5 shadow-sm"
-              >
-                <Printer size={16} /> طباعة إيصال الدفع
-              </button>
-              <button onClick={() => setReceiptData(null)} className="btn btn-secondary border-[#2A3B56]">
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
+        <PaymentReceiptModal
+          receipt={receiptData}
+          settings={settings}
+          onClose={() => setReceiptData(null)}
+        />
       )}
 
       {/* ================= A4 LUXURY ART DIPLOMA MODAL ================= */}
@@ -933,7 +974,7 @@ export default function StudentsPage() {
           setShowDiplomaModal(false);
           setDiplomaStudent(null);
         }}
-        student={diplomaStudent || selectedStudent}
+        student={diplomaStudent || selectedStudent || null}
         courseTitle={primaryCourse?.name || 'دورة الفنون التشكيلية الاحترافية'}
         branchName={settings.address ? settings.address.split('—')[0].trim() : 'المقر الرئيسي'}
       />

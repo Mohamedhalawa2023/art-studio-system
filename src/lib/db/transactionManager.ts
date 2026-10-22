@@ -6,8 +6,8 @@
 
 import {
   Student, User, Course, Group, Session, Enrollment,
-  Installment, Payment, Attendance, Progress, SupplyItem,
-  SupplySale, PortfolioItem
+  Installment, Payment, OperatingExpense, Attendance, Progress, SupplyItem,
+  SupplySale, PortfolioItem, Announcement, mockAnnouncements
 } from '@/lib/mockData';
 import { logger } from '@/lib/logger/logger';
 import { AcademySettings } from '@/lib/store';
@@ -21,13 +21,28 @@ export interface DatabaseState {
   enrollments: Enrollment[];
   installments: Installment[];
   payments: Payment[];
+  expenses: OperatingExpense[];
   attendance: Attendance[];
   progress: Progress[];
   supplyItems: SupplyItem[];
   supplySales: SupplySale[];
   portfolio: PortfolioItem[];
-  customDiplomas: Record<string, any>;
+  announcements: Announcement[];
+  customDiplomas: Record<string, unknown>;
   settings: AcademySettings;
+}
+
+/** Adds newly introduced collections while loading databases created by older releases. */
+export function normalizeDatabaseState(value: unknown): DatabaseState {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('بيانات قاعدة البيانات غير صالحة.');
+  }
+  const state = value as Partial<DatabaseState>;
+  return {
+    ...state,
+    announcements: Array.isArray(state.announcements) ? state.announcements : mockAnnouncements,
+    expenses: Array.isArray(state.expenses) ? state.expenses : [],
+  } as DatabaseState;
 }
 
 export interface DatabaseIndexes {
@@ -42,7 +57,7 @@ export interface DatabaseIndexes {
 }
 
 export class TransactionError extends Error {
-  constructor(message: string, public details?: any) {
+  constructor(message: string, public details?: unknown) {
     super(message);
     this.name = 'TransactionError';
   }

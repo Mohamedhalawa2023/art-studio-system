@@ -1,23 +1,41 @@
 'use client';
 
 import { useMarsam } from '@/lib/store';
+import { useEffect, useState } from 'react';
 import {
   Users, CreditCard, ShoppingBag, AlertCircle,
-  ArrowUpRight, Plus, Barcode, Shield, CheckCircle, Download
+  ArrowUpRight, Plus, Barcode, Shield, CheckCircle, Download, Clock, Wallet
 } from 'lucide-react';
 import Link from 'next/link';
+import { formatLocalDate } from '@/lib/dates';
 
 export default function Dashboard() {
   const {
-    students, enrollments, payments, supplySales, supplyItems,
+    students, enrollments, installments, payments, supplySales, supplyItems,
     settings, exportDatabase
   } = useMarsam();
+  const [today, setToday] = useState<string | null>(null);
+  useEffect(() => {
+    // Next 16 defers current-time reads in Client Components until after prerendering.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setToday(formatLocalDate(new Date()));
+  }, []);
 
   // Financial calculations
   const totalCourseRevenue = payments.filter(p => p.status === 'valid').reduce((s, p) => s + p.amount, 0);
-  const totalSuppliesSales = supplySales.reduce((s, p) => s + p.totalAmount, 0);
-  const totalSuppliesProfit = supplySales.reduce((s, p) => s + p.profit, 0);
-  const overdueEnrollments = enrollments.filter(e => e.paymentStatus === 'overdue' || (e.totalAmount - e.totalPaid > 0 && e.paymentStatus === 'unpaid'));
+  const validSupplySales = supplySales.filter(sale => sale.status !== 'voided');
+  const totalSuppliesSales = validSupplySales.reduce((s, p) => s + p.totalAmount, 0);
+  const totalSuppliesProfit = validSupplySales.reduce((s, p) => s + p.profit, 0);
+  const outstandingAmount = (installment: typeof installments[number]) => Math.max(
+    0,
+    (installment.originalAmount ?? installment.amount) - (installment.paidAmount ?? (installment.status === 'paid' ? installment.amount : 0))
+  );
+  const overdueInstallments = today ? installments.filter(installment =>
+    installment.status !== 'paid' && installment.dueDate < today && outstandingAmount(installment) > 0
+  ) : [];
+  const upcomingInstallments = today ? installments.filter(installment =>
+    installment.status !== 'paid' && installment.dueDate >= today && outstandingAmount(installment) > 0
+  ) : [];
   const totalRemainingTuition = enrollments.reduce((acc, e) => acc + Math.max(0, e.totalAmount - e.totalPaid), 0);
 
   return (
@@ -60,7 +78,7 @@ export default function Dashboard() {
       </div>
 
       {/* 2. KPI Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3.5">
         {/* Total Students */}
         <Link
           href="/students"
@@ -94,7 +112,7 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl md:text-3xl font-black text-[#D97706] mt-1 font-mono">{totalCourseRevenue.toLocaleString()} ج</p>
           <p className="text-xs text-[#94A3B8] mt-1.5 font-medium">
-            متبقي أقساط: <strong className="text-[#2DD4BF] font-mono">{totalRemainingTuition.toLocaleString()} ج</strong>
+            صافي الدفعات بعد قيود الرد والتصحيح
           </p>
         </Link>
 
@@ -129,11 +147,35 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-black text-[#EF4444] mt-1 font-mono">
-            {overdueEnrollments.length}
+            {overdueInstallments.length}
           </p>
           <p className="text-xs mt-1.5 font-bold text-[#FCA5A5] flex items-center gap-1">
-            <span>⚠ أطلب المتابعة والتحصيل</span>
+            <span>⚠ أقساط لها رصيد وموعدها عدى</span>
           </p>
+        </Link>
+
+        {/* Upcoming installments */}
+        <Link href="/payments" prefetch={true} className="p-4 rounded-2xl border border-[#D97706] bg-[#422006] hover:border-amber-400 transition-all group shadow-sm block text-right">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-xs font-bold text-[#FCD34D]">أقساط قادمة</span>
+            <div className="w-8 h-8 rounded-xl bg-[#2B1705] border border-[#D97706] text-[#F59E0B] flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Clock size={16} />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-black text-[#F59E0B] mt-1 font-mono">{upcomingInstallments.length}</p>
+          <p className="text-xs text-[#FCD34D] mt-1.5 font-bold">موعدها اليوم أو لم يأتِ بعد</p>
+        </Link>
+
+        {/* Total remaining receivables, including future installments */}
+        <Link href="/payments" prefetch={true} className="p-4 rounded-2xl border border-[#2A3B56] bg-[#1B2537] hover:border-[#0D9488] transition-all group shadow-sm block text-right">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-xs font-bold text-[#94A3B8]">إجمالي المتبقي المستحق</span>
+            <div className="w-8 h-8 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Wallet size={16} />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-black text-[#2DD4BF] mt-1 font-mono">{totalRemainingTuition.toLocaleString()} ج</p>
+          <p className="text-xs text-[#94A3B8] mt-1.5 font-medium">رصيد كل الاشتراكات الحالية</p>
         </Link>
       </div>
 
@@ -167,9 +209,9 @@ export default function Dashboard() {
                           {student?.name || 'طالب'}
                         </strong>
                       </div>
-                      <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{pay.method} - {pay.date}</p>
+                      <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{pay.reversalOf ? 'رد / تصحيح • ' : ''}{pay.method} - {pay.date}</p>
                     </div>
-                    <span className="font-black text-sm text-[#2DD4BF] font-mono shrink-0 mr-3">+{pay.amount} ج</span>
+                    <span className={`font-black text-sm font-mono shrink-0 mr-3 ${pay.amount < 0 ? 'text-red-400' : 'text-[#2DD4BF]'}`}>{pay.amount < 0 ? '−' : '+'}{Math.abs(pay.amount).toLocaleString()} ج</span>
                   </div>
                 );
               })}
@@ -177,7 +219,7 @@ export default function Dashboard() {
           </div>
 
           <div className="pt-3 border-t border-[#2A3B56] flex items-center justify-between text-xs text-[#94A3B8] mt-3">
-            <span>إجمالي الإيصالات المسجلة: {payments.length}</span>
+            <span>الإيصالات الأصلية: {payments.filter(payment => !payment.reversalOf).length}</span>
             <Link href="/payments" prefetch={true} className="text-[#2DD4BF] font-bold hover:underline">
               طباعة إيصال جديد ⌵
             </Link>
@@ -211,10 +253,11 @@ export default function Dashboard() {
                       <span className="badge text-[10px] shrink-0 bg-[#0D9488]/20 text-[#2DD4BF] border border-[#0D9488]/40">
                         {sale.items.length} صنف
                       </span>
+                      {sale.status === 'voided' && <span className="badge badge-danger text-[10px]">ملغاة</span>}
                     </div>
-                    <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{sale.date} • ربح: +{sale.profit} ج</p>
+                    <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{sale.date}{sale.status === 'voided' ? ' • أُعيدت للمخزون' : ` • ربح: +${sale.profit} ج`}</p>
                   </div>
-                  <span className="font-black text-sm text-[#D97706] font-mono shrink-0 mr-3">{sale.totalAmount} ج</span>
+                  <span className={`font-black text-sm font-mono shrink-0 mr-3 ${sale.status === 'voided' ? 'text-slate-500 line-through' : 'text-[#D97706]'}`}>{sale.totalAmount} ج</span>
                 </div>
               ))}
             </div>

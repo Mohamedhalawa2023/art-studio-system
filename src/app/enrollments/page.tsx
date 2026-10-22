@@ -1,16 +1,28 @@
 'use client';
 import { useState } from 'react';
 import { useMarsam } from '@/lib/store';
-import { FileText, CheckCircle, Clock, AlertCircle, Plus, Eye } from 'lucide-react';
+import type { Payment } from '@/lib/mockData';
+import { PaymentReceiptModal, type CoursePaymentReceipt } from '@/components/finance/PaymentReceiptModal';
+import { FileText, CheckCircle, Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function EnrollmentsPage() {
-  const { enrollments, students, groups, courses, installments, settings } = useMarsam();
+  const { enrollments, students, groups, courses, settings, currentUser, payments, createEnrollment, updateEnrollment, deleteEnrollment } = useMarsam();
 
   const [step, setStep] = useState<'list' | 'new-step1' | 'new-step2' | 'new-step3'>('list');
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [contractAccepted, setContractAccepted] = useState(false);
   const [paymentPlan, setPaymentPlan] = useState<'full' | 'installments'>('installments');
+  const [paymentMethod, setPaymentMethod] = useState<Payment['method']>('cash');
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackIsError, setFeedbackIsError] = useState(false);
+  const [receipt, setReceipt] = useState<CoursePaymentReceipt | null>(null);
+  const [editingEnrollmentId, setEditingEnrollmentId] = useState<string | null>(null);
+  const [editGroupId, setEditGroupId] = useState('');
+  const [editContractAccepted, setEditContractAccepted] = useState(false);
+  const [editTotalAmount, setEditTotalAmount] = useState(0);
 
   const contractText = settings.contractTerms || `بنود التعاقد مع مرسم الإبداع:
 ١. يلتزم الطالب بحضور الحصص في المواعيد المحددة.
@@ -20,6 +32,66 @@ export default function EnrollmentsPage() {
 ٥. المرسم مسؤول عن توفير بيئة تعليمية آمنة ومعتمدة.`;
 
   const uniqueCourses = courses;
+
+  const confirmEnrollment = () => {
+    if (!selectedStudentId || !selectedGroupId || !contractAccepted || isSaving) return;
+    setIsSaving(true);
+    try {
+      const { enrollment, payment } = createEnrollment({
+        studentId: selectedStudentId,
+        groupId: selectedGroupId,
+        paymentPlan,
+        paymentMethod,
+        contractAccepted,
+        recordedBy: currentUser?.id,
+      });
+      const student = students.find(item => item.id === enrollment.studentId);
+      const group = groups.find(item => item.id === enrollment.groupId);
+      const course = courses.find(item => item.id === group?.courseId);
+      setFeedback('تم حفظ الحجز وخطة السداد بنجاح.');
+      setFeedbackIsError(false);
+      if (payment) {
+        setReceipt({
+          receiptNumber: payment.receiptNumber,
+          date: payment.date,
+          studentName: student?.name || 'الطالب',
+          courseName: course?.name || 'دورة تدريبية',
+          amount: payment.amount,
+          remaining: Math.max(0, enrollment.totalAmount - enrollment.totalPaid),
+          method: payment.method,
+          notes: payment.notes,
+        });
+      }
+      setStep('list');
+      setSelectedStudentId('');
+      setSelectedCourseId('');
+      setSelectedGroupId('');
+      setContractAccepted(false);
+    } catch {
+      // The store reports a localized validation message and rolls back the transaction.
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveEnrollmentEdit = () => {
+    if (!editingEnrollmentId || !editGroupId) return;
+    try {
+      updateEnrollment(editingEnrollmentId, { groupId: editGroupId, contractAccepted: editContractAccepted, totalAmount: Number(editTotalAmount) });
+      setEditingEnrollmentId(null);
+      setFeedback('تم تحديث الاشتراك بنجاح.');
+      setFeedbackIsError(false);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : 'تعذر تعديل الاشتراك.');
+      setFeedbackIsError(true);
+    }
+  };
+
+  const removeEnrollment = (id: string) => {
+    if (!window.confirm('حذف الاشتراك وجدول أقساطه؟ إذا كان له إيصال محفوظ سيحتفظ النظام بالسجل لحماية الحسابات.')) return;
+    try { deleteEnrollment(id); setFeedback('تم حذف الاشتراك.'); setFeedbackIsError(false); }
+    catch (error) { setFeedback(error instanceof Error ? error.message : 'تعذر حذف الاشتراك.'); setFeedbackIsError(true); }
+  };
 
   return (
     <div className="space-y-6">
@@ -32,17 +104,24 @@ export default function EnrollmentsPage() {
           <p className="text-slate-500 text-sm mt-1">{enrollments.length} اشتراك مسجل بقاعدة البيانات</p>
         </div>
         {step === 'list' && (
-          <button className="btn btn-primary text-xs font-bold" onClick={() => setStep('new-step1')}>
+          <button className="btn btn-primary text-xs font-bold" onClick={() => { setFeedback(''); setStep('new-step1'); }}>
             <Plus size={15} />
             حجز جديد
           </button>
         )}
         {step !== 'list' && (
-          <button className="btn btn-secondary text-xs font-bold" onClick={() => { setStep('list'); setContractAccepted(false); }}>
+          <button className="btn btn-secondary text-xs font-bold" onClick={() => { setStep('list'); setContractAccepted(false); setFeedback(''); }}>
             ← رجوع للقائمة
           </button>
         )}
       </div>
+
+      {feedback && step === 'list' && (
+        <div role={feedbackIsError ? 'alert' : 'status'} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold ${feedbackIsError ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+          <span>{feedback}</span>
+          <button type="button" onClick={() => setFeedback('')} className="text-emerald-700">إغلاق</button>
+        </div>
+      )}
 
       {/* Enrollment List */}
       {step === 'list' && (
@@ -74,6 +153,7 @@ export default function EnrollmentsPage() {
                     <th className="p-3.5 font-bold">العقد</th>
                     <th className="p-3.5 font-bold">حالة السداد</th>
                     <th className="p-3.5 font-bold">المدفوع</th>
+                    <th className="p-3.5 font-bold">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -96,9 +176,9 @@ export default function EnrollmentsPage() {
                         <td className="p-3.5 text-slate-500">{group?.schedule || 'مواعيد الدورة'}</td>
                         <td className="p-3.5">
                           {enrollment.contractSigned ? (
-                            <span className="badge badge-teal flex items-center gap-1 w-fit"><CheckCircle size={10} />موقّع إلكترونياً</span>
+                            <span className="badge badge-teal flex items-center gap-1 w-fit"><CheckCircle size={10} />موافقة مسجلة</span>
                           ) : (
-                            <span className="badge badge-danger w-fit">غير موقّع</span>
+                            <span className="badge badge-danger w-fit">بانتظار الموافقة</span>
                           )}
                         </td>
                         <td className="p-3.5">
@@ -118,6 +198,12 @@ export default function EnrollmentsPage() {
                             <p className="text-[10px] text-[#94A3B8]">من إجمالي {enrollment.totalAmount?.toLocaleString()} ج</p>
                           </div>
                         </td>
+                        <td className="p-3.5">
+                          <div className="flex gap-1.5">
+                            <button type="button" className="btn btn-secondary btn-sm text-slate-700 border-slate-300" aria-label={`تعديل اشتراك ${student?.name || 'الطالب'}`} title="تعديل الاشتراك" onClick={() => { setEditingEnrollmentId(enrollment.id); setEditGroupId(enrollment.groupId); setEditContractAccepted(enrollment.contractSigned); setEditTotalAmount(enrollment.totalAmount); }}><Pencil size={13} /></button>
+                            <button type="button" className="btn btn-secondary btn-sm text-red-700 border-slate-300" aria-label={`حذف اشتراك ${student?.name || 'الطالب'}`} title="حذف الاشتراك" onClick={() => removeEnrollment(enrollment.id)}><Trash2 size={13} /></button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -125,6 +211,18 @@ export default function EnrollmentsPage() {
               </table>
             </div>
           </div>
+          {editingEnrollmentId && (
+            <div className="modal-overlay" onClick={() => setEditingEnrollmentId(null)}>
+              <div role="dialog" aria-modal="true" className="bg-[#1B2537] border border-[#2A3B56] shadow-2xl p-6 rounded-2xl w-full max-w-lg space-y-4 text-[#F8FAFC]" onClick={event => event.stopPropagation()}>
+                <h2 className="text-lg font-bold">تعديل الاشتراك</h2>
+                <label className="block text-sm font-semibold">المجموعة<select className="input mt-1" value={editGroupId} onChange={event => setEditGroupId(event.target.value)}>{groups.map(group => <option key={group.id} value={group.id}>{courses.find(course => course.id === group.courseId)?.name || 'كورس'} — {group.schedule}</option>)}</select></label>
+                <label className="block text-sm font-semibold">إجمالي الرسوم<input className="input mt-1" type="number" min="0.01" step="0.01" value={editTotalAmount} onChange={event => setEditTotalAmount(Number(event.target.value))} /></label>
+                {payments.some(payment => payment.enrollmentId === editingEnrollmentId) && <p className="text-xs text-amber-300">إجمالي الرسوم مثبت بعد تسجيل إيصالات؛ يمكن تعديل المجموعة والعقد فقط.</p>}
+                <label className="flex items-center gap-2 text-sm"><input className="accent-teal-400" type="checkbox" checked={editContractAccepted} onChange={event => setEditContractAccepted(event.target.checked)} />تأكيد موافقة العقد</label>
+                <div className="flex gap-2"><button type="button" className="btn btn-primary" onClick={saveEnrollmentEdit}>حفظ</button><button type="button" className="btn btn-secondary" onClick={() => setEditingEnrollmentId(null)}>إلغاء</button></div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -161,7 +259,14 @@ export default function EnrollmentsPage() {
           {/* Step 1 - Course & Group Selection */}
           {step === 'new-step1' && (
             <div className="glass p-6 rounded-2xl border border-slate-200 space-y-5 bg-white">
-              <h2 className="text-lg font-black text-slate-900">١. اختيار الكورس والمجموعة</h2>
+              <h2 className="text-lg font-black text-slate-900">١. اختيار الطالب والكورس والمجموعة</h2>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5">الطالب:</label>
+                <select className="input text-xs" value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)}>
+                  <option value="">اختر الطالب...</option>
+                  {students.map(student => <option key={student.id} value={student.id}>{student.name}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1.5">الكورس التدريبي:</label>
                 <select className="input text-xs" value={selectedCourseId} onChange={e => { setSelectedCourseId(e.target.value); setSelectedGroupId(''); }}>
@@ -175,11 +280,12 @@ export default function EnrollmentsPage() {
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1.5">المجموعة والمواعيد:</label>
                   <div className="grid gap-2.5">
-                    {groups.filter(g => g.courseId === selectedCourseId).map(group => {
+                    {groups.filter(g => g.courseId === selectedCourseId && g.status !== 'completed').map(group => {
                       const available = (group.capacity || 10) - (group.enrolled || 0);
+                      const disabled = available <= 0;
                       return (
-                        <label key={group.id} className={`p-3.5 rounded-xl border cursor-pointer transition-all ${selectedGroupId === group.id ? 'border-teal-500/60 bg-teal-500/10/60' : 'border-slate-200 hover:bg-slate-50'}`}>
-                          <input type="radio" className="sr-only" value={group.id} checked={selectedGroupId === group.id} onChange={() => setSelectedGroupId(group.id)} />
+                        <label key={group.id} className={`p-3.5 rounded-xl border transition-all ${disabled ? 'cursor-not-allowed border-slate-100 bg-slate-50 opacity-60' : `cursor-pointer ${selectedGroupId === group.id ? 'border-teal-500/60 bg-teal-500/10/60' : 'border-slate-200 hover:bg-slate-50'}`}`}>
+                          <input type="radio" className="sr-only" value={group.id} checked={selectedGroupId === group.id} disabled={disabled} onChange={() => setSelectedGroupId(group.id)} />
                           <div className="flex justify-between items-center">
                             <div>
                               <p className="font-bold text-xs text-slate-900">{group.schedule}</p>
@@ -197,7 +303,7 @@ export default function EnrollmentsPage() {
               )}
               <button
                 className="btn btn-primary w-full text-xs font-bold py-2.5"
-                disabled={!selectedCourseId || !selectedGroupId}
+                disabled={!selectedStudentId || !selectedCourseId || !selectedGroupId}
                 onClick={() => setStep('new-step2')}
               >
                 التالي ← عرض وثيقة التعاقد
@@ -211,6 +317,11 @@ export default function EnrollmentsPage() {
               <div className="flex items-center gap-2.5">
                 <FileText size={22} className="text-teal-400" />
                 <h2 className="text-lg font-black text-slate-900">٢. بنود وثيقة التعاقد</h2>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
+                الطالب: <strong>{students.find(student => student.id === selectedStudentId)?.name || '—'}</strong>
+                <span className="mx-2">•</span>
+                الكورس: <strong>{courses.find(course => course.id === selectedCourseId)?.name || '—'}</strong>
               </div>
               <div className="p-4 rounded-xl text-xs leading-relaxed text-slate-800 whitespace-pre-line bg-teal-500/10/30 border border-blue-100">
                 {contractText}
@@ -249,11 +360,11 @@ export default function EnrollmentsPage() {
                   <>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { id: 'full', label: 'سداد كامل', desc: `${price.toLocaleString()} ج دفعة واحدة`, discount: '(خصم 5%)' },
-                        { id: 'installments', label: 'تقسيط ميسر', desc: `3 أقساط × ${Math.round(price/3).toLocaleString()} ج`, discount: '' },
+                        { id: 'full', label: 'سداد كامل', desc: `${Math.round(price * 0.95 * 100) / 100} ج.م دفعة واحدة`, discount: 'خصم 5% مطبق على الإجمالي' },
+                        { id: 'installments', label: 'تقسيط ميسر', desc: `3 أقساط متساوية تقريباً من إجمالي ${price.toLocaleString()} ج.م`, discount: '' },
                       ].map(plan => (
                         <label key={plan.id} className={`p-4 rounded-xl cursor-pointer transition-all text-center border ${paymentPlan === plan.id ? 'border-teal-500/60 bg-teal-500/10/60' : 'border-slate-200 bg-slate-50'}`}>
-                          <input type="radio" className="sr-only" value={plan.id} checked={paymentPlan === plan.id} onChange={() => setPaymentPlan(plan.id as any)} />
+                          <input type="radio" className="sr-only" value={plan.id} checked={paymentPlan === plan.id} onChange={() => setPaymentPlan(plan.id as 'full' | 'installments')} />
                           <p className="font-bold text-xs text-slate-900">{plan.label}</p>
                           <p className="text-[11px] text-slate-500 mt-1">{plan.desc}</p>
                           {plan.discount && <p className="text-[10px] text-teal-300 font-bold mt-0.5">{plan.discount}</p>}
@@ -261,16 +372,26 @@ export default function EnrollmentsPage() {
                       ))}
                     </div>
 
+                    {paymentPlan === 'full' && (
+                      <div>
+                        <label className="mb-1.5 block text-xs font-bold text-slate-600">طريقة سداد الدفعة الكاملة:</label>
+                        <select className="input text-xs" value={paymentMethod} onChange={event => setPaymentMethod(event.target.value as Payment['method'])}>
+                          <option value="cash">نقداً</option>
+                          <option value="transfer">تحويل بنكي</option>
+                          <option value="instapay">إنستاباي</option>
+                          <option value="vodafone">فودافون كاش</option>
+                          <option value="card">بطاقة بنكية</option>
+                        </select>
+                      </div>
+                    )}
+
                     <button
                       className="btn btn-primary w-full text-xs font-bold py-2.5"
-                      onClick={() => {
-                        alert('✅ تم تأكيد خطة السداد وإتمام الحجز!');
-                        setStep('list');
-                        setContractAccepted(false);
-                      }}
+                      disabled={isSaving}
+                      onClick={confirmEnrollment}
                     >
                       <CheckCircle size={16} />
-                      تأكيد وحفظ الحجز
+                      {isSaving ? 'جاري الحفظ...' : 'تأكيد وحفظ الحجز'}
                     </button>
                   </>
                 );
@@ -278,6 +399,14 @@ export default function EnrollmentsPage() {
             </div>
           )}
         </div>
+      )}
+
+      {receipt && (
+        <PaymentReceiptModal
+          receipt={receipt}
+          settings={settings}
+          onClose={() => setReceipt(null)}
+        />
       )}
     </div>
   );

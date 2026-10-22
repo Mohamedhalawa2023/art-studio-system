@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="24" y1="20" x2="232" y2="242" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102D46"/>
+      <stop offset="1" stop-color="#087F83"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="73" y1="48" x2="178" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF5"/>
+      <stop offset="1" stop-color="#E7F4F0"/>
+    </linearGradient>
+    <linearGradient id="brush" x1="145" y1="202" x2="215" y2="111" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9A24B"/>
+      <stop offset="1" stop-color="#F5D27D"/>
+    </linearGradient>
+    <filter id="shadow" x="43" y="32" width="174" height="184" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+  <rect x="12" y="12" width="232" height="232" rx="58" fill="url(#bg)"/>
+  <circle cx="204" cy="55" r="3" fill="#B7F2E6" opacity=".75"/>
+  <circle cx="52" cy="194" r="2.5" fill="#B7F2E6" opacity=".6"/>
+  <path d="M61 59 190 67 181 164 53 156Z" fill="#06293A" opacity=".3" filter="url(#shadow)"/>
+  <path d="M67 47 190 54 181 153 58 146Z" fill="url(#paper)"/>
+  <path d="m78 135 31-35 24 23 17-19 22 31-2 11-92-5Z" fill="#35AFA1"/>
+  <path d="m78 135 31-35 24 23 17-19 22 31" stroke="#167A79" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="151" cy="82" r="12" fill="#F3A253"/>
+  <path d="m88 153-15 56M142 157l17 54M116 157l8 54" stroke="#F6E7C7" stroke-width="8" stroke-linecap="round"/>
+  <path d="m153 198 58-82c4-6 13-1 10 5l-43 91-25-14Z" fill="#F8FCF6"/>
+  <path d="m153 198 58-82c4-6 13-1 10 5l-43 91-25-14Z" stroke="#DDECE6" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m153 198 25 14-8 17c-2 4-7 5-11 3l-12-7c-4-2-5-7-2-11l8-16Z" fill="url(#brush)"/>
+  <path d="m154 197 23 13" stroke="#12334A" stroke-width="5" stroke-linecap="round"/>
+  <path d="m211 116 9-13c3-4 9-2 8 3l-7 15-10-5Z" fill="#F0B369"/>
+</svg>

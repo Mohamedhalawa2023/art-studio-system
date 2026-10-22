@@ -4,7 +4,7 @@
  */
 
 import { Student, Enrollment, Installment, Payment, User } from '@/lib/mockData';
-import { DatabaseEngine } from '@/lib/db/transactionManager';
+import type { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
 import { addLocalCalendarDays, formatLocalDate, formatLocalDateTime } from '@/lib/dates';
@@ -16,9 +16,21 @@ export interface RegisterStudentDTO {
   guardianPhone: string;
   guardianEmail?: string;
   groupId?: string;
+  contractAccepted?: boolean;
   totalAmount?: number;
   initialPayment?: number;
   paymentMethod?: Payment['method'];
+  level?: string;
+  healthNotes?: string;
+  publishConsent?: boolean;
+}
+
+export interface UpdateStudentDTO {
+  name: string;
+  birthDate: string;
+  guardianName: string;
+  guardianPhone: string;
+  guardianEmail?: string;
   level?: string;
   healthNotes?: string;
   publishConsent?: boolean;
@@ -33,7 +45,7 @@ export class StudentService {
    */
   public registerStudentWithEnrollment(
     dto: RegisterStudentDTO,
-    onStateCommit?: (state: any) => void
+    onStateCommit?: (state: DatabaseState) => void
   ): { student: Student; enrollment?: Enrollment; payment?: Payment } {
     return this.db.executeTransaction(
       'REGISTER_STUDENT_ENROLLMENT',
@@ -77,7 +89,7 @@ export class StudentService {
           birthDate: validatedBirthDate,
           level: dto.level || 'المستوى الأول (مبتدئ)',
           healthNotes: dto.healthNotes?.trim() || '',
-          publishConsent: dto.publishConsent ?? true,
+          publishConsent: dto.publishConsent ?? false,
           qrToken
         };
         draft.students.push(newStudent);
@@ -87,9 +99,20 @@ export class StudentService {
         let initialPaymentRecord: Payment | undefined;
 
         if (dto.groupId) {
+          if (!dto.contractAccepted) {
+            throw new Error('يجب تسجيل موافقة ولي الأمر على بنود التعاقد قبل إنشاء الاشتراك.');
+          }
           const group = draft.groups.find(g => g.id === dto.groupId);
           if (!group) {
             throw new Error(`المجموعة المحددة غير صالحة أو غير موجودة (${dto.groupId})`);
+          }
+
+          if (group.status === 'completed') {
+            throw new Error('لا يمكن تسجيل الطالب في مجموعة منتهية.');
+          }
+          const capacity = Number.isSafeInteger(group.capacity) && group.capacity > 0 ? group.capacity : 10;
+          if ((group.enrolled || 0) >= capacity) {
+            throw new Error('المجموعة مكتملة العدد، اختر مجموعة أخرى.');
           }
 
           const course = draft.courses.find(c => c.id === group.courseId);
@@ -119,7 +142,7 @@ export class StudentService {
             studentId: newStudent.id,
             groupId: group.id,
             enrollDate: dateStr,
-            contractSigned: true,
+            contractSigned: dto.contractAccepted === true,
             contractVersion: 'v2.0-2026',
             totalAmount,
             totalPaid: initialPayment,
@@ -178,5 +201,51 @@ export class StudentService {
       },
       onStateCommit
     );
+  }
+
+  public updateStudent(id: string, dto: UpdateStudentDTO, onStateCommit?: (state: DatabaseState) => void): Student {
+    return this.db.executeTransaction('UPDATE_STUDENT', draft => {
+      const student = draft.students.find(item => item.id === id);
+      if (!student) throw new Error('الطالب المطلوب غير موجود.');
+      const name = Validators.requireText(dto.name, 'اسم الطالب', 3, 80);
+      const guardianName = Validators.requireText(dto.guardianName, 'اسم ولي الأمر', 3, 80);
+      const phone = Validators.validatePhone(dto.guardianPhone);
+      const birthDate = Validators.validateDateString(dto.birthDate, 'تاريخ الميلاد');
+      const guardian = draft.users.find(user => user.id === student.guardianId && user.role === 'guardian');
+      if (!guardian) throw new Error('بيانات ولي الأمر المرتبطة بالطالب غير موجودة.');
+      if (draft.users.some(user => user.id !== guardian.id && user.role === 'guardian' && user.phone === phone)) {
+        throw new Error('رقم الهاتف مسجل بالفعل لولي أمر آخر.');
+      }
+      student.name = name;
+      student.birthDate = birthDate;
+      student.level = dto.level?.trim() || '';
+      student.healthNotes = dto.healthNotes?.trim() || '';
+      student.publishConsent = dto.publishConsent === true;
+      guardian.name = guardianName;
+      guardian.phone = phone;
+      guardian.email = dto.guardianEmail?.trim() || `${phone}@marsam.art`;
+      return student;
+    }, onStateCommit);
+  }
+
+  public deleteStudent(id: string, onStateCommit?: (state: DatabaseState) => void): void {
+    this.db.executeTransaction('DELETE_STUDENT', draft => {
+      const student = draft.students.find(item => item.id === id);
+      if (!student) throw new Error('الطالب المطلوب غير موجود.');
+      const enrollmentIds = new Set(draft.enrollments.filter(item => item.studentId === id).map(item => item.id));
+      if (draft.payments.some(item => enrollmentIds.has(item.enrollmentId))) {
+        throw new Error('لا يمكن حذف طالب له إيصالات مالية محفوظة. صحّح الإيصالات بإجراء عكسي، واترك سجل الطالب للمراجعة المالية.');
+      }
+      for (const enrollment of draft.enrollments.filter(item => item.studentId === id)) {
+        const group = draft.groups.find(item => item.id === enrollment.groupId);
+        if (group) group.enrolled = Math.max(0, (group.enrolled || 0) - 1);
+      }
+      draft.enrollments = draft.enrollments.filter(item => item.studentId !== id);
+      draft.installments = draft.installments.filter(item => !enrollmentIds.has(item.enrollmentId));
+      draft.attendance = draft.attendance.filter(item => item.studentId !== id);
+      draft.progress = draft.progress.filter(item => item.studentId !== id);
+      draft.students = draft.students.filter(item => item.id !== id);
+      if (draft.customDiplomas) delete draft.customDiplomas[id];
+    }, onStateCommit);
   }
 }

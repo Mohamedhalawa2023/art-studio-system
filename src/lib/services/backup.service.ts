@@ -6,6 +6,7 @@
 
 import { DatabaseState } from '@/lib/db/transactionManager';
 import { logger } from '@/lib/logger/logger';
+import { mockAnnouncements } from '@/lib/mockData';
 
 export class BackupService {
   /**
@@ -32,7 +33,7 @@ export class BackupService {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+          window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 
           logger.info('BackupService', `Database backup downloaded: ${filename}`);
           resolve();
@@ -71,6 +72,18 @@ export class BackupService {
         }
       }
 
+      // Older backups predate announcements. Keep them importable and initialize the new collection.
+      if (parsed.announcements !== undefined && !Array.isArray(parsed.announcements)) {
+        return { valid: false, error: 'ملف النسخة الاحتياطية غير متوافق: جدول الإعلانات بصيغة غير صالحة.' };
+      }
+      if (parsed.announcements === undefined) parsed.announcements = mockAnnouncements;
+
+      // Operating expenses were added after earlier database versions.
+      if (parsed.expenses !== undefined && !Array.isArray(parsed.expenses)) {
+        return { valid: false, error: 'ملف النسخة الاحتياطية غير متوافق: جدول المصروفات بصيغة غير صالحة.' };
+      }
+      if (parsed.expenses === undefined) parsed.expenses = [];
+
       // Check settings object
       if (!parsed.settings || typeof parsed.settings !== 'object') {
         parsed.settings = {
@@ -82,7 +95,7 @@ export class BackupService {
       }
 
       return { valid: true, data: parsed as DatabaseState };
-    } catch (err) {
+    } catch {
       return { valid: false, error: 'الملف ليس بتنسيق JSON صالح أو يحتوي على بيانات تالفة.' };
     }
   }

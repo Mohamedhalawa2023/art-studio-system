@@ -3,9 +3,10 @@
  * Utilizes in-memory O(1) indexes for instantaneous QR barcode scans and automated overdue detection.
  */
 
-import { Student, Attendance, Enrollment } from '@/lib/mockData';
-import { DatabaseEngine } from '@/lib/db/transactionManager';
+import type { Student, Attendance, Enrollment } from '@/lib/mockData';
+import type { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
 import { logger } from '@/lib/logger/logger';
+import { formatLocalDate } from '@/lib/dates';
 
 export interface BarcodeScanResult {
   success: boolean;
@@ -29,7 +30,8 @@ export class AttendanceService {
   public processBarcodeScan(
     barcode: string,
     sessionId: string,
-    onStateCommit?: (state: any) => void
+    onStateCommit?: (state: DatabaseState) => void,
+    recordedBy = 'u1'
   ): BarcodeScanResult {
     const cleanBarcode = barcode?.trim().toLowerCase();
     if (!cleanBarcode) {
@@ -48,15 +50,30 @@ export class AttendanceService {
       };
     }
 
-    // 2. Fetch student enrollment via index
-    const enrollments = indexes.enrollmentsByStudentId.get(student.id) || [];
-    const activeEnrollment = enrollments[0];
+    const state = this.db.getState();
+    const session = state.sessions.find(item => item.id === sessionId);
+    if (!session) return { success: false, message: 'الحصة المحددة غير موجودة.' };
+    if (session.status === 'cancelled' || session.status === 'completed') {
+      return { success: false, message: 'لا يمكن تسجيل الحضور في حصة ملغاة أو منتهية.' };
+    }
+
+    // A student can attend only a session in a group they are enrolled in.
+    const activeEnrollment = (indexes.enrollmentsByStudentId.get(student.id) || [])
+      .find(enrollment => enrollment.groupId === session.groupId);
+    if (!activeEnrollment) {
+      return { success: false, student, message: 'الطالب غير مسجل في مجموعة هذه الحصة.' };
+    }
 
     const remaining = activeEnrollment
       ? Math.max(0, activeEnrollment.totalAmount - activeEnrollment.totalPaid)
       : 0;
 
-    const isOverdue = activeEnrollment?.paymentStatus === 'overdue' || remaining > 0;
+    const today = formatLocalDate(new Date());
+    const hasOverdueInstallment = state.installments.some(installment =>
+      installment.enrollmentId === activeEnrollment.id &&
+      (installment.status === 'overdue' || (installment.status === 'pending' && installment.dueDate < today))
+    );
+    const isOverdue = activeEnrollment.paymentStatus === 'overdue' || hasOverdueInstallment;
 
     // 3. Atomically record Attendance
     let createdAttendance: Attendance | undefined;
@@ -65,7 +82,7 @@ export class AttendanceService {
       'RECORD_BARCODE_ATTENDANCE',
       (draft) => {
         const now = new Date();
-        const timeStr = now.toTimeString().slice(0, 5);
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 
         // Check if attendance already logged for this session
         const existing = draft.attendance.find(
@@ -74,7 +91,7 @@ export class AttendanceService {
 
         if (existing) {
           existing.status = 'present';
-          existing.checkIn = timeStr;
+          existing.checkIn = existing.checkIn || timeStr;
           createdAttendance = existing;
         } else {
           createdAttendance = {
@@ -82,7 +99,7 @@ export class AttendanceService {
             studentId: student.id,
             sessionId,
             checkIn: timeStr,
-            recordedBy: 'u1',
+            recordedBy,
             status: 'present'
           };
           draft.attendance.push(createdAttendance);

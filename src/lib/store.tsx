@@ -1,24 +1,27 @@
 'use client';
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from 'react';
 import {
-  User, Student, Course, Group, Session, Enrollment, Payment, Installment,
+  User, Student, Course, Group, Session, Enrollment, Payment, Installment, OperatingExpense, Announcement,
   Attendance, Progress, SupplyItem, SupplySale, PortfolioItem,
   mockUsers, mockStudents, mockCourses, mockGroups, mockSessions,
+  mockAnnouncements,
   mockEnrollments, mockInstallments, mockPayments, mockAttendance, mockProgress,
   mockSupplyItems, mockSupplySales, mockPortfolio
 } from './mockData';
-import { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
-import { StudentService, RegisterStudentDTO } from '@/lib/services/student.service';
-import { FinanceService, RecordPaymentDTO } from '@/lib/services/finance.service';
-import { PosService, CreateSaleDTO } from '@/lib/services/pos.service';
+import { DatabaseEngine, DatabaseState, normalizeDatabaseState } from '@/lib/db/transactionManager';
+import { StudentService, RegisterStudentDTO, UpdateStudentDTO } from '@/lib/services/student.service';
+import { FinanceService, RecordExpenseDTO, RecordPaymentDTO, ReversePaymentDTO, UpdateExpenseDTO } from '@/lib/services/finance.service';
+import { EnrollmentService, CreateEnrollmentDTO, UpdateEnrollmentDTO } from '@/lib/services/enrollment.service';
+import { PosService, CreateSaleDTO, VoidSaleDTO } from '@/lib/services/pos.service';
 import { AttendanceService, BarcodeScanResult } from '@/lib/services/attendance.service';
+import { AnnouncementDTO, CatalogService, CreateCourseDTO, CreateGroupDTO, UpdateCourseDTO, UpdateGroupDTO } from '@/lib/services/catalog.service';
 import { BackupService } from '@/lib/services/backup.service';
 import { logger } from '@/lib/logger/logger';
 import { formatLocalDate } from '@/lib/dates';
 
 export type {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment,
-  Attendance, Progress, SupplyItem, SupplySale, PortfolioItem
+  Attendance, Progress, SupplyItem, SupplySale, PortfolioItem, OperatingExpense
 };
 
 export interface AcademySettings {
@@ -43,34 +46,66 @@ interface MarsamContextType {
   courses: Course[];
   groups: Group[];
   sessions: Session[];
+  announcements: Announcement[];
   enrollments: Enrollment[];
   installments: Installment[];
   payments: Payment[];
+  expenses: OperatingExpense[];
   attendance: Attendance[];
   progress: Progress[];
   supplyItems: SupplyItem[];
   supplySales: SupplySale[];
   portfolio: PortfolioItem[];
-  customDiplomas: Record<string, any>;
+  customDiplomas: Record<string, unknown>;
   settings: AcademySettings;
   
   // Domain Operations
   addStudentWithEnrollment: (params: RegisterStudentDTO) => { student: Student; enrollment?: Enrollment; payment?: Payment };
+  updateStudent: (id: string, params: UpdateStudentDTO) => Student;
+  deleteStudent: (id: string) => void;
+  createEnrollment: (params: CreateEnrollmentDTO) => { enrollment: Enrollment; payment?: Payment };
+  updateEnrollment: (id: string, params: UpdateEnrollmentDTO) => Enrollment;
+  deleteEnrollment: (id: string) => void;
   addCoursePayment: (params: RecordPaymentDTO) => Payment;
+  reverseCoursePayment: (params: ReversePaymentDTO) => Payment;
+  addOperatingExpense: (params: RecordExpenseDTO) => OperatingExpense;
+  updateOperatingExpense: (params: UpdateExpenseDTO) => OperatingExpense;
+  deleteOperatingExpense: (id: string, deletedBy?: string) => void;
   recordStudentAttendance: (params: { studentId: string; sessionId: string; status: 'present' | 'absent' | 'late'; lessonTopic?: string }) => Attendance;
+  deleteAttendance: (id: string) => void;
   processBarcodeScan: (barcode: string, sessionId: string) => BarcodeScanResult;
   addSupplyItem: (item: Omit<SupplyItem, 'id'>) => SupplyItem;
   updateSupplyItem: (id: string, updates: Partial<Omit<SupplyItem, 'id'>>) => SupplyItem;
   deleteSupplyItem: (id: string) => void;
   updateSupplyStock: (id: string, deltaQty: number) => void;
   createSupplySale: (params: CreateSaleDTO) => SupplySale;
+  voidSupplySale: (params: VoidSaleDTO) => SupplySale;
+  createCourse: (params: CreateCourseDTO) => Course;
+  updateCourse: (id: string, params: UpdateCourseDTO) => Course;
+  deleteCourse: (id: string) => void;
+  createGroup: (params: CreateGroupDTO) => Group;
+  updateGroup: (id: string, params: UpdateGroupDTO) => Group;
+  deleteGroup: (id: string) => void;
+  createAnnouncement: (params: AnnouncementDTO) => Announcement;
+  updateAnnouncement: (id: string, params: AnnouncementDTO) => Announcement;
+  deleteAnnouncement: (id: string) => void;
+  cancelSession: (id: string) => Session;
+  createMakeupSession: (params: { groupId: string; date: string; time: string }) => Session;
+  updateSession: (id: string, params: { date: string; time: string }) => Session;
+  deleteSession: (id: string) => void;
   updateStudentProgress: (params: { studentId: string; sessionId: string; level: string; rating: number; notes?: string }) => void;
+  deleteStudentProgress: (id: string) => void;
   addPortfolioItem: (item: Omit<PortfolioItem, 'id' | 'uploadDate'>) => void;
+  updatePortfolioItem: (id: string, updates: Partial<Pick<PortfolioItem, 'title' | 'description' | 'supervisorId' | 'imageUrl'>>) => void;
+  deletePortfolioItem: (id: string) => void;
+  addUser: (user: Omit<User, 'id'>) => User;
+  updateUser: (id: string, updates: Partial<Omit<User, 'id'>>) => User;
+  deleteUser: (id: string) => void;
   updatePortfolioStatus: (id: string, status: 'approved' | 'rejected') => void;
-  saveStudentDiploma: (studentId: string, diplomaData: any) => void;
+  saveStudentDiploma: (studentId: string, diplomaData: unknown) => void;
   updateSettings: (newSettings: Partial<AcademySettings>) => void;
   exportDatabase: () => Promise<void>;
-  importDatabase: (jsonData: string) => boolean;
+  importDatabase: (jsonData: string) => Promise<boolean>;
   resetDatabase: () => void;
 }
 
@@ -101,15 +136,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<Course[]>(mockCourses);
   const [groups, setGroups] = useState<Group[]>(mockGroups);
   const [sessions, setSessions] = useState<Session[]>(mockSessions);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
   const [enrollments, setEnrollments] = useState<Enrollment[]>(mockEnrollments);
   const [installments, setInstallments] = useState<Installment[]>(mockInstallments);
   const [payments, setPayments] = useState<Payment[]>(mockPayments);
+  const [expenses, setExpenses] = useState<OperatingExpense[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>(mockAttendance);
   const [progress, setProgress] = useState<Progress[]>(mockProgress);
   const [supplyItems, setSupplyItems] = useState<SupplyItem[]>(mockSupplyItems);
   const [supplySales, setSupplySales] = useState<SupplySale[]>(mockSupplySales);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(mockPortfolio);
-  const [customDiplomas, setCustomDiplomas] = useState<Record<string, any>>({});
+  const [customDiplomas, setCustomDiplomas] = useState<Record<string, unknown>>({});
   const [settings, setSettings] = useState<AcademySettings>(initialSettings);
 
   const [isHydrated, setIsHydrated] = useState(false);
@@ -122,9 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       courses: mockCourses,
       groups: mockGroups,
       sessions: mockSessions,
+      announcements: mockAnnouncements,
       enrollments: mockEnrollments,
       installments: mockInstallments,
       payments: mockPayments,
+      expenses: [],
       attendance: mockAttendance,
       progress: mockProgress,
       supplyItems: mockSupplyItems,
@@ -138,8 +177,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const studentService = useMemo(() => new StudentService(dbEngine), [dbEngine]);
   const financeService = useMemo(() => new FinanceService(dbEngine), [dbEngine]);
+  const enrollmentService = useMemo(() => new EnrollmentService(dbEngine), [dbEngine]);
   const posService = useMemo(() => new PosService(dbEngine), [dbEngine]);
   const attendanceService = useMemo(() => new AttendanceService(dbEngine), [dbEngine]);
+  const catalogService = useMemo(() => new CatalogService(dbEngine), [dbEngine]);
 
   /**
    * Unified Reactive State Sync callback from committed transactions
@@ -150,9 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCourses([...committedState.courses]);
     setGroups([...committedState.groups]);
     setSessions([...committedState.sessions]);
+    setAnnouncements([...committedState.announcements]);
     setEnrollments([...committedState.enrollments]);
     setInstallments([...committedState.installments]);
     setPayments([...committedState.payments]);
+    setExpenses([...committedState.expenses]);
     setAttendance([...committedState.attendance]);
     setProgress([...committedState.progress]);
     setSupplyItems([...committedState.supplyItems]);
@@ -165,6 +208,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 3. Hydrate state from local disk storage (/api/database) or fallback to localStorage
   useEffect(() => {
     const savedTheme = (localStorage.getItem(THEME_KEY) as 'light' | 'dark') || 'light';
+    // Hydrate the context value from browser storage after mount to avoid an SSR/client theme mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -175,13 +220,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const json = await res.json();
           if (json.success && json.data) {
-            dbEngine.hydrate(json.data);
-            syncFromEngine(json.data);
+            const normalized = normalizeDatabaseState(json.data);
+            dbEngine.hydrate(normalized);
+            syncFromEngine(normalized);
             loaded = true;
             logger.info('AuthProvider', 'Database hydrated successfully from disk storage.');
           }
         }
-      } catch (err) {
+      } catch {
         logger.warn('AuthProvider', 'Failed to reach /api/database on boot, checking localStorage fallback.');
       }
 
@@ -189,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
           if (saved) {
-            const parsed = JSON.parse(saved);
+            const parsed = normalizeDatabaseState(JSON.parse(saved));
             dbEngine.hydrate(parsed);
             syncFromEngine(parsed);
           }
@@ -208,8 +254,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isHydrated) return;
 
     const currentState: DatabaseState = {
-      users, students, courses, groups, sessions,
-      enrollments, installments, payments, attendance,
+      users, students, courses, groups, sessions, announcements,
+      enrollments, installments, payments, expenses, attendance,
       progress, supplyItems, supplySales, portfolio,
       customDiplomas, settings
     };
@@ -220,7 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Browser localStorage mirror
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-    } catch (e) {
+    } catch {
       logger.warn('AuthProvider', 'LocalStorage quota exceeded or restricted.');
     }
 
@@ -236,8 +282,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [
     isHydrated, dbEngine, users, students, courses, groups, sessions,
-    enrollments, installments, payments, attendance,
-    progress, supplyItems, supplySales, portfolio, customDiplomas, settings
+    enrollments, installments, payments, expenses, attendance,
+    progress, supplyItems, supplySales, portfolio, announcements, customDiplomas, settings
   ]);
 
   const toggleTheme = () => {
@@ -269,6 +315,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateStudent = (id: string, params: UpdateStudentDTO) => studentService.updateStudent(id, params, syncFromEngine);
+  const deleteStudent = (id: string) => studentService.deleteStudent(id, syncFromEngine);
+
+  const createEnrollment = (params: CreateEnrollmentDTO) => {
+    try {
+      return enrollmentService.createEnrollment(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  const updateEnrollment = (id: string, params: UpdateEnrollmentDTO) => enrollmentService.updateEnrollment(id, params, syncFromEngine);
+  const deleteEnrollment = (id: string) => enrollmentService.deleteEnrollment(id, syncFromEngine);
+
   /**
    * Action 2: Add Course Payment (ACID Transaction)
    */
@@ -282,12 +344,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const reverseCoursePayment = (params: ReversePaymentDTO) => {
+    try {
+      return financeService.reverseCoursePayment(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  const addOperatingExpense = (params: RecordExpenseDTO) => {
+    try {
+      return financeService.addOperatingExpense(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  const updateOperatingExpense = (params: UpdateExpenseDTO) => {
+    try {
+      return financeService.updateOperatingExpense(params, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  const deleteOperatingExpense = (id: string, deletedBy?: string) => {
+    try {
+      financeService.deleteOperatingExpense(id, deletedBy, syncFromEngine);
+    } catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
   /**
    * Action 3: Process Real-time Barcode Scanner (O(1) Indexed Lookup)
    */
   const processBarcodeScan = (barcode: string, sessionId: string) => {
     try {
-      return attendanceService.processBarcodeScan(barcode, sessionId, syncFromEngine);
+      return attendanceService.processBarcodeScan(barcode, sessionId, syncFromEngine, currentUser?.id || 'u1');
     } catch (error) {
       const userMessage = logger.formatUserError(error);
       return { success: false, message: userMessage };
@@ -337,10 +439,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         recordedBy: currentUser?.id || 'admin',
         date: formatLocalDate(new Date())
       };
-      setProgress(prev => [progressRecord, ...prev]);
+      setProgress(prev => {
+        const existingProgress = prev.find(item => item.studentId === params.studentId && item.sessionId === params.sessionId);
+        if (!existingProgress) return [progressRecord, ...prev];
+        return prev.map(item => item.id === existingProgress.id
+          ? { ...item, level: progressRecord.level, notes: progressRecord.notes, recordedBy: progressRecord.recordedBy, date: progressRecord.date }
+          : item
+        );
+      });
     }
 
     return updatedRecord;
+  };
+
+  const deleteAttendance = (id: string) => {
+    if (!attendance.some(item => item.id === id)) throw new Error('سجل الحضور المطلوب غير موجود.');
+    setAttendance(prev => prev.filter(item => item.id !== id));
   };
 
   /**
@@ -355,6 +469,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
+
+  const voidSupplySale = (params: VoidSaleDTO) => {
+    try { return posService.voidSupplySale(params, syncFromEngine); }
+    catch (error) {
+      const userMessage = logger.formatUserError(error);
+      alert(userMessage);
+      throw error;
+    }
+  };
+
+  const createCourse = (params: CreateCourseDTO) => catalogService.createCourse(params, syncFromEngine);
+  const updateCourse = (id: string, params: UpdateCourseDTO) => catalogService.updateCourse(id, params, syncFromEngine);
+  const deleteCourse = (id: string) => catalogService.deleteCourse(id, syncFromEngine);
+  const createGroup = (params: CreateGroupDTO) => catalogService.createGroup(params, syncFromEngine);
+  const updateGroup = (id: string, params: UpdateGroupDTO) => catalogService.updateGroup(id, params, syncFromEngine);
+  const deleteGroup = (id: string) => catalogService.deleteGroup(id, syncFromEngine);
+  const createAnnouncement = (params: AnnouncementDTO) => catalogService.createAnnouncement(params, syncFromEngine);
+  const updateAnnouncement = (id: string, params: AnnouncementDTO) => catalogService.updateAnnouncement(id, params, syncFromEngine);
+  const deleteAnnouncement = (id: string) => catalogService.deleteAnnouncement(id, syncFromEngine);
+  const cancelSession = (id: string) => catalogService.cancelSession(id, syncFromEngine);
+  const createMakeupSession = (params: { groupId: string; date: string; time: string }) => catalogService.createMakeupSession(params, syncFromEngine);
+  const updateSession = (id: string, params: { date: string; time: string }) => catalogService.updateSession(id, params, syncFromEngine);
+  const deleteSession = (id: string) => catalogService.deleteSession(id, syncFromEngine);
 
   /**
    * Action 6: Add Supply Item (ACID Transaction)
@@ -418,7 +555,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rating: number;
     notes?: string;
   }) => {
-    const newProgress: Progress = {
+    const updatedProgress: Progress = {
       id: 'pr_' + Date.now(),
       studentId: params.studentId,
       sessionId: params.sessionId,
@@ -428,8 +565,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       recordedBy: currentUser?.id || 'admin',
       date: formatLocalDate(new Date())
     };
-    setProgress(prev => [newProgress, ...prev]);
+    setProgress(prev => {
+      const existing = prev.find(item => item.studentId === params.studentId && item.sessionId === params.sessionId);
+      if (!existing) return [updatedProgress, ...prev];
+      return prev.map(item => item.id === existing.id ? { ...updatedProgress, id: existing.id } : item);
+    });
     setStudents(prev => prev.map(s => s.id === params.studentId ? { ...s, level: params.level } : s));
+  };
+
+  const deleteStudentProgress = (id: string) => {
+    const deleted = progress.find(item => item.id === id);
+    if (!deleted) throw new Error('سجل التقييم المطلوب غير موجود.');
+    const remaining = progress.filter(item => item.id !== id && item.studentId === deleted.studentId)
+      .sort((left, right) => right.date.localeCompare(left.date));
+    setProgress(prev => prev.filter(item => item.id !== id));
+    if (students.some(item => item.id === deleted.studentId && item.level === deleted.level)) {
+      setStudents(prev => prev.map(item => item.id === deleted.studentId
+        ? { ...item, level: remaining[0]?.level || '' }
+        : item));
+    }
   };
 
   /**
@@ -448,10 +602,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPortfolio(prev => prev.map(p => p.id === id ? { ...p, status } : p));
   };
 
+  const updatePortfolioItem = (id: string, updates: Partial<Pick<PortfolioItem, 'title' | 'description' | 'supervisorId' | 'imageUrl'>>) => {
+    if (updates.title !== undefined && !updates.title.trim()) throw new Error('عنوان العمل الفني مطلوب.');
+    setPortfolio(prev => prev.map(item => item.id === id ? {
+      ...item,
+      ...updates,
+      ...(updates.title !== undefined ? { title: updates.title.trim() } : {}),
+      ...(updates.description !== undefined ? { description: updates.description.trim() } : {}),
+    } : item));
+  };
+
+  const deletePortfolioItem = (id: string) => {
+    if (!portfolio.some(item => item.id === id)) throw new Error('العمل الفني المطلوب غير موجود.');
+    setPortfolio(prev => prev.filter(item => item.id !== id));
+  };
+
+  const addUser = (input: Omit<User, 'id'>) => {
+    const name = input.name.trim();
+    const phone = input.phone.trim();
+    const email = input.email.trim();
+    if (name.length < 3 || !phone) throw new Error('أدخل اسمًا كاملًا ورقم هاتف للمستخدم.');
+    const user: User = { ...input, id: `u-${globalThis.crypto?.randomUUID?.() || Date.now()}`, name, phone, email: email || `${phone}@marsam.art` };
+    return dbEngine.executeTransaction('ADD_USER', draft => {
+      if (draft.users.some(item => item.phone === phone || item.email.toLocaleLowerCase() === user.email.toLocaleLowerCase())) {
+        throw new Error('رقم الهاتف أو البريد مسجل بالفعل.');
+      }
+      draft.users.push(user);
+      return user;
+    }, syncFromEngine);
+  };
+
+  const updateUser = (id: string, updates: Partial<Omit<User, 'id'>>) => {
+    const next = dbEngine.executeTransaction('UPDATE_USER', draft => {
+      const existing = draft.users.find(user => user.id === id);
+      if (!existing) throw new Error('المستخدم المطلوب غير موجود.');
+      const nextPhone = (updates.phone ?? existing.phone).trim();
+      const nextEmail = (updates.email ?? existing.email).trim();
+      const updated = { ...existing, ...updates, name: (updates.name ?? existing.name).trim(), phone: nextPhone, email: nextEmail || `${nextPhone}@marsam.art` };
+      if (updated.name.length < 3 || !updated.phone) throw new Error('أدخل اسمًا كاملًا ورقم هاتف للمستخدم.');
+      if (draft.users.some(user => user.id !== id && (user.phone === updated.phone || user.email.toLocaleLowerCase() === updated.email.toLocaleLowerCase()))) {
+        throw new Error('رقم الهاتف أو البريد مسجل بالفعل.');
+      }
+      if (existing.role === 'admin' && updated.role !== 'admin') throw new Error('لا يمكن تغيير دور حساب المدير.');
+      if (updated.role !== existing.role) {
+        if (draft.students.some(student => student.guardianId === id) && updated.role !== 'guardian') {
+          throw new Error('ولي الأمر مرتبط بملفات طلاب؛ لا يمكن تغيير دوره قبل نقل هذه الملفات.');
+        }
+        if (draft.groups.some(group => group.supervisorId === id) && updated.role !== 'supervisor') {
+          throw new Error('المستخدم مشرف لمجموعات قائمة؛ لا يمكن تغيير دوره قبل نقل المجموعات.');
+        }
+        if (draft.portfolio.some(item => item.supervisorId === id) && updated.role === 'guardian') {
+          throw new Error('المستخدم مرتبط بأعمال فنية؛ لا يمكن تحويله إلى ولي أمر.');
+        }
+      }
+      const index = draft.users.findIndex(user => user.id === id);
+      draft.users[index] = updated;
+      return updated;
+    }, syncFromEngine);
+    if (currentUser?.id === id) setCurrentUser(next);
+    return next;
+  };
+
+  const deleteUser = (id: string) => {
+    if (currentUser?.id === id) throw new Error('لا يمكن حذف الحساب المستخدم حاليًا.');
+    dbEngine.executeTransaction('DELETE_USER', draft => {
+      const user = draft.users.find(item => item.id === id);
+      if (!user) throw new Error('المستخدم المطلوب غير موجود.');
+      if (user.role === 'admin') throw new Error('لا يمكن حذف حساب المدير.');
+      if (draft.students.some(student => student.guardianId === id)) throw new Error('لا يمكن حذف ولي أمر مرتبط بملفات طلاب.');
+      if (draft.groups.some(group => group.supervisorId === id)) throw new Error('انقل المجموعات إلى مشرف آخر قبل حذف هذا الحساب.');
+      if (draft.portfolio.some(item => item.supervisorId === id)) throw new Error('انقل الأعمال الفنية إلى مستخدم آخر قبل حذف هذا الحساب.');
+      draft.users = draft.users.filter(item => item.id !== id);
+    }, syncFromEngine);
+  };
+
   /**
    * Action 10: Diploma & Settings
    */
-  const saveStudentDiploma = (studentId: string, diplomaData: any) => {
+  const saveStudentDiploma = (studentId: string, diplomaData: unknown) => {
     setCustomDiplomas(prev => ({ ...prev, [studentId]: diplomaData }));
   };
 
@@ -464,8 +692,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const exportDatabase = async () => {
     const state: DatabaseState = {
-      users, students, courses, groups, sessions,
-      enrollments, installments, payments, attendance,
+      users, students, courses, groups, sessions, announcements,
+      enrollments, installments, payments, expenses, attendance,
       progress, supplyItems, supplySales, portfolio,
       customDiplomas, settings
     };
@@ -475,15 +703,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Action 12: Schema-Validated Database Import
    */
-  const importDatabase = (jsonData: string): boolean => {
+  const importDatabase = async (jsonData: string): Promise<boolean> => {
     const verification = BackupService.validateImportSchema(jsonData);
     if (!verification.valid || !verification.data) {
       alert(`خطأ في استيراد البيانات: ${verification.error}`);
       return false;
     }
 
-    dbEngine.hydrate(verification.data);
-    syncFromEngine(verification.data);
+    const importedData = normalizeDatabaseState(verification.data);
+    dbEngine.hydrate(importedData);
+    syncFromEngine(importedData);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData));
+      const response = await fetch('/api/database', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(importedData),
+      });
+      if (!response.ok) {
+        logger.warn('AuthProvider', `Imported database is active locally; server sync returned ${response.status}.`);
+      }
+    } catch (error) {
+      logger.warn('AuthProvider', 'Imported database is active locally; server sync is unavailable.', { error: String(error) });
+    }
     alert('تم استيراد واستعادة قاعدة البيانات بنجاح وبأمان تام ✅');
     return true;
   };
@@ -499,9 +741,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       courses: mockCourses,
       groups: mockGroups,
       sessions: mockSessions,
+      announcements: mockAnnouncements,
       enrollments: mockEnrollments,
       installments: mockInstallments,
       payments: mockPayments,
+      expenses: [],
       attendance: mockAttendance,
       progress: mockProgress,
       supplyItems: mockSupplyItems,
@@ -517,13 +761,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <MarsamContext.Provider value={{
       currentUser, login, logout,
       theme, toggleTheme,
-      users, students, courses, groups, sessions,
-      enrollments, installments, payments, attendance,
+      users, students, courses, groups, sessions, announcements,
+      enrollments, installments, payments, expenses, attendance,
       progress, supplyItems, supplySales, portfolio, customDiplomas, settings,
-      addStudentWithEnrollment, addCoursePayment,
-      recordStudentAttendance, processBarcodeScan,
-      addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale,
-      updateStudentProgress, addPortfolioItem, updatePortfolioStatus,
+      addStudentWithEnrollment, updateStudent, deleteStudent, createEnrollment, updateEnrollment, deleteEnrollment, addCoursePayment, reverseCoursePayment, addOperatingExpense,
+      updateOperatingExpense, deleteOperatingExpense,
+      recordStudentAttendance, deleteAttendance, processBarcodeScan,
+      addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale, voidSupplySale,
+      createCourse, updateCourse, deleteCourse, createGroup, updateGroup, deleteGroup, createAnnouncement, updateAnnouncement, deleteAnnouncement,
+      cancelSession, createMakeupSession, updateSession, deleteSession,
+      updateStudentProgress, deleteStudentProgress, addPortfolioItem, updatePortfolioItem, deletePortfolioItem, updatePortfolioStatus,
+      addUser, updateUser, deleteUser,
       saveStudentDiploma,
       updateSettings, exportDatabase, importDatabase, resetDatabase
     }}>

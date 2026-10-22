@@ -5,17 +5,40 @@ import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { Pagination } from '@/components/common/Pagination';
 import { BarcodeStickerModal } from '@/components/supplies/BarcodeStickerModal';
+import type { SupplyItem, SupplySale } from '@/lib/mockData';
+import { printInvoice, type InvoicePaperSize } from '@/lib/printing';
 import { playScanSuccessBeep, playScanErrorBeep } from '@/lib/audio/beep';
 import {
-  ShoppingBag, Search, Plus, Minus, Trash2, Printer, CheckCircle,
-  AlertTriangle, DollarSign, Package, TrendingUp, Barcode, ArrowUpRight,
-  Filter, Tag, User as UserIcon, X, Edit3, Volume2
+  ShoppingBag, Search, Plus, Minus, Trash2, Printer,
+  Barcode, Tag, X, Edit3, Volume2, Ban
 } from 'lucide-react';
+
+const paymentMethodLabels: Record<string, string> = {
+  cash: 'نقداً',
+  transfer: 'تحويل بنكي',
+  instapay: 'إنستاباي',
+  vodafone: 'فودافون كاش',
+  card: 'بطاقة بنكية',
+};
+
+const invoicePaperLabels: Record<InvoicePaperSize, string> = {
+  a4: 'A4',
+  a5: 'A5',
+  thermal: 'حراري 80 مم',
+};
+
+function formatInvoiceMoney(amount: number) {
+  return `${new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 2 }).format(amount)} ج.م`;
+}
+
+function toCents(amount: number) {
+  return Math.round((amount + Number.EPSILON) * 100);
+}
 
 export default function SuppliesPage() {
   const {
     supplyItems, supplySales, students,
-    addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale, settings
+    addSupplyItem, updateSupplyItem, deleteSupplyItem, updateSupplyStock, createSupplySale, voidSupplySale, settings, currentUser
   } = useMarsam();
 
   const [activeTab, setActiveTab] = useState<'pos' | 'inventory' | 'financials'>('pos');
@@ -33,7 +56,7 @@ export default function SuppliesPage() {
   const { isSubmitting: isDeletingProduct, execute: executeDeleteProduct } = useAsyncAction();
 
   // Edit and Delete Modal States
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<SupplyItem | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     category: 'ألوان',
@@ -43,14 +66,15 @@ export default function SuppliesPage() {
     stockQty: 10,
     minStock: 3
   });
-  const [deletingProduct, setDeletingProduct] = useState<any | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<SupplyItem | null>(null);
 
   // POS Cart State
   const [cart, setCart] = useState<Array<{ productId: string; quantity: number }>>([]);
   const [customerType, setCustomerType] = useState<'walkin' | 'student'>('walkin');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [walkinName, setWalkinName] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'instapay' | 'vodafone' | 'card'>('cash');
+  const [invoiceDiscountInput, setInvoiceDiscountInput] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'instapay' | 'vodafone' | 'card'>('cash');
   const [notes, setNotes] = useState('');
   
   // Barcode quick input
@@ -68,11 +92,12 @@ export default function SuppliesPage() {
     minStock: 3
   });
 
-  // Printable Invoice State
-  const [currentInvoice, setCurrentInvoice] = useState<any | null>(null);
+  // Invoice Modal
+  const [currentInvoice, setCurrentInvoice] = useState<SupplySale | null>(null);
+  const [invoicePaperSize, setInvoicePaperSize] = useState<InvoicePaperSize>('a5');
 
   // Barcode Sticker Modal State
-  const [stickerProduct, setStickerProduct] = useState<any | null>(null);
+  const [stickerProduct, setStickerProduct] = useState<SupplyItem | null>(null);
 
   // Instant Scanner Feedback Toast
   const [scanToast, setScanToast] = useState<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null);
@@ -82,6 +107,10 @@ export default function SuppliesPage() {
     const timer = setTimeout(() => setScanToast(null), 3500);
     return () => clearTimeout(timer);
   }, [scanToast]);
+
+  useEffect(() => {
+    if (cart.length === 0 && invoiceDiscountInput !== '') setInvoiceDiscountInput('');
+  }, [cart.length, invoiceDiscountInput]);
 
   // Central Barcode Processor (Works with USB Handheld Laser Scanners & Screen Input)
   const processScannedBarcode = (scanned: string) => {
@@ -141,7 +170,9 @@ export default function SuppliesPage() {
 
   const paginatedSales = useMemo(() => {
     const start = (salesPage - 1) * ITEMS_PER_PAGE;
-    return supplySales.slice(start, start + ITEMS_PER_PAGE);
+    return [...supplySales]
+      .sort((left, right) => right.date.localeCompare(left.date))
+      .slice(start, start + ITEMS_PER_PAGE);
   }, [supplySales, salesPage]);
 
   // Cart operations
@@ -220,21 +251,35 @@ export default function SuppliesPage() {
 
   // Cart totals
   const cartSummary = useMemo(() => {
-    let subtotal = 0;
+    let subtotalCents = 0;
     let totalItems = 0;
     cart.forEach(c => {
       const p = supplyItems.find(item => item.id === c.productId);
       if (p) {
-        subtotal += p.sellPrice * c.quantity;
+        subtotalCents += toCents(p.sellPrice) * c.quantity;
         totalItems += c.quantity;
       }
     });
-    return { subtotal, totalItems };
-  }, [cart, supplyItems]);
+    const parsedDiscount = invoiceDiscountInput.trim() === '' ? 0 : Number(invoiceDiscountInput);
+    const discountIsNumeric = Number.isFinite(parsedDiscount);
+    const discountCents = discountIsNumeric && parsedDiscount >= 0 ? toCents(parsedDiscount) : 0;
+    const discountIsInvalid = !discountIsNumeric || parsedDiscount < 0 || discountCents > subtotalCents;
+    return {
+      subtotal: subtotalCents / 100,
+      discount: discountCents / 100,
+      totalDue: Math.max(0, subtotalCents - discountCents) / 100,
+      discountIsInvalid,
+      totalItems
+    };
+  }, [cart, supplyItems, invoiceDiscountInput]);
 
   // Checkout
   const handleCheckout = () => {
     if (cart.length === 0) return;
+    if (cartSummary.discountIsInvalid) {
+      alert('قيمة الخصم يجب أن تكون صفرًا أو أكثر، وألا تتجاوز إجمالي الفاتورة.');
+      return;
+    }
 
     let customerName = walkinName || 'عميل زائر';
     let customerId: string | undefined = undefined;
@@ -256,11 +301,13 @@ export default function SuppliesPage() {
         customerName,
         customerId,
         items: cart,
+        discountAmount: cartSummary.discount,
         paymentMethod,
         notes
       });
 
       setCart([]);
+      setInvoiceDiscountInput('');
       setNotes('');
       setWalkinName('');
       setCurrentInvoice(sale);
@@ -268,12 +315,25 @@ export default function SuppliesPage() {
   };
 
   // Financial calculations
-  const totalSalesRevenue = supplySales.reduce((acc, s) => acc + s.totalAmount, 0);
-  const totalSalesCost = supplySales.reduce((acc, s) => acc + s.totalCost, 0);
+  const validSales = supplySales.filter(sale => sale.status !== 'voided');
+  const totalSalesRevenue = validSales.reduce((acc, sale) => acc + toCents(sale.totalAmount), 0) / 100;
+  const totalSalesCost = validSales.reduce((acc, sale) => acc + toCents(sale.totalCost), 0) / 100;
   const totalSalesProfit = totalSalesRevenue - totalSalesCost;
   const profitMargin = totalSalesRevenue > 0 ? Math.round((totalSalesProfit / totalSalesRevenue) * 100) : 0;
-  const inventoryAssetValue = supplyItems.reduce((acc, i) => acc + (i.costPrice * i.stockQty), 0);
+  const inventoryAssetValue = supplyItems.reduce((acc, item) => acc + toCents(item.costPrice) * item.stockQty, 0) / 100;
   const lowStockCount = supplyItems.filter(i => i.stockQty <= i.minStock).length;
+
+  const handleVoidSale = (sale: SupplySale) => {
+    if (sale.status === 'voided') return;
+    if (!window.confirm(`إلغاء الفاتورة ${sale.invoiceNumber} وإرجاع الأصناف إلى المخزون؟`)) return;
+    const reason = window.prompt('سبب إلغاء الفاتورة:');
+    if (!reason?.trim()) return;
+    try {
+      voidSupplySale({ saleId: sale.id, voidedBy: currentUser?.id || 'u1', reason });
+    } catch {
+      // The store displays a localized error and the transaction rolls back.
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -389,6 +449,10 @@ export default function SuppliesPage() {
               ))}
             </div>
 
+            <p className="text-xs text-[#94A3B8] -mt-2">
+              اضغط على بطاقة الصنف لإضافته للفاتورة، أو امسح الباركود لإضافته مباشرة.
+            </p>
+
             {/* Products Grid */}
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3.5">
               {filteredItems.map(item => {
@@ -457,7 +521,7 @@ export default function SuppliesPage() {
                     </div>
 
                     <div>
-                      <h4 className="font-bold text-sm text-[#F8FAFC] mt-0.5 line-clamp-2 leading-snug">{item.name}</h4>
+                      <h4 className="font-bold text-sm text-white mt-0.5 line-clamp-2 leading-snug">{item.name}</h4>
                       <p className="text-[11px] text-[#94A3B8] font-mono mt-1">كود: {item.barcode}</p>
                     </div>
 
@@ -479,7 +543,7 @@ export default function SuppliesPage() {
           <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl flex flex-col justify-between space-y-4 shadow-xl">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
-                <h3 className="font-bold text-base text-[#F8FAFC] flex items-center gap-2">
+                <h3 className="font-bold text-base text-white flex items-center gap-2">
                   <ShoppingBag size={18} className="text-[#2DD4BF]" />
                   فاتورة البيع الحالية
                 </h3>
@@ -503,8 +567,8 @@ export default function SuppliesPage() {
                     return (
                       <div key={c.productId} className="flex items-center justify-between p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-xs">
                         <div className="flex-1 min-w-0 pr-2">
-                          <p className="font-semibold text-[#F8FAFC] truncate">{product.name}</p>
-                          <p className="text-[11px] text-[#2DD4BF] font-mono font-bold mt-0.5">{product.sellPrice * c.quantity} ج ({product.sellPrice} ج للقطعة)</p>
+                          <p className="font-semibold text-white truncate text-xs">{product.name}</p>
+                          <p className="text-xs text-[#2DD4BF] font-mono font-bold">{formatInvoiceMoney(toCents(product.sellPrice) * c.quantity / 100)} ({formatInvoiceMoney(product.sellPrice)} للقطعة)</p>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button onClick={() => updateCartQty(c.productId, -1)} className="p-1 rounded-lg bg-[#1B2537] border border-[#2A3B56] hover:bg-[#2A3B56] text-[#F8FAFC] transition-colors">
@@ -521,6 +585,30 @@ export default function SuppliesPage() {
                       </div>
                     );
                   })
+                )}
+              </div>
+
+              <div className="mt-3 rounded-xl border border-[#2A3B56] bg-[#111827] p-3">
+                <label htmlFor="invoice-discount" className="mb-1 block text-[11px] font-bold text-[#94A3B8]">
+                  خصم الفاتورة (ج.م)
+                </label>
+                <input
+                  id="invoice-discount"
+                  type="number"
+                  min="0"
+                  max={cartSummary.subtotal}
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="مثال: 100"
+                  value={invoiceDiscountInput}
+                  onChange={event => setInvoiceDiscountInput(event.target.value)}
+                  disabled={cart.length === 0}
+                  className="w-full rounded-lg border border-[#2A3B56] bg-[#1B2537] px-3 py-2 text-sm text-white placeholder-[#64748B] focus:border-[#0D9488] focus:outline-none disabled:opacity-50"
+                />
+                {cartSummary.discountIsInvalid && (
+                  <p className="mt-1 text-[11px] font-semibold text-red-400">
+                    أدخل خصمًا من صفر حتى إجمالي الفاتورة.
+                  </p>
                 )}
               </div>
 
@@ -559,7 +647,7 @@ export default function SuppliesPage() {
                   <div>
                     <label className="block text-[11px] text-[#94A3B8] font-bold mb-1">اسم المشتري الخارجي:</label>
                     <input
-                      className="w-full bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] placeholder-[#94A3B8] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0D9488]"
+                      className="w-full bg-[#111827] border border-[#2A3B56] text-white placeholder-[#94A3B8] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0D9488]"
                       placeholder="مثال: أحمد مصطفى"
                       value={walkinName}
                       onChange={e => setWalkinName(e.target.value)}
@@ -573,12 +661,13 @@ export default function SuppliesPage() {
                   <select
                     className="w-full bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0D9488]"
                     value={paymentMethod}
-                    onChange={e => setPaymentMethod(e.target.value as any)}
+                    onChange={e => setPaymentMethod(e.target.value as typeof paymentMethod)}
                   >
-                    <option value="cash" className="bg-[#111827] text-[#F8FAFC]">نقداً (كاش الخزينة)</option>
-                    <option value="instapay" className="bg-[#111827] text-[#F8FAFC]">انستاباي (InstaPay)</option>
-                    <option value="vodafone" className="bg-[#111827] text-[#F8FAFC]">فودافون كاش</option>
-                    <option value="card" className="bg-[#111827] text-[#F8FAFC]">بطاقة بنكية / فيزا</option>
+                    <option value="cash">نقداً (كاش للخزنة)</option>
+                    <option value="transfer">تحويل بنكي</option>
+                    <option value="instapay">انستاباي (InstaPay)</option>
+                    <option value="vodafone">فودافون كاش</option>
+                    <option value="card">بطاقة بنكية / فيزا</option>
                   </select>
                 </div>
               </div>
@@ -590,13 +679,21 @@ export default function SuppliesPage() {
                 <span className="text-[#94A3B8]">إجمالي القطع:</span>
                 <span className="font-bold text-[#F8FAFC]">{cartSummary.totalItems} قطع</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-[#F8FAFC]">إتمام المطلوب:</span>
-                <span className="font-black text-2xl text-[#2DD4BF] font-mono">{cartSummary.subtotal} ج</span>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#94A3B8]">الإجمالي قبل الخصم:</span>
+                <span className="font-bold text-[#F8FAFC]">{formatInvoiceMoney(cartSummary.subtotal)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#94A3B8]">الخصم:</span>
+                <span className="font-bold text-amber-300">- {formatInvoiceMoney(cartSummary.discount)}</span>
+              </div>
+              <div className="flex items-center justify-between text-lg">
+                <span className="font-bold text-[#F8FAFC]">المطلوب بعد الخصم:</span>
+                <span className="font-black text-2xl text-[#2DD4BF] font-mono">{formatInvoiceMoney(cartSummary.totalDue)}</span>
               </div>
 
               <button
-                disabled={cart.length === 0 || isCheckingOut}
+                disabled={cart.length === 0 || isCheckingOut || cartSummary.discountIsInvalid}
                 onClick={handleCheckout}
                 className="w-full bg-[#0D9488] hover:bg-[#0F766E] disabled:bg-[#111827] disabled:text-[#94A3B8] disabled:border-[#2A3B56] disabled:border text-white font-bold py-3 text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#0D9488]/20 transition-all disabled:shadow-none disabled:cursor-not-allowed"
               >
@@ -683,9 +780,9 @@ export default function SuppliesPage() {
                           {item.category}
                         </span>
                       </td>
-                      <td className="p-3.5 text-[#94A3B8]">{item.costPrice} ج</td>
-                      <td className="p-3.5 font-bold text-[#F8FAFC]">{item.sellPrice} ج</td>
-                      <td className="p-3.5 text-[#2DD4BF] font-bold font-mono">+{item.sellPrice - item.costPrice} ج</td>
+                      <td className="p-3.5 text-[#94A3B8]">{formatInvoiceMoney(item.costPrice)}</td>
+                      <td className="p-3.5 font-bold text-[#F8FAFC]">{formatInvoiceMoney(item.sellPrice)}</td>
+                      <td className="p-3.5 text-[#2DD4BF] font-bold font-mono">{formatInvoiceMoney(item.sellPrice - item.costPrice)}</td>
                       <td className="p-3.5">
                         <span className={`text-[11px] px-2 py-0.5 rounded-lg font-bold border ${item.stockQty === 0 ? 'bg-red-500/10 border-red-500/30 text-red-400' : isLow ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-[#111827] border-[#2A3B56] text-[#2DD4BF]'}`}>
                           {item.stockQty} {isLow && item.stockQty > 0 && '(أوشك على النفاد)'}
@@ -695,7 +792,8 @@ export default function SuppliesPage() {
                         <div className="inline-flex items-center gap-1 bg-[#111827] border border-[#2A3B56] p-1 rounded-lg">
                           <button
                             onClick={() => updateSupplyStock(item.id, -1)}
-                            className="p-1 rounded hover:bg-red-500/20 text-red-400 transition-colors"
+                            disabled={item.stockQty <= 0}
+                            className="p-1 rounded hover:bg-red-500/20 text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
                             title="خصم قطعة"
                           >
                             <Minus size={12} />
@@ -773,20 +871,20 @@ export default function SuppliesPage() {
               <p className="text-2xl font-black text-[#2DD4BF] mt-1">{totalSalesRevenue.toLocaleString()} ج</p>
               <p className="text-[11px] text-[#94A3B8] mt-1">خزينة متجر الأدوات</p>
             </div>
-            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#0D9488]/60">
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-teal-500/40">
               <p className="text-xs text-[#94A3B8] font-semibold">تكلفة البضاعة المباعة</p>
-              <p className="text-2xl font-black text-[#F8FAFC] mt-1">{totalSalesCost.toLocaleString()} ج</p>
-              <p className="text-[11px] text-[#94A3B8] mt-1">رأس المال المسترد</p>
+              <p className="text-2xl font-black text-[#2DD4BF] mt-1">{totalSalesCost.toLocaleString()} ج</p>
+              <p className="text-xs text-[#94A3B8] mt-1">بتكلفة الشراء المسجلة للأصناف</p>
             </div>
-            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#2DD4BF]">
-              <p className="text-xs text-[#94A3B8] font-semibold">صافي أرباح الأدوات فقط</p>
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-teal-500/60">
+              <p className="text-xs text-[#94A3B8] font-semibold">مجمل ربح الأدوات</p>
               <p className="text-2xl font-black text-[#2DD4BF] mt-1">{totalSalesProfit.toLocaleString()} ج</p>
-              <p className="text-[11px] text-[#94A3B8] mt-1">هامش ربح {profitMargin}%</p>
+              <p className="text-xs text-[#94A3B8] mt-1">هامش {profitMargin}% قبل المصروفات التشغيلية</p>
             </div>
-            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-[#2A3B56]">
+            <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-md border-r-4 border-r-slate-500">
               <p className="text-xs text-[#94A3B8] font-semibold">عدد فواتير الأدوات</p>
               <p className="text-2xl font-black text-[#F8FAFC] mt-1">{supplySales.length}</p>
-              <p className="text-[11px] text-[#94A3B8] mt-1">ترقيم SHP-2026</p>
+              <p className="text-xs text-[#94A3B8] mt-1">ترقيم سنوي: SHP-YYYY</p>
             </div>
           </div>
 
@@ -799,13 +897,14 @@ export default function SuppliesPage() {
 
             <div className="divide-y divide-[#2A3B56]">
               {paginatedSales.map(sale => (
-                <div key={sale.id} className="py-3.5 flex items-center justify-between gap-4">
+                <div key={sale.id} className={`py-3.5 flex items-center justify-between gap-4 ${sale.status === 'voided' ? 'opacity-60' : ''}`}>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-[#2DD4BF] bg-[#111827] border border-[#2A3B56] px-2 py-0.5 rounded">
                         {sale.invoiceNumber}
                       </span>
                       <span className="font-bold text-sm text-[#F8FAFC]">{sale.customerName}</span>
+                      {sale.status === 'voided' && <span className="badge badge-danger">ملغاة</span>}
                       <span className="bg-[#111827] border border-[#2A3B56] text-[#94A3B8] text-[11px] px-2 py-0.5 rounded font-semibold">
                         {sale.customerType === 'student' ? 'طالب' : 'خارجي'}
                       </span>
@@ -817,16 +916,22 @@ export default function SuppliesPage() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-left">
-                      <p className="font-black text-sm text-[#2DD4BF] font-mono">{sale.totalAmount} ج</p>
-                      <p className="text-xs text-[#94A3B8]">ربح: +{sale.profit} ج</p>
+                      <p className="font-black text-sm text-[#2DD4BF] font-mono">{formatInvoiceMoney(sale.totalAmount)}</p>
+                      {(sale.discountAmount ?? 0) > 0 && (
+                        <p className="text-xs text-amber-300">خصم الفاتورة: {formatInvoiceMoney(sale.discountAmount ?? 0)}</p>
+                      )}
+                      <p className="text-xs text-[#94A3B8]">مجمل الربح: {formatInvoiceMoney(sale.totalAmount - sale.totalCost)}</p>
+                      {sale.status === 'voided' && <p className="text-[10px] text-red-300">سبب الإلغاء: {sale.voidReason || 'غير مسجل'}</p>}
                     </div>
                     <button
                       onClick={() => setCurrentInvoice(sale)}
-                      className="bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] hover:bg-[#2A3B56] hover:text-[#F8FAFC] px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 transition-colors"
+                      disabled={sale.status === 'voided'}
+                      className="bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] hover:bg-[#2A3B56] hover:text-[#F8FAFC] px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 transition-colors disabled:opacity-40"
                     >
                       <Printer size={13} />
                       عرض / طباعة
                     </button>
+                    {sale.status !== 'voided' && <button type="button" onClick={() => handleVoidSale(sale)} className="bg-red-950/60 border border-red-800 text-red-300 hover:bg-red-900 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"><Ban size={13} />إلغاء الفاتورة</button>}
                   </div>
                 </div>
               ))}
@@ -897,7 +1002,10 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر الشراء (التكلفة):</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
+                    min="0"
+                    max="1000000"
+                    step="0.01"
+                    className="input text-sm"
                     value={newProduct.costPrice || ''}
                     onChange={e => setNewProduct({ ...newProduct, costPrice: Number(e.target.value) })}
                   />
@@ -906,7 +1014,11 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر البيع للطالب:</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs font-bold text-[#2DD4BF] focus:outline-none focus:border-[#0D9488]"
+                    min="0.01"
+                    max="1000000"
+                    step="0.01"
+                    className="input text-sm font-bold text-teal-300"
+                    required
                     value={newProduct.sellPrice || ''}
                     onChange={e => setNewProduct({ ...newProduct, sellPrice: Number(e.target.value) })}
                   />
@@ -918,7 +1030,10 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">الكمية الأولية بالمخزن:</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
+                    min="0"
+                    step="1"
+                    className="input text-sm"
+                    required
                     value={newProduct.stockQty}
                     onChange={e => setNewProduct({ ...newProduct, stockQty: Number(e.target.value) })}
                   />
@@ -927,7 +1042,10 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">حد التنبيه بنقص المخزون:</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
+                    min="0"
+                    step="1"
+                    className="input text-sm"
+                    required
                     value={newProduct.minStock}
                     onChange={e => setNewProduct({ ...newProduct, minStock: Number(e.target.value) })}
                   />
@@ -1018,7 +1136,11 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر الشراء (التكلفة):</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
+                    min="0"
+                    max="1000000"
+                    step="0.01"
+                    className="input text-sm"
+                    required
                     value={editForm.costPrice}
                     onChange={e => setEditForm({ ...editForm, costPrice: Number(e.target.value) })}
                   />
@@ -1027,7 +1149,10 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">سعر البيع للطالب:</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs font-bold text-[#2DD4BF] focus:outline-none focus:border-[#0D9488]"
+                    min="0.01"
+                    max="1000000"
+                    step="0.01"
+                    className="input text-sm font-bold text-teal-300"
                     required
                     value={editForm.sellPrice}
                     onChange={e => setEditForm({ ...editForm, sellPrice: Number(e.target.value) })}
@@ -1040,7 +1165,10 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">الكمية بالمخزن:</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
+                    min="0"
+                    step="1"
+                    className="input text-sm font-bold"
+                    required
                     value={editForm.stockQty}
                     onChange={e => setEditForm({ ...editForm, stockQty: Number(e.target.value) })}
                   />
@@ -1049,7 +1177,10 @@ export default function SuppliesPage() {
                   <label className="block text-xs text-[#94A3B8] font-bold mb-1">حد التنبيه بنقص المخزون:</label>
                   <input
                     type="number"
-                    className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488]"
+                    min="0"
+                    step="1"
+                    className="input text-sm"
+                    required
                     value={editForm.minStock}
                     onChange={e => setEditForm({ ...editForm, minStock: Number(e.target.value) })}
                   />
@@ -1106,17 +1237,17 @@ export default function SuppliesPage() {
               </div>
             </div>
 
-            <div className="text-xs text-[#94A3B8]">
-              هل أنت متأكد من رغبتك في حذف هذا الصنف نهائياً من قاعدة بيانات المخزن؟
+            <div className="text-xs text-[#CBD5E1]">
+              حذف الصنف متاح بعد تصفية رصيده. الرصيد غير الصفري يظل محسوبًا ضمن المخزون حتى تتم تسويته.
             </div>
 
             <div className="pt-2 border-t border-[#2A3B56] flex gap-2">
               <button
                 onClick={handleConfirmDelete}
-                disabled={isDeletingProduct}
-                className="bg-red-600 hover:bg-red-700 text-white flex-1 py-2 rounded-xl text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold shadow-md transition-colors"
+                disabled={isDeletingProduct || deletingProduct.stockQty > 0}
+                className="btn btn-danger bg-red-600 hover:bg-red-700 text-white flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold shadow-sm"
               >
-                {isDeletingProduct ? 'جاري الحذف...' : 'تأكيد الحذف'}
+                {isDeletingProduct ? 'جاري الحذف...' : deletingProduct.stockQty > 0 ? 'صفّر الرصيد أولًا' : 'تأكيد الحذف'}
               </button>
               <button
                 onClick={() => setDeletingProduct(null)}
@@ -1131,84 +1262,102 @@ export default function SuppliesPage() {
 
       {/* ================= MODAL: PRINTABLE INVOICE ================= */}
       {currentInvoice && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white text-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl relative border-2 border-[#0D9488]/40">
+        <div className="invoice-print-overlay fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="invoice-modal-shell relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl">
             <button
+              type="button"
               onClick={() => setCurrentInvoice(null)}
-              className="absolute top-4 left-4 text-slate-400 hover:text-slate-800"
+              aria-label="إغلاق الفاتورة"
+              className="invoice-print-actions absolute left-4 top-4 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800"
             >
               <X size={20} />
             </button>
 
             {/* Receipt Content */}
-            <div id="printable-receipt" className="space-y-4">
-              <div className="text-center border-b pb-4">
-                <h2 className="text-xl font-black text-slate-900">{settings.name}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">قسم متجر ومبيعات الأدوات الفنية</p>
-                <p className="text-xs text-slate-400">{settings.address} • {settings.phone}</p>
-                <div className="mt-2 inline-block bg-[#0D9488]/10 px-3 py-1 rounded text-xs font-mono font-bold text-[#0D9488] border border-[#0D9488]/20">
-                  فاتورة رقم: {currentInvoice.invoiceNumber}
+            <article id="printable-document" className="invoice-paper invoice-paper-sale" dir="rtl">
+              <header className="invoice-brand border-b-2 border-slate-900 pb-4 text-center">
+                <div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full border-2 border-teal-700 text-sm font-black text-teal-800">م</div>
+                <h1 className="text-xl font-black text-slate-950">{settings.name}</h1>
+                <p className="mt-1 text-sm font-semibold text-slate-700">فاتورة مبيعات أدوات فنية</p>
+                <p className="mt-1 text-xs text-slate-600">{settings.address} • {settings.phone}</p>
+                <div className="mt-3 inline-flex rounded-md border border-slate-400 px-3 py-1 text-sm font-bold text-slate-900">
+                  رقم الفاتورة: <bdi className="mr-1 font-mono">{currentInvoice.invoiceNumber}</bdi>
                 </div>
-              </div>
+              </header>
 
-              <div className="text-xs space-y-1 text-slate-600 border-b pb-3">
-                <div className="flex justify-between">
-                  <span>التاريخ:</span>
-                  <span className="font-semibold text-slate-800">{currentInvoice.date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>اسم المشتري:</span>
-                  <span className="font-semibold text-slate-900">{currentInvoice.customerName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>طريقة الدفع:</span>
-                  <span className="font-semibold text-slate-800">{currentInvoice.paymentMethod}</span>
-                </div>
-              </div>
+              <dl className="invoice-details my-4 grid grid-cols-2 gap-x-5 gap-y-3 text-sm">
+                <div><dt>تاريخ البيع</dt><dd><bdi>{currentInvoice.date}</bdi></dd></div>
+                <div><dt>نوع العميل</dt><dd>{currentInvoice.customerType === 'student' ? 'طالب' : 'عميل مباشر'}</dd></div>
+                <div><dt>اسم المشتري</dt><dd>{currentInvoice.customerName}</dd></div>
+                <div><dt>طريقة الدفع</dt><dd>{paymentMethodLabels[currentInvoice.paymentMethod] || currentInvoice.paymentMethod}</dd></div>
+                {currentInvoice.notes && <div className="col-span-2"><dt>ملاحظات</dt><dd>{currentInvoice.notes}</dd></div>}
+              </dl>
 
-              {/* Items Table */}
-              <table className="w-full text-right text-xs">
-                <thead>
-                  <tr className="border-b text-slate-500">
-                    <th className="py-1">الصنف</th>
-                    <th className="py-1 text-center">الكمية</th>
-                    <th className="py-1 text-left">الإجمالي</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {currentInvoice.items.map((item: any, idx: number) => (
-                    <tr key={idx} className="py-1.5">
-                      <td className="py-1.5 text-slate-800">{item.productName}</td>
-                      <td className="py-1.5 text-center font-bold text-slate-900">{item.quantity}</td>
-                      <td className="py-1.5 text-left font-bold text-[#0D9488] font-mono">{item.total} ج</td>
+              <div className="overflow-x-auto">
+                <table className="invoice-items w-full border-collapse text-right text-sm">
+                  <thead>
+                    <tr className="border-y border-slate-700 bg-slate-100 text-slate-800">
+                      <th className="px-2 py-2">الصنف</th>
+                      <th className="px-2 py-2 text-center">سعر الوحدة</th>
+                      <th className="px-2 py-2 text-center">الكمية</th>
+                      <th className="px-2 py-2 text-left">الإجمالي</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Total */}
-              <div className="border-t pt-3 flex justify-between items-center">
-                <span className="font-black text-sm text-slate-900">إجمالي الفاتورة:</span>
-                <span className="font-black text-xl text-[#0D9488] font-mono">{currentInvoice.totalAmount} ج</span>
+                  </thead>
+                  <tbody>
+                    {currentInvoice.items.map((item, idx) => (
+                      <tr key={`${item.productId}-${idx}`} className="border-b border-slate-200">
+                        <td className="px-2 py-2 font-semibold text-slate-900">{item.productName}</td>
+                        <td className="px-2 py-2 text-center text-slate-700"><bdi>{formatInvoiceMoney(item.unitPrice)}</bdi></td>
+                        <td className="px-2 py-2 text-center font-bold text-slate-900"><bdi>{item.quantity}</bdi></td>
+                        <td className="px-2 py-2 text-left font-bold text-slate-900"><bdi>{formatInvoiceMoney(item.total)}</bdi></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              <p className="text-center text-[10px] text-slate-400 pt-2 border-t">
-                شكراً لتعاملكم مع مرسم الإبداع • الفاتورة مسجلة رسمياً بنظام الإدارة
-              </p>
-            </div>
+              <div className="invoice-amount-row mt-4 space-y-2 border-y-2 border-slate-900 py-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-slate-700">الإجمالي قبل الخصم</span>
+                  <strong className="font-bold text-slate-900"><bdi>{formatInvoiceMoney(currentInvoice.subtotalAmount ?? currentInvoice.items.reduce((sum, item) => sum + item.total, 0))}</bdi></strong>
+                </div>
+                {(currentInvoice.discountAmount ?? 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-700">خصم الفاتورة</span>
+                    <strong className="font-bold text-slate-900"><bdi>- {formatInvoiceMoney(currentInvoice.discountAmount ?? 0)}</bdi></strong>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-slate-300 pt-2 text-base">
+                  <span className="font-black text-slate-900">الصافي بعد الخصم</span>
+                  <strong className="font-black text-slate-950"><bdi>{formatInvoiceMoney(currentInvoice.totalAmount)}</bdi></strong>
+                </div>
+              </div>
+
+              <footer className="invoice-footer mt-8 border-t border-slate-300 pt-4 text-center text-xs text-slate-600">
+                <div className="mb-5 flex justify-between text-slate-800">
+                  <span>توقيع المستلم: __________________</span>
+                  <span>توقيع البائع: __________________</span>
+                </div>
+                <p>شكراً لتعاملكم مع {settings.name}.</p>
+              </footer>
+            </article>
 
             {/* Actions */}
-            <div className="mt-5 pt-3 border-t flex gap-2">
+            <div className="invoice-print-actions mt-5 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                مقاس الورق
+                <select value={invoicePaperSize} onChange={event => setInvoicePaperSize(event.target.value as InvoicePaperSize)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+                  {(Object.keys(invoicePaperLabels) as InvoicePaperSize[]).map(size => <option key={size} value={size}>{invoicePaperLabels[size]}</option>)}
+                </select>
+              </label>
               <button
-                onClick={() => window.print()}
-                className="bg-[#0D9488] hover:bg-[#0F766E] text-white flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-[#0D9488]/20 transition-colors"
+                type="button"
+                onClick={() => printInvoice(invoicePaperSize)}
+                className="btn btn-primary flex flex-1 items-center justify-center gap-2 shadow-md shadow-blue-600/20"
               >
-                <Printer size={16} /> طباعة الفاتورة (طابعة حرارية / A5)
+                <Printer size={16} /> طباعة الفاتورة
               </button>
-              <button
-                onClick={() => setCurrentInvoice(null)}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors"
-              >
+              <button type="button" onClick={() => setCurrentInvoice(null)} className="btn btn-secondary">
                 إغلاق
               </button>
             </div>

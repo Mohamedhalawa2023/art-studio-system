@@ -3,35 +3,116 @@ import { useState, useMemo, useEffect } from 'react';
 import { useMarsam } from '@/lib/store';
 import {
   TrendingUp, DollarSign, CreditCard, ShoppingBag, Calendar,
-  Printer, Download, Filter, ArrowUpRight, ArrowDownRight,
-  PieChart as PieIcon, BarChart3, Clock, CheckCircle2, AlertTriangle,
-  Banknote, Smartphone, ArrowRightLeft, ShieldCheck, ChevronDown
+  Printer, Download, PieChart as PieIcon, BarChart3, Clock, ShieldCheck, Pencil, Trash2, X
 } from 'lucide-react';
 import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend
+  ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { formatLocalDate } from '@/lib/dates';
+import type { OperatingExpenseCategory } from '@/lib/mockData';
 
 type DateFilter = 'today' | 'week' | 'month' | 'year' | 'all' | 'custom';
 
-const COLORS = ['#0D9488', '#2563EB', '#F59E0B', '#10B981', '#6366F1'];
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: 'نقدًا',
+  transfer: 'تحويل بنكي',
+  instapay: 'إنستاباي',
+  vodafone: 'فودافون كاش',
+  card: 'بطاقة بنكية',
+};
+
+const EXPENSE_CATEGORY_LABELS: Record<OperatingExpenseCategory, string> = {
+  rent: 'إيجار',
+  salaries: 'مرتبات',
+  materials: 'خامات',
+  utilities: 'مرافق',
+  maintenance: 'صيانة',
+  transport: 'مواصلات',
+  marketing: 'تسويق',
+  other: 'أخرى',
+};
+
+const toCents = (amount: number) => Math.round((amount + Number.EPSILON) * 100);
+const fromCents = (amount: number) => amount / 100;
+
+function parseReportDate(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(value);
+  if (!match) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const [, yearText, monthText, dayText, hourText = '0', minuteText = '0', secondText = '0'] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  const parsed = new Date(year, month - 1, day, hour, minute, second);
+  if (
+    parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day ||
+    parsed.getHours() !== hour || parsed.getMinutes() !== minute || parsed.getSeconds() !== second
+  ) return null;
+  return parsed;
+}
 
 export default function FinancialReportsPage() {
   const {
     payments, enrollments, supplySales, supplyItems,
-    students, courses, groups, settings
+    students, courses, groups, settings, expenses, addOperatingExpense,
+    updateOperatingExpense, deleteOperatingExpense, currentUser
   } = useMarsam();
 
   // Date Filter State
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'supplies' | 'courses' | 'receivables'>('overview');
+  const [activeReportTab, setActiveReportTab] = useState<'overview' | 'supplies' | 'courses' | 'receivables' | 'expenses'>('overview');
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
+  const [expenseDate, setExpenseDate] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState<OperatingExpenseCategory>('rent');
+  const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expensePaymentMethod, setExpensePaymentMethod] = useState<'cash' | 'transfer' | 'instapay' | 'vodafone' | 'card'>('cash');
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
   useEffect(() => {
-    setCurrentDate(new Date());
+    const frame = window.requestAnimationFrame(() => {
+      const now = new Date();
+      setCurrentDate(now);
+      setExpenseDate(formatLocalDate(now));
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  const resetExpenseForm = () => {
+    setEditingExpenseId(null);
+    setExpenseDate(formatLocalDate(new Date()));
+    setExpenseCategory('rent');
+    setExpenseDescription('');
+    setExpenseAmount('');
+    setExpensePaymentMethod('cash');
+  };
+
+  const startEditingExpense = (expense: (typeof expenses)[number]) => {
+    setEditingExpenseId(expense.id);
+    setExpenseDate(expense.date);
+    setExpenseCategory(expense.category);
+    setExpenseDescription(expense.description);
+    setExpenseAmount(String(expense.amount));
+    setExpensePaymentMethod(expense.paymentMethod);
+  };
+
+  const handleDeleteExpense = (expense: (typeof expenses)[number]) => {
+    if (!window.confirm('حذف المصروف «' + expense.description + '» بقيمة ' + expense.amount.toLocaleString() + ' ج؟')) return;
+    try {
+      deleteOperatingExpense(expense.id, currentUser?.id || undefined);
+      if (editingExpenseId === expense.id) resetExpenseForm();
+    } catch {
+      // The store already displays the validation error.
+    }
+  };
 
   // Compute Filter Date Threshold
   const filterDateRange = useMemo(() => {
@@ -89,82 +170,95 @@ export default function FinancialReportsPage() {
     if (!filterDateRange) return [];
     return payments.filter(p => {
       if (p.status !== 'valid') return false;
-      const d = new Date(p.date);
-      return d >= filterDateRange.startDate && d <= filterDateRange.endDate;
-    });
+      const date = parseReportDate(p.date);
+      return date !== null && date >= filterDateRange.startDate && date <= filterDateRange.endDate;
+    }).sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0));
   }, [payments, filterDateRange]);
 
   // Filtered Supply Sales (Tools revenue)
   const filteredSales = useMemo(() => {
     if (!filterDateRange) return [];
     return supplySales.filter(s => {
-      const d = new Date(s.date);
-      return d >= filterDateRange.startDate && d <= filterDateRange.endDate;
-    });
+      if (s.status === 'voided') return false;
+      const date = parseReportDate(s.date);
+      return date !== null && date >= filterDateRange.startDate && date <= filterDateRange.endDate;
+    }).sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0));
   }, [supplySales, filterDateRange]);
+
+  const filteredExpenses = useMemo(() => {
+    if (!filterDateRange) return [];
+    return expenses.filter(expense => {
+      const date = parseReportDate(expense.date);
+      return date !== null && date >= filterDateRange.startDate && date <= filterDateRange.endDate;
+    }).sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0));
+  }, [expenses, filterDateRange]);
 
   // Financial Metrics
   const courseRevenue = useMemo(() => {
-    return filteredPayments.reduce((acc, p) => acc + p.amount, 0);
+    return fromCents(filteredPayments.reduce((acc, p) => acc + toCents(p.amount), 0));
   }, [filteredPayments]);
 
   const suppliesRevenue = useMemo(() => {
-    return filteredSales.reduce((acc, s) => acc + s.totalAmount, 0);
+    return fromCents(filteredSales.reduce((acc, s) => acc + toCents(s.totalAmount), 0));
   }, [filteredSales]);
 
   const suppliesCost = useMemo(() => {
-    return filteredSales.reduce((acc, s) => acc + s.totalCost, 0);
+    return fromCents(filteredSales.reduce((acc, s) => acc + toCents(s.totalCost), 0));
   }, [filteredSales]);
 
   const suppliesProfit = useMemo(() => {
     return suppliesRevenue - suppliesCost;
   }, [suppliesRevenue, suppliesCost]);
 
-  const totalGrossRevenue = courseRevenue + suppliesRevenue;
-  const totalNetProfit = courseRevenue + suppliesProfit;
-  const overallMargin = totalGrossRevenue > 0 ? Math.round((totalNetProfit / totalGrossRevenue) * 100) : 0;
+  const totalOperatingExpenses = fromCents(filteredExpenses.reduce((sum, expense) => sum + toCents(expense.amount), 0));
+  const netOperatingResult = fromCents(toCents(courseRevenue) + toCents(suppliesProfit) - toCents(totalOperatingExpenses));
+
+  const totalGrossRevenue = fromCents(toCents(courseRevenue) + toCents(suppliesRevenue));
+  const suppliesMargin = suppliesRevenue > 0 ? Math.round((suppliesProfit / suppliesRevenue) * 100) : 0;
 
   // Receivables / Remaining Tuition
   const totalRemainingTuition = useMemo(() => {
     return enrollments.reduce((acc, e) => {
       const remaining = Math.max(0, e.totalAmount - e.totalPaid);
-      return acc + remaining;
-    }, 0);
+      return acc + toCents(remaining);
+    }, 0) / 100;
   }, [enrollments]);
 
   // Inventory Asset Value (Current Stock * Cost)
   const inventoryAssetValue = useMemo(() => {
-    return supplyItems.reduce((acc, i) => acc + (i.costPrice * i.stockQty), 0);
+    return supplyItems.reduce((acc, i) => acc + toCents(i.costPrice) * i.stockQty, 0) / 100;
   }, [supplyItems]);
 
   // Payment Methods Breakdown (Combined)
   const paymentMethodsBreakdown = useMemo(() => {
     const map: Record<string, number> = {
       cash: 0,
+      transfer: 0,
       instapay: 0,
       vodafone: 0,
-      transfer: 0
+      card: 0
     };
 
     filteredPayments.forEach(p => {
-      map[p.method] = (map[p.method] || 0) + p.amount;
+      map[p.method] = (map[p.method] || 0) + toCents(p.amount);
     });
 
     filteredSales.forEach(s => {
-      map[s.paymentMethod] = (map[s.paymentMethod] || 0) + s.totalAmount;
+      map[s.paymentMethod] = (map[s.paymentMethod] || 0) + toCents(s.totalAmount);
     });
 
     const labels: Record<string, string> = {
-      cash: 'نقداً (كاش)',
-      instapay: 'انستاباي (InstaPay)',
-      vodafone: 'محافظ إلكترونية (فودافون كاش)',
-      transfer: 'تحويل بنكي / بطاقات'
+      cash: 'نقدًا',
+      instapay: 'إنستاباي',
+      vodafone: 'فودافون كاش',
+      transfer: 'تحويل بنكي',
+      card: 'بطاقة بنكية'
     };
 
     return Object.entries(map).map(([key, value]) => ({
       key,
       name: labels[key] || key,
-      value
+      value: fromCents(value)
     })).filter(m => m.value > 0);
   }, [filteredPayments, filteredSales]);
 
@@ -178,52 +272,83 @@ export default function FinancialReportsPage() {
 
   // Top Selling Supplies
   const topSellingSupplies = useMemo(() => {
-    const itemMap = new Map<string, { name: string; qty: number; revenue: number; profit: number }>();
+    const itemMap = new Map<string, { name: string; qty: number; revenueCents: number; profitCents: number }>();
     filteredSales.forEach(s => {
+      const invoiceSubtotalCents = s.subtotalAmount !== undefined
+        ? toCents(s.subtotalAmount)
+        : s.items.reduce((sum, item) => sum + toCents(item.total), 0);
+      const invoiceDiscountCents = toCents(s.discountAmount ?? 0);
+      let allocatedDiscountCents = 0;
+      let accumulatedLineTotalCents = 0;
+
       s.items.forEach(it => {
         const existing = itemMap.get(it.productId) || {
           name: it.productName,
           qty: 0,
-          revenue: 0,
-          profit: 0
+          revenueCents: 0,
+          profitCents: 0
         };
-        const profit = (it.unitPrice - it.costPrice) * it.quantity;
+        const lineTotalCents = toCents(it.total);
+        accumulatedLineTotalCents += lineTotalCents;
+        const nextAllocatedDiscountCents = invoiceSubtotalCents > 0
+          ? Math.round(invoiceDiscountCents * accumulatedLineTotalCents / invoiceSubtotalCents)
+          : invoiceDiscountCents;
+        const lineDiscountCents = nextAllocatedDiscountCents - allocatedDiscountCents;
+        allocatedDiscountCents = nextAllocatedDiscountCents;
+        const netLineRevenueCents = lineTotalCents - lineDiscountCents;
+        const lineCostCents = toCents(it.costPrice) * it.quantity;
         itemMap.set(it.productId, {
           name: it.productName,
           qty: existing.qty + it.quantity,
-          revenue: existing.revenue + it.total,
-          profit: existing.profit + profit
+          revenueCents: existing.revenueCents + netLineRevenueCents,
+          profitCents: existing.profitCents + netLineRevenueCents - lineCostCents
         });
       });
     });
 
     return Array.from(itemMap.values())
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
+      .sort((a, b) => b.revenueCents - a.revenueCents)
+      .slice(0, 5)
+      .map(item => ({
+        name: item.name,
+        qty: item.qty,
+        revenue: fromCents(item.revenueCents),
+        profit: fromCents(item.profitCents),
+      }));
   }, [filteredSales]);
 
   // Export CSV
   const handleExportCSV = () => {
     const rows = [
-      ['نوع العملية', 'المرجع / الفاتورة', 'العميل / الطالب', 'التاريخ', 'المبلغ (ج.م)', 'طريقة الدفع', 'الصافي / الربح'],
+      ['نوع العملية', 'المرجع / الفاتورة', 'العميل / الطالب', 'التاريخ', 'المبلغ المحصل (ج.م)', 'خصم الفاتورة (ج.م)', 'طريقة الدفع', 'مجمل ربح الأدوات (ج.م)'],
       ...filteredPayments.map(p => {
         const enr = enrollments.find(e => e.id === p.enrollmentId);
         const stu = students.find(s => s.id === enr?.studentId);
-        return ['اشتراك كورس', p.receiptNumber, stu?.name || 'طالب', p.date, p.amount, p.method, p.amount];
+        return ['دفعة كورس', p.receiptNumber, stu?.name || 'طالب', p.date, p.amount, '', PAYMENT_METHOD_LABELS[p.method] || p.method, ''];
       }),
       ...filteredSales.map(s => {
-        return ['مبيعات أدوات', s.invoiceNumber, s.customerName, s.date, s.totalAmount, s.paymentMethod, s.profit];
-      })
+        return ['بيع أدوات', s.invoiceNumber, s.customerName, s.date, s.totalAmount, s.discountAmount ?? 0, PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod, s.totalAmount - s.totalCost];
+      }),
+      ...filteredExpenses.map(expense => [
+        'مصروف تشغيل', EXPENSE_CATEGORY_LABELS[expense.category] + ': ' + expense.description, '', expense.date,
+        -expense.amount, '', PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod, ''
+      ])
     ];
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(e => e.join(',')).join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const escapeCsvCell = (value: unknown) => {
+      const text = String(value ?? '');
+      const safeText = /^[\s]*[=+\-@]/.test(text) ? `'${text}` : text;
+      return `"${safeText.replace(/"/g, '""')}"`;
+    };
+    const csvContent = '\uFEFF' + rows.map(row => row.map(escapeCsvCell).join(',')).join('\r\n');
+    const downloadUrl = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `تقرير_مالي_مرسم_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('href', downloadUrl);
+    link.setAttribute('download', `تقرير_مالي_مرسم_${formatLocalDate(new Date())}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
   };
 
   return (
@@ -233,14 +358,14 @@ export default function FinancialReportsPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold mb-1">
             <ShieldCheck size={14} />
-            <span>نظام التقارير المحاسبية المعتمد</span>
+            <span>تقارير الإدارة المالية</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <BarChart3 className="text-teal-400" size={26} />
-            التقارير المالية والأرباح العامة
+            التقارير المالية والتحصيل
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
-            المركز المالي المتكامل، أرباح متجر الأدوات، إيرادات الكورسات، وتحليل حركة الخزينة
+            ملخص التحصيل ومبيعات الأدوات والمصروفات التشغيلية خلال الفترة المحددة
           </p>
         </div>
 
@@ -314,12 +439,18 @@ export default function FinancialReportsPage() {
         )}
       </div>
 
+      {dateFilter === 'custom' && (!customStart || !customEnd || customStart > customEnd) && (
+        <p role="alert" className="text-sm text-red-600">
+          {!customStart || !customEnd ? 'اختر تاريخ البداية والنهاية لعرض الفترة المخصصة.' : 'تاريخ البداية يجب أن يسبق تاريخ النهاية.'}
+        </p>
+      )}
+
       {/* 3. Executive KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* Total Gross Revenue */}
         <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs">
           <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">إجمالي الإيرادات الكلية</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">إجمالي المتحصلات</span>
             <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
               <DollarSign size={16} />
             </div>
@@ -332,26 +463,26 @@ export default function FinancialReportsPage() {
           </p>
         </div>
 
-        {/* Net Profit */}
+        {/* Course Revenue */}
         <div className="p-4 rounded-2xl border border-teal-500/30 bg-teal-500/5 dark:bg-teal-950/20 shadow-xs">
           <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-teal-300">صافي الأرباح المقدرة</span>
+            <span className="text-xs font-bold text-teal-300">رسوم الكورسات المحصلة</span>
             <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center">
               <TrendingUp size={16} />
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-black text-teal-400 mt-1 font-mono">
-            {totalNetProfit.toLocaleString()} ج
+            {courseRevenue.toLocaleString()} ج
           </p>
           <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 font-medium">
-            هامش ربح إجمالي: <strong className="text-teal-400 font-mono">%{overallMargin}</strong>
+            إجمالي الدفعات المسجلة قبل المصروفات التشغيلية
           </p>
         </div>
 
         {/* Supplies Profit */}
         <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs">
           <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">أرباح متجر الأدوات</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">مجمل ربح متجر الأدوات</span>
             <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
               <ShoppingBag size={16} />
             </div>
@@ -361,6 +492,7 @@ export default function FinancialReportsPage() {
           </p>
           <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
             المبيعات: <strong className="font-mono text-slate-700 dark:text-slate-300">{suppliesRevenue.toLocaleString()} ج</strong>
+            <span className="mr-2">• هامش {suppliesMargin}% قبل المصروفات التشغيلية</span>
           </p>
         </div>
 
@@ -376,7 +508,26 @@ export default function FinancialReportsPage() {
             {totalRemainingTuition.toLocaleString()} ج
           </p>
           <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-            قيمة المخزن السلعي: <strong className="font-mono text-teal-400">{inventoryAssetValue.toLocaleString()} ج</strong>
+            رصيد مستحق بكل الاشتراكات الحالية؛ لا يتغير مع فلتر الفترة
+          </p>
+          <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
+            قيمة المخزون بالتكلفة: <strong className="font-mono text-teal-400">{inventoryAssetValue.toLocaleString()} ج</strong>
+          </p>
+        </div>
+
+        {/* Net operating result after recorded operating expenses */}
+        <div className={`p-4 rounded-2xl border shadow-xs ${netOperatingResult >= 0 ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-red-500/25 bg-red-500/5'}`}>
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">نتيجة النشاط بعد المصروفات</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <TrendingUp size={16} />
+            </div>
+          </div>
+          <p className={`text-2xl md:text-3xl font-black mt-1 font-mono ${netOperatingResult >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            {netOperatingResult.toLocaleString()} ج
+          </p>
+          <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
+            مصروفات مسجلة: <strong className="font-mono">{totalOperatingExpenses.toLocaleString()} ج</strong>
           </p>
         </div>
       </div>
@@ -409,7 +560,7 @@ export default function FinancialReportsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(val: any) => `${Number(val).toLocaleString()} ج`}
+                    formatter={(val: number | string | readonly (number | string)[] | undefined) => `${Number(val).toLocaleString()} ج`}
                     contentStyle={{ borderRadius: '12px', background: '#0F172A', color: '#fff', border: 'none' }}
                   />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
@@ -512,7 +663,7 @@ export default function FinancialReportsPage() {
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
               }`}
             >
-              كشف حركة الخزينة العام ({filteredPayments.length + filteredSales.length})
+              كشف حركة الخزينة العام ({filteredPayments.length + filteredSales.length + filteredExpenses.length})
             </button>
             <button
               onClick={() => setActiveReportTab('supplies')}
@@ -544,6 +695,16 @@ export default function FinancialReportsPage() {
             >
               المتبقيات والأقساط المستحقة
             </button>
+            <button
+              onClick={() => setActiveReportTab('expenses')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeReportTab === 'expenses'
+                  ? 'bg-teal-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+              }`}
+            >
+              المصروفات ({filteredExpenses.length})
+            </button>
           </div>
         </div>
 
@@ -568,26 +729,35 @@ export default function FinancialReportsPage() {
                     ref: p.receiptNumber,
                     name: students.find(s => s.id === enrollments.find(e => e.id === p.enrollmentId)?.studentId)?.name || 'طالب',
                     date: p.date,
-                    method: p.method,
+                    method: PAYMENT_METHOD_LABELS[p.method] || p.method,
                     amount: p.amount,
-                    isPositive: true
+                    isPositive: p.amount >= 0
                   })),
                   ...filteredSales.map(s => ({
                     type: 'متجر أدوات',
                     ref: s.invoiceNumber,
                     name: s.customerName,
                     date: s.date,
-                    method: s.paymentMethod,
+                    method: PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod,
                     amount: s.totalAmount,
                     isPositive: true
+                  })),
+                  ...filteredExpenses.map(expense => ({
+                    type: 'مصروف',
+                    ref: EXPENSE_CATEGORY_LABELS[expense.category],
+                    name: expense.description,
+                    date: expense.date,
+                    method: PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod,
+                    amount: expense.amount,
+                    isPositive: false
                   }))
                 ]
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0))
                   .slice(0, 30)
                   .map((row, idx) => (
                     <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                       <td className="p-3">
-                        <span className={`badge ${row.type === 'كورس' ? 'badge-teal' : 'badge-info'}`}>
+                        <span className={`badge ${row.type === 'كورس' ? 'badge-teal' : row.type === 'مصروف' ? 'badge-gray' : 'badge-info'}`}>
                           {row.type}
                         </span>
                       </td>
@@ -595,8 +765,8 @@ export default function FinancialReportsPage() {
                       <td className="p-3 font-semibold text-slate-900 dark:text-white">{row.name}</td>
                       <td className="p-3 text-slate-500">{row.date}</td>
                       <td className="p-3"><span className="badge badge-gray">{row.method}</span></td>
-                      <td className="p-3 text-left font-black text-teal-400 font-mono text-sm">
-                        +{row.amount.toLocaleString()} ج
+                      <td className={`p-3 text-left font-black font-mono text-sm ${row.isPositive ? 'text-teal-400' : 'text-red-500'}`}>
+                        {row.isPositive ? '+' : '−'}{Math.abs(row.amount).toLocaleString()} ج
                       </td>
                     </tr>
                   ))}
@@ -616,9 +786,10 @@ export default function FinancialReportsPage() {
                   <th className="p-3">التاريخ</th>
                   <th className="p-3">الأصناف المباعة</th>
                   <th className="p-3">طريقة الدفع</th>
+                  <th className="p-3">الخصم</th>
                   <th className="p-3">إجمالي الفاتورة</th>
                   <th className="p-3">تكلفة البضاعة</th>
-                  <th className="p-3 text-left">الربح الصافي</th>
+                  <th className="p-3 text-left">مجمل الربح</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -630,10 +801,11 @@ export default function FinancialReportsPage() {
                     <td className="p-3 text-slate-600 dark:text-slate-300">
                       {s.items.map(i => `${i.productName} (${i.quantity})`).join(', ')}
                     </td>
-                    <td className="p-3"><span className="badge badge-gray">{s.paymentMethod}</span></td>
+                    <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod}</span></td>
+                    <td className="p-3 font-mono text-amber-600 dark:text-amber-300">{(s.discountAmount ?? 0).toLocaleString()} ج</td>
                     <td className="p-3 font-bold text-slate-900 dark:text-white font-mono">{s.totalAmount} ج</td>
                     <td className="p-3 text-slate-400 font-mono">{s.totalCost} ج</td>
-                    <td className="p-3 text-left font-black text-teal-400 font-mono">+{s.profit} ج</td>
+                    <td className="p-3 text-left font-black text-teal-400 font-mono">{(s.totalAmount - s.totalCost).toLocaleString()} ج</td>
                   </tr>
                 ))}
               </tbody>
@@ -668,9 +840,9 @@ export default function FinancialReportsPage() {
                       <td className="p-3 font-semibold text-slate-900 dark:text-white">{stu?.name || 'طالب'}</td>
                       <td className="p-3 text-slate-600 dark:text-slate-300">{crs?.name || 'دورة فنية'}</td>
                       <td className="p-3 text-slate-500">{p.date}</td>
-                      <td className="p-3"><span className="badge badge-gray">{p.method}</span></td>
+                      <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[p.method] || p.method}</span></td>
                       <td className="p-3 text-slate-500">{p.notes || '-'}</td>
-                      <td className="p-3 text-left font-black text-teal-400 font-mono">+{p.amount} ج</td>
+                      <td className={`p-3 text-left font-black font-mono ${p.amount >= 0 ? 'text-teal-400' : 'text-red-500'}`}>{p.amount >= 0 ? '+' : '−'}{Math.abs(p.amount).toLocaleString()} ج</td>
                     </tr>
                   );
                 })}
@@ -712,6 +884,124 @@ export default function FinancialReportsPage() {
                   })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* TAB E: OPERATING EXPENSES */}
+        {activeReportTab === 'expenses' && (
+          <div className="space-y-5">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              {editingExpenseId ? 'تعديل بيانات المصروف' : 'إضافة مصروف تشغيل'}
+            </h3>
+            <form
+              className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
+              onSubmit={event => {
+                event.preventDefault();
+                try {
+                  const expenseData = {
+                    date: expenseDate,
+                    category: expenseCategory,
+                    description: expenseDescription,
+                    amount: Number(expenseAmount),
+                    paymentMethod: expensePaymentMethod,
+                    recordedBy: currentUser?.id || undefined,
+                  };
+                  if (editingExpenseId) {
+                    updateOperatingExpense({
+                      ...expenseData,
+                      id: editingExpenseId,
+                      updatedBy: currentUser?.id || undefined,
+                    });
+                    resetExpenseForm();
+                  } else {
+                    addOperatingExpense(expenseData);
+                    setExpenseDescription('');
+                    setExpenseAmount('');
+                  }
+                } catch {
+                  // The store already displays the validation error.
+                }
+              }}
+            >
+              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+                التاريخ
+                <input className="input w-full text-xs" type="date" required value={expenseDate} onChange={event => setExpenseDate(event.target.value)} />
+              </label>
+              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+                البند
+                <select className="input w-full text-xs" value={expenseCategory} onChange={event => setExpenseCategory(event.target.value as OperatingExpenseCategory)}>
+                  {Object.entries(EXPENSE_CATEGORY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>
+              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300 lg:col-span-2">
+                البيان
+                <input className="input w-full text-xs" required minLength={2} maxLength={200} value={expenseDescription} onChange={event => setExpenseDescription(event.target.value)} placeholder="مثال: إيجار شهر أكتوبر" />
+              </label>
+              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+                المبلغ (ج.م)
+                <input className="input w-full text-xs" type="number" min="0.01" step="0.01" required value={expenseAmount} onChange={event => setExpenseAmount(event.target.value)} />
+              </label>
+              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+                طريقة الدفع
+                <select className="input w-full text-xs" value={expensePaymentMethod} onChange={event => setExpensePaymentMethod(event.target.value as typeof expensePaymentMethod)}>
+                  {Object.entries(PAYMENT_METHOD_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>
+              <div className="flex gap-2 lg:col-span-6">
+                <button className="btn btn-primary flex-1 text-xs font-bold" type="submit">{editingExpenseId ? 'حفظ التعديل' : 'تسجيل المصروف'}</button>
+                {editingExpenseId && <button className="btn btn-secondary flex items-center gap-1 text-xs" type="button" onClick={resetExpenseForm}><X size={14} /> إلغاء التعديل</button>}
+              </div>
+            </form>
+
+            <div className="flex flex-wrap justify-between items-center gap-2 text-sm">
+              <span className="font-bold text-slate-600 dark:text-slate-300">إجمالي مصروفات الفترة</span>
+              <strong className="font-mono text-red-500">{totalOperatingExpenses.toLocaleString()} ج.م</strong>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-right text-xs">
+                <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 font-bold border-b border-slate-200 dark:border-white/10">
+                  <tr>
+                    <th className="p-3">التاريخ</th>
+                    <th className="p-3">البند</th>
+                    <th className="p-3">البيان</th>
+                    <th className="p-3">طريقة الدفع</th>
+                    <th className="p-3 text-left">المبلغ</th>
+                    <th className="p-3 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {filteredExpenses.map(expense => (
+                    <tr key={expense.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                      <td className="p-3 text-slate-500">{expense.date}</td>
+                      <td className="p-3 font-semibold text-slate-700 dark:text-slate-200">{EXPENSE_CATEGORY_LABELS[expense.category]}</td>
+                      <td className="p-3 text-slate-600 dark:text-slate-300">
+                        <span>{expense.description}</span>
+                        {expense.updatedAt && <span className="block mt-0.5 text-[10px] text-slate-400">آخر تعديل: {expense.updatedAt}</span>}
+                      </td>
+                      <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod}</span></td>
+                      <td className="p-3 text-left font-black font-mono text-red-500">−{expense.amount.toLocaleString()} ج</td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <button type="button" onClick={() => startEditingExpense(expense)} className="text-teal-600 hover:text-teal-500" title="تعديل المصروف" aria-label={'تعديل المصروف ' + expense.description}>
+                            <Pencil size={15} />
+                          </button>
+                          <button type="button" onClick={() => handleDeleteExpense(expense)} className="text-red-500 hover:text-red-400" title="حذف المصروف" aria-label={'حذف المصروف ' + expense.description}>
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredExpenses.length === 0 && (
+                    <tr><td colSpan={6} className="p-8 text-center text-slate-400">لا توجد مصروفات مسجلة في الفترة المحددة.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              نتيجة النشاط = دفعات الكورسات + مجمل ربح متجر الأدوات − المصروفات المسجلة. أي تكلفة أخرى تُضاف كبند مصروف حتى تظهر في الحساب.
+            </p>
           </div>
         )}
       </div>

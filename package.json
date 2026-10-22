@@ -2,15 +2,18 @@
   "name": "marsam",
   "version": "0.1.0",
   "private": true,
+  "description": "نظام سطح مكتب لإدارة المرسم والكورسات والحضور والمدفوعات والمخزون",
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/copy-standalone.js",
     "start": "next start",
     "lint": "eslint",
-    "desktop": "concurrently -k -s first \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "test": "node --test scripts/enrollment.service.test.cjs",
+    "desktop": "concurrently -k -s first \"next dev --hostname 127.0.0.1\" \"wait-on http://127.0.0.1:3000 && electron .\"",
     "app:desktop": "electron .",
     "electron:only": "electron .",
-    "build:exe": "next build && electron-builder"
+    "prebuild:exe": "node scripts/generate-app-icon.cjs",
+    "build:exe": "npm run build && electron-builder"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.6",
@@ -28,6 +31,7 @@
     "@types/react-dom": "^19",
     "concurrently": "^10.0.6",
     "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "tailwindcss": "^4",
@@ -45,7 +49,10 @@
       "output": "dist"
     },
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "public/icon.ico"
     },
     "portable": {

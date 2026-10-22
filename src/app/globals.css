@@ -80,6 +80,11 @@ body {
   border: none;
 }
 
+.btn:focus-visible {
+  outline: 3px solid #2DD4BF;
+  outline-offset: 2px;
+}
+
 .btn-primary {
   background: #0D9488;
   color: #FFFFFF;
@@ -283,5 +288,82 @@ body {
     height: 25mm !important;
     min-height: 25mm !important;
     max-height: 25mm !important;
+  }
+
+  /* Invoice and receipt printing is deliberately isolated from the app shell. */
+  html.invoice-printing body * {
+    visibility: hidden !important;
+  }
+  html.invoice-printing body *:has(#printable-document) {
+    display: contents !important;
+  }
+  html.invoice-printing #printable-document,
+  html.invoice-printing #printable-document * {
+    visibility: visible !important;
+  }
+  html.invoice-printing .invoice-print-overlay,
+  html.invoice-printing .invoice-modal-shell {
+    position: static !important;
+    inset: auto !important;
+    display: contents !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  html.invoice-printing .invoice-print-actions {
+    display: none !important;
+  }
+  html.invoice-printing #printable-document {
+    position: static !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-family: 'Cairo', Arial, sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.55 !important;
+    box-shadow: none !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  html.invoice-printing #printable-document * {
+    color: #111827 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html.invoice-printing[data-invoice-paper='a4'] #printable-document {
+    width: 186mm !important;
+  }
+  html.invoice-printing[data-invoice-paper='a5'] #printable-document {
+    width: 132mm !important;
+  }
+  html.invoice-printing[data-invoice-paper='thermal'] #printable-document {
+    width: 74mm !important;
+    font-size: 8.5pt !important;
+  }
+  html.invoice-printing[data-invoice-paper='thermal'] .invoice-details {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html.invoice-printing[data-invoice-paper='thermal'] .invoice-items {
+    font-size: 7.5pt !important;
+  }
+  html.invoice-printing .invoice-items tr,
+  html.invoice-printing .invoice-amount-row,
+  html.invoice-printing .invoice-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }

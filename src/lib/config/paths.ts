@@ -26,6 +26,18 @@ let resolvedBasePath: string | null = null;
 export function getAppStorageBaseDir(): string {
   if (resolvedBasePath) return resolvedBasePath;
 
+  // Packaged desktop builds must keep user data outside the install directory,
+  // including per-user installs under LocalAppData\Programs where writes succeed.
+  if (process.env.MARSAM_DESKTOP === '1') {
+    const appData = process.env.APPDATA || process.env.LOCALAPPDATA || (
+      process.platform === 'darwin'
+        ? path.join(process.env.HOME || '', 'Library', 'Application Support')
+        : path.join(process.env.HOME || '', '.config')
+    );
+    resolvedBasePath = path.join(appData, 'MarsamArtStudio');
+    return resolvedBasePath;
+  }
+
   const cwd = process.cwd();
   const isProgramFiles = cwd.toLowerCase().includes('program files');
 

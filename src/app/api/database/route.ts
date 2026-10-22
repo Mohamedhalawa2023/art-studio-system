@@ -98,6 +98,7 @@ function validateDatabaseIntegrity(data: any): boolean {
       return false;
     }
   }
+  if (data.expenses !== undefined && !Array.isArray(data.expenses)) return false;
   return true;
 }
 
