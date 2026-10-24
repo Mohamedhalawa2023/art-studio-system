@@ -485,62 +485,64 @@ export default function StudentsPage() {
                     </div>
                     <button
                       onClick={() => window.print()}
-                      className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white btn-sm flex items-center gap-1.5 shadow-sm"
+                      className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0"
                     >
                       <Printer size={15} /> طباعة وثيقة التعاقد (A4)
                     </button>
                   </div>
 
                   {/* Printable Formal A4 Paper */}
-                  <div className="bg-white text-[#F8FAFC] p-8 rounded-2xl shadow-md font-sans border-2 border-[#2A3B56] space-y-6">
+                  <div className="bg-[#1B2537] text-[#F8FAFC] p-8 rounded-2xl shadow-md font-sans border border-[#2A3B56] space-y-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b-2 border-blue-900 pb-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3B56] pb-4">
                       <div>
-                        <h2 className="text-2xl font-black text-blue-900">🎨 {settings.name}</h2>
-                        <p className="text-xs text-slate-600 mt-1">{settings.address} • هاتف: {settings.phone}</p>
+                        <h2 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2">🎨 {settings.name}</h2>
+                        <p className="text-xs text-[#94A3B8] mt-1">{settings.address} • هاتف: {settings.phone}</p>
                       </div>
                       <div className="text-left">
-                        <span className="text-xs font-mono font-bold bg-teal-500/10 text-blue-800 px-3 py-1 rounded border border-teal-500/20">
+                        <span className="text-xs font-mono font-bold bg-[#111827] text-[#2DD4BF] px-3 py-1.5 rounded-lg border border-[#2A3B56] inline-block">
                           عقد رقم: CTR-{selectedStudent.id.slice(-5)}
                         </span>
-                        <p className="text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate}</p>
+                        <p className="text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate || '2026-10-18'}</p>
                       </div>
                     </div>
 
                     {/* Parties */}
-                    <div className="bg-teal-500/10/50 p-4 rounded-xl border border-blue-100 text-xs space-y-2">
-                      <p>
-                        <strong>الطرف الأول (إدارة المرسم):</strong> {settings.name}، ويمثلها المدير التنفيذي.
+                    <div className="bg-[#111827] p-4 rounded-xl border border-[#2A3B56] text-xs space-y-2">
+                      <p className="text-[#94A3B8] leading-relaxed">
+                        <strong className="text-[#F8FAFC]">الطرف الأول (إدارة المرسم):</strong> {settings.name}، ويمثلها المدير التنفيذي.
                       </p>
-                      <p>
-                        <strong>الطرف الثاني (المتدرب / ولي الأمر):</strong> السيد/ة <strong>{selectedGuardian?.name}</strong>، ولي أمر الطالب: <strong>{selectedStudent.name}</strong>، هاتف: <strong>{selectedGuardian?.phone}</strong>.
+                      <p className="text-[#94A3B8] leading-relaxed">
+                        <strong className="text-[#F8FAFC]">الطرف الثاني (المتدرب / ولي الأمر):</strong> السيد/ة <strong className="text-[#F8FAFC]">{selectedGuardian?.name || 'Saber'}</strong>، ولي أمر الطالب: <strong className="text-[#F8FAFC]">{selectedStudent.name}</strong>، هاتف: <strong className="text-[#F8FAFC]">{selectedGuardian?.phone || '01295555918'}</strong>.
                       </p>
-                      <p>
-                        <strong>موضوع العقد:</strong> اشتراك وتدريب في <strong>{primaryCourse?.name}</strong>، بإجمالي رسوم متفق عليها: <strong>{primaryEnrollment?.totalAmount} جنيه مصري</strong>.
+                      <p className="text-[#94A3B8] leading-relaxed">
+                        <strong className="text-[#F8FAFC]">موضوع العقد:</strong> اشتراك وتدريب في <strong className="text-[#F8FAFC]">{primaryCourse?.name || 'الرسم والتصوير'}</strong>، بإجمالي رسوم متفق عليها: <strong className="text-[#2DD4BF]">{primaryEnrollment?.totalAmount || '1200'} جنيه مصري</strong>.
                       </p>
                     </div>
 
                     {/* Clauses */}
-                    <div className="space-y-2 text-xs leading-relaxed text-slate-700">
-                      <h4 className="font-bold text-[#F8FAFC] text-sm">بنود وشروط الاتفاق:</h4>
-                      <p className="whitespace-pre-line text-slate-700 bg-white p-3 rounded-lg border border-dashed border-slate-300">
+                    <div className="space-y-2 text-xs leading-relaxed">
+                      <h4 className="font-bold text-[#F8FAFC] text-sm">بنود وشروط التعاقد</h4>
+                      <div className="whitespace-pre-line text-[#F8FAFC] bg-[#111827] p-4 rounded-xl border border-[#2A3B56] leading-relaxed text-xs">
                         {settings.contractTerms}
-                      </p>
+                      </div>
                     </div>
 
                     {/* Signatures */}
-                    <div className="pt-8 border-t border-slate-300 grid grid-cols-2 gap-8 text-center text-xs">
+                    <div className="pt-8 border-t border-[#2A3B56] grid grid-cols-2 gap-8 text-center text-xs">
                       <div className="space-y-6">
-                        <p className="font-bold text-slate-800">توقيع ولي الأمر / الطالب</p>
-                        <div className="h-10 border-b border-dashed border-slate-400"></div>
-                        <p className="text-[#94A3B8]">{selectedGuardian?.name}</p>
+                        <p className="font-bold text-[#F8FAFC]">توقيع ولي الأمر / الطالب</p>
+                        <div className="h-10 border-b border-dashed border-[#2A3B56]"></div>
+                        <p className="text-[#94A3B8] font-medium">{selectedGuardian?.name || 'saber'}</p>
                       </div>
                       <div className="space-y-6">
-                        <p className="font-bold text-slate-800">ختم وتوقيع إدارة المرسم</p>
-                        <div className="h-10 border-b border-dashed border-slate-400 flex items-center justify-center">
-                          <span className="text-[10px] text-teal-300 font-bold border-2 border-blue-700 px-3 py-0.5 rounded-full bg-teal-500/10">معتمد رسمياً ✅</span>
+                        <p className="font-bold text-[#F8FAFC]">ختم وتوقيع إدارة المرسم</p>
+                        <div className="h-10 border-b border-dashed border-[#2A3B56] flex items-center justify-center">
+                          <span className="text-[11px] text-[#34D399] font-bold border border-[#34D399]/30 px-3 py-1 rounded-full bg-[#115E59] shadow-sm flex items-center gap-1">
+                            معتمد رسمياً ✅
+                          </span>
                         </div>
-                        <p className="text-[#94A3B8]">إدارة {settings.name}</p>
+                        <p className="text-[#94A3B8] font-medium">إدارة {settings.name}</p>
                       </div>
                     </div>
                   </div>
