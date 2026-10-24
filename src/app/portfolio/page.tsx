@@ -85,28 +85,28 @@ export default function PortfolioPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Sparkles className="text-teal-400" size={26} />
+          <h1 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2">
+            <Sparkles className="text-[#2DD4BF]" size={26} />
             معرض الأعمال الفنية ولوحات المرسم
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-[#94A3B8] text-sm mt-1">
             توثيق إبداعات المشرفين والطلاب واعتماد اللوحات للنشر بالكتالوج الرسمي للمرسم
           </p>
         </div>
 
         <button
           onClick={() => setShowUploadModal(true)}
-          className="btn btn-primary text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-teal-900/30 cursor-pointer"
         >
-          <Upload size={15} />
+          <Upload size={16} />
           <span>إضافة عمل فني جديد</span>
         </button>
       </div>
 
       {/* Supervisors Summary Row */}
-      <div className="glass p-5 rounded-2xl border border-slate-200 bg-white">
-        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
-          <Palette size={16} className="text-teal-400" />
+      <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm">
+        <h3 className="font-bold text-xs uppercase tracking-wider text-[#F8FAFC] mb-3.5 flex items-center gap-2">
+          <Palette size={16} className="text-[#2DD4BF]" />
           فنانو ومشرفو المرسم
         </h3>
 
@@ -119,18 +119,22 @@ export default function PortfolioPage() {
             return (
               <div
                 key={sup.id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-3"
+                className="p-3.5 rounded-xl border border-[#2A3B56] bg-[#111827] flex items-center gap-3 transition-colors hover:border-[#0D9488]/40"
               >
-                <div className="w-11 h-11 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
+                <div className="w-11 h-11 rounded-full bg-[#0D9488] flex items-center justify-center text-[#F8FAFC] font-black text-sm shadow-sm shrink-0">
                   {sup.name.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-xs text-slate-900 truncate">{sup.name}</p>
-                  <p className="text-[11px] text-slate-500">{sup.phone || 'مشرف معتمد'}</p>
-                  <div className="flex gap-2 mt-1.5 flex-wrap">
-                    <span className="badge badge-teal text-[10px]">{approved} معتمد</span>
+                  <p className="font-bold text-xs text-[#F8FAFC] truncate">{sup.name}</p>
+                  <p className="text-[11px] text-[#94A3B8] mt-0.5">{sup.phone || 'مشرف معتمد'}</p>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#115E59] text-[#2DD4BF]">
+                      {approved} معتمد
+                    </span>
                     {pending > 0 && (
-                      <span className="badge badge-info text-[10px]">{pending} قيد الاعتماد</span>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#78350F] text-[#D97706]">
+                        {pending} قيد الاعتماد
+                      </span>
                     )}
                   </div>
                 </div>
@@ -141,8 +145,8 @@ export default function PortfolioPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex gap-1.5 glass p-1 rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex gap-2 p-1 rounded-xl bg-[#111827] border border-[#2A3B56]">
           {[
             { id: 'all', label: `جميع الأعمال (${portfolio.length})` },
             { id: 'approved', label: `المعتمدة (${portfolio.filter(p => p.status === 'approved').length})` },
@@ -151,10 +155,10 @@ export default function PortfolioPage() {
             <button
               key={f.id}
               onClick={() => setFilter(f.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 filter === f.id
-                  ? 'bg-teal-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-teal-400'
+                  ? 'bg-[#0D9488] text-[#F8FAFC] shadow-md shadow-teal-900/30'
+                  : 'text-[#94A3B8] hover:text-[#F8FAFC]'
               }`}
             >
               {f.label}
@@ -162,19 +166,19 @@ export default function PortfolioPage() {
           ))}
         </div>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#94A3B8]">
           عرض {filteredItems.length} عمل فني
         </p>
       </div>
 
       {/* Gallery Grid */}
       {filteredItems.length === 0 ? (
-        <div className="glass p-12 rounded-2xl border border-slate-200 text-center space-y-3 bg-white">
-          <ImageIcon size={44} className="mx-auto text-[#94A3B8]" />
-          <p className="font-bold text-sm text-slate-800">لا توجد أعمال فنية في هذا القسم بعد</p>
+        <div className="p-12 rounded-2xl border border-[#2A3B56] text-center space-y-3 bg-[#1B2537]">
+          <ImageIcon size={44} className="mx-auto text-[#94A3B8]/60" />
+          <p className="font-bold text-sm text-[#F8FAFC]">لا توجد أعمال فنية في هذا القسم بعد</p>
           <button
             onClick={() => setShowUploadModal(true)}
-            className="btn btn-secondary text-xs"
+            className="px-4 py-2 rounded-xl bg-[#111827] border border-[#334155] text-[#CBD5E1] hover:text-[#F8FAFC] hover:border-[#0D9488] text-xs font-bold transition-all"
           >
             رفع أول عمل فني
           </button>
@@ -187,11 +191,11 @@ export default function PortfolioPage() {
             return (
               <div
                 key={item.id}
-                className="glass rounded-2xl overflow-hidden border border-slate-200 flex flex-col group transition-all hover:shadow-lg hover:border-teal-500/40 bg-white"
+                className="rounded-2xl overflow-hidden border border-[#2A3B56] bg-[#1B2537] flex flex-col group transition-all hover:border-[#0D9488]/50 shadow-sm"
               >
                 {/* Artwork Image Container */}
                 <div
-                  className="relative h-52 w-full overflow-hidden bg-slate-100 cursor-pointer"
+                  className="relative h-52 w-full overflow-hidden bg-[#111827] cursor-pointer"
                   onClick={() => setSelectedArtwork(item)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -200,15 +204,23 @@ export default function PortfolioPage() {
                     alt={item.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                    <span className="text-white text-xs font-bold flex items-center gap-1">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0E1629]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                    <span className="text-[#F8FAFC] text-xs font-bold flex items-center gap-1">
                       <Eye size={14} /> تكبير اللوحة
                     </span>
                   </div>
 
                   {/* Status Badge */}
                   <div className="absolute top-2.5 right-2.5">
-                    <span className={`badge ${item.status === 'approved' ? 'badge-teal' : item.status === 'pending' ? 'badge-info' : 'badge-danger'}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md ${
+                        item.status === 'approved'
+                          ? 'bg-[#115E59] text-[#2DD4BF]'
+                          : item.status === 'pending'
+                          ? 'bg-[#78350F] text-[#D97706]'
+                          : 'bg-[#450A0A] text-[#FCA5A5]'
+                      }`}
+                    >
                       {item.status === 'approved' ? <CheckCircle size={11} /> : <Clock size={11} />}
                       {item.status === 'approved' ? 'معتمد' : item.status === 'pending' ? 'في الانتظار' : 'مرفوض'}
                     </span>
@@ -218,42 +230,58 @@ export default function PortfolioPage() {
                 {/* Details */}
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                   <div>
-                    <h4 className="font-bold text-sm text-slate-900 leading-snug line-clamp-1">{item.title}</h4>
-                    <p className="text-xs text-teal-300 font-semibold mt-0.5">
+                    <h4 className="font-bold text-sm text-[#F8FAFC] leading-snug line-clamp-1">{item.title}</h4>
+                    <p className="text-xs text-[#2DD4BF] font-semibold mt-1">
                       بإشراف: {supervisor?.name || 'فنان المرسم'}
                     </p>
                     {item.description && (
-                      <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-[#94A3B8] mt-1.5 line-clamp-2 leading-relaxed">
                         {item.description}
                       </p>
                     )}
                   </div>
 
                   {/* Administrative Action Buttons */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5">
-                    <button type="button" onClick={() => beginArtworkEdit(item)} className="btn btn-secondary text-[11px] py-1.5" title="تعديل العمل الفني"><Pencil size={13} />تعديل</button>
-                    <button type="button" onClick={() => removeArtwork(item)} className="btn btn-secondary text-red-600 text-[11px] py-1.5" title="حذف العمل الفني"><Trash2 size={13} />حذف</button>
+                  <div className="pt-2 border-t border-[#2A3B56] flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => beginArtworkEdit(item)}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488] text-[11px] font-medium flex items-center gap-1 transition-colors"
+                      title="تعديل العمل الفني"
+                    >
+                      <Pencil size={12} />
+                      تعديل
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeArtwork(item)}
+                      className="px-2.5 py-1.5 rounded-lg bg-[#111827] border border-[#334155] text-[#94A3B8]/60 hover:text-red-400 hover:border-red-500/50 text-[11px] font-medium flex items-center gap-1 transition-colors"
+                      title="حذف العمل الفني"
+                    >
+                      <Trash2 size={12} />
+                      حذف
+                    </button>
                     {item.status === 'pending' ? (
                       <>
                         <button
                           onClick={() => updatePortfolioStatus(item.id, 'approved')}
-                          className="btn btn-primary text-white text-[11px] font-bold py-1.5 flex-1 flex items-center justify-center gap-1 shadow-sm"
+                          className="px-3 py-1.5 rounded-lg bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-[11px] font-bold flex-1 flex items-center justify-center gap-1 transition-colors shadow-md shadow-teal-900/30"
                         >
-                          <CheckCircle size={13} /> اعتماد اللوحة
+                          <CheckCircle size={12} /> اعتماد اللوحة
                         </button>
                         <button
                           onClick={() => updatePortfolioStatus(item.id, 'rejected')}
-                          className="p-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50"
+                          className="p-1.5 rounded-lg bg-[#111827] border border-red-900/60 text-red-400 hover:bg-red-950/40 transition-colors"
                           title="رفض"
                         >
                           <X size={14} />
                         </button>
                       </>
                     ) : (
-                      <div className="w-full flex items-center justify-between text-[11px] text-slate-500">
+                      <div className="w-full flex items-center justify-between text-[11px] text-[#94A3B8] pt-1">
                         <span>تاريخ الإضافة: {item.uploadDate}</span>
                         {item.status === 'approved' && (
-                          <span className="text-teal-300 font-bold flex items-center gap-1">
+                          <span className="text-[#2DD4BF] font-bold flex items-center gap-1">
                             <ShieldCheck size={12} /> منشورة
                           </span>
                         )}
@@ -269,16 +297,19 @@ export default function PortfolioPage() {
 
       {/* ================= MODAL: UPLOAD ARTWORK ================= */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1B2537] p-6 rounded-2xl max-w-lg w-full border border-[#2A3B56] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-[#F8FAFC]">
+        <div className="modal-overlay" onClick={() => { setShowUploadModal(false); setEditingArtwork(null); setPreviewImage(null); }}>
+          <div
+            className="bg-[#1B2537] p-6 rounded-2xl max-w-lg w-full border border-[#2A3B56] shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-[#F8FAFC]"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
               <h3 className="font-bold text-base text-[#F8FAFC] flex items-center gap-2">
-                <Upload size={18} className="text-teal-400" />
+                <Upload size={18} className="text-[#2DD4BF]" />
                 {editingArtwork ? 'تعديل العمل الفني' : 'إضافة عمل فني جديد إلى المعرض'}
               </h3>
               <button
                 onClick={() => { setShowUploadModal(false); setEditingArtwork(null); setPreviewImage(null); }}
-                className="text-[#94A3B8] hover:text-white"
+                className="w-8 h-8 rounded-lg bg-[#111827] border border-[#2A3B56] text-[#CBD5E1] hover:text-[#F8FAFC] flex items-center justify-center transition-colors"
               >
                 <X size={18} />
               </button>
@@ -287,7 +318,7 @@ export default function PortfolioPage() {
             <form onSubmit={handleUploadSubmit} className="space-y-4 text-xs">
               {/* Image Uploader */}
               <div>
-                <label className="block text-[#CBD5E1] font-bold mb-1.5">
+                <label className="block text-[#94A3B8] font-bold mb-1.5">
                   صورة العمل الفني *:
                 </label>
                 <div
@@ -302,11 +333,11 @@ export default function PortfolioPage() {
                         alt="Preview"
                         className="max-h-48 mx-auto rounded-lg object-contain shadow-md"
                       />
-                      <p className="text-[11px] text-teal-400 font-bold">انقر لتغيير الصورة</p>
+                      <p className="text-[11px] text-[#2DD4BF] font-bold">انقر لتغيير الصورة</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <Upload size={32} className="mx-auto text-teal-400 mb-1" />
+                      <Upload size={32} className="mx-auto text-[#2DD4BF] mb-1" />
                       <p className="font-bold text-xs text-[#F8FAFC]">اختر صورة العمل الفني من جهازك</p>
                       <p className="text-[10px] text-[#94A3B8]">PNG, JPG, JPEG (يتم حفظها في قاعدة البيانات المحلية)</p>
                     </div>
@@ -323,11 +354,11 @@ export default function PortfolioPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-[#CBD5E1] font-bold mb-1">
+                <label className="block text-[#94A3B8] font-bold mb-1">
                   عنوان العمل الفني / اللوحة *:
                 </label>
                 <input
-                  className="input text-xs"
+                  className="w-full mt-1 p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
                   placeholder="مثال: دراسة الضوء والظلال في الطبيعة الصامتة"
                   required
                   value={newTitle}
@@ -337,27 +368,29 @@ export default function PortfolioPage() {
 
               {/* Supervisor */}
               <div>
-                <label className="block text-[#CBD5E1] font-bold mb-1">
+                <label className="block text-[#94A3B8] font-bold mb-1">
                   المشرف أو الفنان المنفذ:
                 </label>
                 <select
-                  className="input text-xs"
+                  className="w-full mt-1 p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
                   value={newSupervisorId}
                   onChange={e => setNewSupervisorId(e.target.value)}
                 >
                   {supervisors.map(sup => (
-                    <option key={sup.id} value={sup.id}>{sup.name} ({sup.role === 'admin' ? 'المدير' : 'مشرف'})</option>
+                    <option key={sup.id} value={sup.id} className="bg-[#111827] text-[#F8FAFC]">
+                      {sup.name} ({sup.role === 'admin' ? 'المدير' : 'مشرف'})
+                    </option>
                   ))}
                 </select>
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-[#CBD5E1] font-bold mb-1">
+                <label className="block text-[#94A3B8] font-bold mb-1">
                   وصف العمل والخامات المستخدمة:
                 </label>
                 <textarea
-                  className="input text-xs h-20"
+                  className="w-full mt-1 p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488] h-20"
                   placeholder="مثال: ألوان زيتية على كانفاس مشدود 50x70، تطبيق تقنيات الشياروسكورو والتدرج اللوني..."
                   value={newDescription}
                   onChange={e => setNewDescription(e.target.value)}
@@ -367,14 +400,14 @@ export default function PortfolioPage() {
               <div className="pt-2 flex gap-2">
                 <button
                   type="submit"
-                  className="btn btn-primary flex-1 text-xs font-bold shadow-md shadow-teal-600/20"
+                  className="flex-1 py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold text-xs transition-colors shadow-md shadow-teal-900/30"
                 >
                   {editingArtwork ? 'حفظ التعديلات' : 'حفظ العمل بالمعرض'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setShowUploadModal(false); setEditingArtwork(null); setPreviewImage(null); }}
-                  className="btn btn-secondary text-xs"
+                  className="px-5 py-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#CBD5E1] hover:text-[#F8FAFC] text-xs transition-colors"
                 >
                   إلغاء
                 </button>
@@ -387,35 +420,35 @@ export default function PortfolioPage() {
       {/* ================= MODAL: ARTWORK ZOOM VIEW ================= */}
       {selectedArtwork && (
         <div
-          className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="modal-overlay"
           onClick={() => setSelectedArtwork(null)}
         >
           <div
-            className="bg-white max-w-3xl w-full rounded-2xl overflow-hidden border border-slate-200 shadow-2xl text-slate-900"
+            className="bg-[#1B2537] max-w-3xl w-full rounded-2xl overflow-hidden border border-[#2A3B56] shadow-2xl text-[#F8FAFC]"
             onClick={e => e.stopPropagation()}
           >
-            <div className="relative max-h-[70vh] bg-slate-950 flex items-center justify-center">
+            <div className="relative max-h-[70vh] bg-[#0E1629] flex items-center justify-center p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedArtwork.imageUrl}
                 alt={selectedArtwork.title}
-                className="max-h-[70vh] w-auto object-contain"
+                className="max-h-[70vh] w-auto object-contain rounded-lg"
               />
               <button
                 onClick={() => setSelectedArtwork(null)}
-                className="absolute top-4 left-4 p-2 rounded-full bg-slate-800/80 text-white hover:bg-slate-900"
+                className="absolute top-4 left-4 w-9 h-9 rounded-full bg-[#111827]/80 border border-[#2A3B56] text-[#F8FAFC] hover:bg-[#111827] flex items-center justify-center transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
-            <div className="p-5 flex items-center justify-between bg-white border-t border-slate-100">
+            <div className="p-5 flex items-center justify-between bg-[#1B2537] border-t border-[#2A3B56]">
               <div>
-                <h3 className="font-black text-lg text-slate-900">{selectedArtwork.title}</h3>
-                <p className="text-xs text-teal-300 font-semibold mt-0.5">{selectedArtwork.description}</p>
+                <h3 className="font-black text-lg text-[#F8FAFC]">{selectedArtwork.title}</h3>
+                <p className="text-xs text-[#2DD4BF] font-semibold mt-1">{selectedArtwork.description}</p>
               </div>
               <button
                 onClick={() => setSelectedArtwork(null)}
-                className="btn btn-secondary text-xs"
+                className="px-5 py-2 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#CBD5E1] hover:text-[#F8FAFC] text-xs font-semibold transition-colors"
               >
                 إغلاق
               </button>

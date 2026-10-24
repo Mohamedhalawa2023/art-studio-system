@@ -280,7 +280,7 @@ export default function FinancialReportsPage() {
   const revenueSourcesPie = useMemo(() => {
     return [
       { name: 'رسوم واشتراكات الكورسات', value: courseRevenue, color: '#0D9488' },
-      { name: 'مبيعات متجر الأدوات والخامات', value: suppliesRevenue, color: '#2563EB' }
+      { name: 'مبيعات متجر الأدوات والخامات', value: suppliesRevenue, color: '#3B82F6' }
     ].filter(i => i.value > 0);
   }, [courseRevenue, suppliesRevenue]);
 
@@ -395,31 +395,31 @@ export default function FinancialReportsPage() {
       {/* 1. Header with Title and Global Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold mb-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#115E59] border border-[#0D9488]/40 text-[#2DD4BF] text-xs font-bold mb-1.5">
             <ShieldCheck size={14} />
             <span>تقارير الإدارة المالية</span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="text-teal-400" size={26} />
+          <h1 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2">
+            <BarChart3 className="text-[#2DD4BF]" size={26} />
             التقارير المالية والتحصيل
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-[#94A3B8] text-sm mt-1">
             ملخص التحصيل ومبيعات الأدوات والمصروفات التشغيلية خلال الفترة المحددة
           </p>
         </div>
 
         {/* Global Export & Print Buttons */}
-        <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto">
+        <div className="flex items-center gap-2.5 shrink-0 self-stretch sm:self-auto">
           <button
             onClick={() => window.print()}
-            className="btn btn-secondary flex items-center gap-1.5 text-xs font-bold py-2.5 px-3.5 shadow-xs"
+            className="px-4 py-2.5 rounded-xl bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488] font-bold text-xs flex items-center gap-2 transition-all"
             title="طباعة التقرير المالي الرسمي"
           >
             <Printer size={15} /> طباعة التقرير
           </button>
           <button
             onClick={handleExportCSV}
-            className="btn btn-primary flex items-center gap-1.5 text-xs font-bold py-2.5 px-3.5 shadow-md shadow-teal-500/15"
+            className="px-4 py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-teal-900/30"
             title="تصدير كشيت إكسيل"
           >
             <Download size={15} /> تصدير Excel (CSV)
@@ -428,10 +428,10 @@ export default function FinancialReportsPage() {
       </div>
 
       {/* 2. Date Filter Bar */}
-      <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-white/10 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1 ml-2">
-            <Calendar size={14} /> الفترة:
+      <div className="p-3.5 rounded-2xl bg-[#1B2537] border border-[#2A3B56] shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          <span className="text-xs font-bold text-[#94A3B8] flex items-center gap-1.5 ml-2">
+            <Calendar size={14} className="text-[#2DD4BF]" /> الفترة:
           </span>
           {(['today', 'week', 'month', 'year', 'all', 'custom'] as DateFilter[]).map(df => {
             const labels: Record<DateFilter, string> = {
@@ -447,10 +447,10 @@ export default function FinancialReportsPage() {
               <button
                 key={df}
                 onClick={() => setDateFilter(df)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isSelected
-                    ? 'bg-teal-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                    ? 'bg-[#0D9488] text-[#F8FAFC] shadow-md shadow-teal-900/30'
+                    : 'bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488]'
                 }`}
               >
                 {labels[df]}
@@ -460,17 +460,17 @@ export default function FinancialReportsPage() {
         </div>
 
         {dateFilter === 'custom' && (
-          <div className="flex items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <div className="flex items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#2A3B56]">
             <input
               type="date"
-              className="input text-xs py-1 px-2.5"
+              className="p-1.5 px-3 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none"
               value={customStart}
               onChange={e => setCustomStart(e.target.value)}
             />
-            <span className="text-xs text-slate-400">إلى</span>
+            <span className="text-xs text-[#94A3B8]">إلى</span>
             <input
               type="date"
-              className="input text-xs py-1 px-2.5"
+              className="p-1.5 px-3 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none"
               value={customEnd}
               onChange={e => setCustomEnd(e.target.value)}
             />
@@ -479,94 +479,106 @@ export default function FinancialReportsPage() {
       </div>
 
       {dateFilter === 'custom' && (!customStart || !customEnd || customStart > customEnd) && (
-        <p role="alert" className="text-sm text-red-600">
+        <div role="alert" className="p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-sm">
           {!customStart || !customEnd ? 'اختر تاريخ البداية والنهاية لعرض الفترة المخصصة.' : 'تاريخ البداية يجب أن يسبق تاريخ النهاية.'}
-        </p>
+        </div>
       )}
 
-      {/* 3. Executive KPI Cards */}
+      {/* 3. Executive KPI Cards (5 Cards) */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-        {/* Total Gross Revenue */}
-        <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs">
-          <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">إجمالي المتحصلات</span>
-            <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
-              <DollarSign size={16} />
+        {/* 1. Total Gross Revenue */}
+        <div className="p-4 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold text-[#94A3B8]">إجمالي المتحصلات</span>
+              <div className="w-8 h-8 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] flex items-center justify-center">
+                <DollarSign size={16} />
+              </div>
             </div>
+            <p className="text-2xl md:text-3xl font-black text-[#2DD4BF] mt-1.5 font-mono">
+              {totalGrossRevenue.toLocaleString()} ج
+            </p>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mt-1 font-mono">
-            {totalGrossRevenue.toLocaleString()} ج
-          </p>
-          <p className="text-[11px] text-teal-400 mt-1.5 font-bold flex items-center gap-1">
+          <p className="text-[11px] text-[#94A3B8] mt-2 font-medium">
             <span>كورسات + مبيعات خامات</span>
           </p>
         </div>
 
-        {/* Course Revenue */}
-        <div className="p-4 rounded-2xl border border-teal-500/30 bg-teal-500/5 dark:bg-teal-950/20 shadow-xs">
-          <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-teal-300">رسوم الكورسات المحصلة</span>
-            <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center">
-              <TrendingUp size={16} />
+        {/* 2. Course Revenue */}
+        <div className="p-4 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold text-[#94A3B8]">رسوم الكورسات المحصلة</span>
+              <div className="w-8 h-8 rounded-xl bg-[#115E59]/40 border border-[#0D9488]/40 text-[#2DD4BF] flex items-center justify-center">
+                <TrendingUp size={16} />
+              </div>
             </div>
+            <p className="text-2xl md:text-3xl font-black text-[#2DD4BF] mt-1.5 font-mono">
+              {courseRevenue.toLocaleString()} ج
+            </p>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-teal-400 mt-1 font-mono">
-            {courseRevenue.toLocaleString()} ج
-          </p>
-          <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 font-medium">
-            إجمالي الدفعات المسجلة قبل المصروفات التشغيلية
+          <p className="text-[11px] text-[#94A3B8] mt-2 font-medium">
+            إجمالي الدفعات المسجلة قبل المصروفات
           </p>
         </div>
 
-        {/* Supplies Profit */}
-        <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs">
-          <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">مجمل ربح متجر الأدوات</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <ShoppingBag size={16} />
+        {/* 3. Supplies Profit */}
+        <div className="p-4 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold text-[#94A3B8]">مجمل ربح متجر الأدوات</span>
+              <div className="w-8 h-8 rounded-xl bg-[#111827] border border-[#2A3B56] text-blue-400 flex items-center justify-center">
+                <ShoppingBag size={16} />
+              </div>
             </div>
+            <p className="text-2xl md:text-3xl font-black text-[#2DD4BF] mt-1.5 font-mono">
+              +{suppliesProfit.toLocaleString()} ج
+            </p>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono">
-            +{suppliesProfit.toLocaleString()} ج
-          </p>
-          <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-            المبيعات: <strong className="font-mono text-slate-700 dark:text-slate-300">{suppliesRevenue.toLocaleString()} ج</strong>
-            <span className="mr-2">• هامش {suppliesMargin}% قبل المصروفات التشغيلية</span>
+          <p className="text-[11px] text-[#94A3B8] mt-2 font-medium">
+            المبيعات: <strong className="font-mono text-[#F8FAFC]">{suppliesRevenue.toLocaleString()} ج</strong>
+            <span className="mr-1.5">• هامش {suppliesMargin}%</span>
           </p>
         </div>
 
-        {/* Uncollected Receivables */}
-        <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 dark:bg-amber-950/20 shadow-xs">
-          <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">أقساط ومستحقات قيد التحصيل</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-              <Clock size={16} />
+        {/* 4. Uncollected Receivables (Alert Highlighted Card) */}
+        <div className="p-4 rounded-2xl border-2 border-[#D97706]/70 bg-[#1B2537] shadow-lg shadow-amber-950/20 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold text-[#FBBF24]">أقساط ومستحقات قيد التحصيل</span>
+              <div className="w-8 h-8 rounded-xl bg-[#78350F]/40 border border-[#D97706]/40 text-[#FBBF24] flex items-center justify-center">
+                <Clock size={16} />
+              </div>
             </div>
+            <p className="text-2xl md:text-3xl font-black text-[#D97706] mt-1.5 font-mono">
+              {totalRemainingTuition.toLocaleString()} ج
+            </p>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono">
-            {totalRemainingTuition.toLocaleString()} ج
-          </p>
-          <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-            رصيد مستحق بكل الاشتراكات الحالية؛ لا يتغير مع فلتر الفترة
-          </p>
-          <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-            قيمة المخزون بالتكلفة: <strong className="font-mono text-teal-400">{inventoryAssetValue.toLocaleString()} ج</strong>
-          </p>
+          <div>
+            <p className="text-[11px] text-[#94A3B8] mt-2 font-medium leading-relaxed">
+              رصيد مستحق بكل الاشتراكات الحالية؛ لا يتغير مع فلتر الفترة
+            </p>
+            <p className="text-[10px] text-[#94A3B8] mt-1 font-medium">
+              قيمة المخزون بالتكلفة: <strong className="font-mono text-[#2DD4BF]">{inventoryAssetValue.toLocaleString()} ج</strong>
+            </p>
+          </div>
         </div>
 
-        {/* Net operating result after recorded operating expenses */}
-        <div className={`p-4 rounded-2xl border shadow-xs ${netOperatingResult >= 0 ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-red-500/25 bg-red-500/5'}`}>
-          <div className="flex items-center justify-between pb-1">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">نتيجة النشاط بعد المصروفات</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <TrendingUp size={16} />
+        {/* 5. Net Operating Result */}
+        <div className="p-4 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold text-[#94A3B8]">نتيجة النشاط بعد المصروفات</span>
+              <div className="w-8 h-8 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] flex items-center justify-center">
+                <TrendingUp size={16} />
+              </div>
             </div>
+            <p className={`text-2xl md:text-3xl font-black mt-1.5 font-mono ${netOperatingResult >= 0 ? 'text-[#2DD4BF]' : 'text-red-400'}`}>
+              {netOperatingResult.toLocaleString()} ج
+            </p>
           </div>
-          <p className={`text-2xl md:text-3xl font-black mt-1 font-mono ${netOperatingResult >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-            {netOperatingResult.toLocaleString()} ج
-          </p>
-          <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-            مصروفات مسجلة: <strong className="font-mono">{totalOperatingExpenses.toLocaleString()} ج</strong>
+          <p className="text-[11px] text-[#94A3B8] mt-2 font-medium">
+            مصروفات مسجلة: <strong className="font-mono text-[#F8FAFC]">{totalOperatingExpenses.toLocaleString()} ج</strong>
           </p>
         </div>
       </div>
@@ -574,14 +586,14 @@ export default function FinancialReportsPage() {
       {/* 4. Visual Charts Section */}
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Revenue Distribution Pie Chart */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-            <PieIcon size={16} className="text-teal-400" />
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <h3 className="text-sm font-bold text-[#F8FAFC] flex items-center gap-2 mb-3">
+            <PieIcon size={16} className="text-[#2DD4BF]" />
             توزيع مصادر الدخل
           </h3>
           <div className="h-56 w-full flex items-center justify-center">
             {revenueSourcesPie.length === 0 ? (
-              <p className="text-xs text-slate-400">لا توجد حركات مالية في هذه الفترة</p>
+              <p className="text-xs text-[#94A3B8]">لا توجد حركات مالية في هذه الفترة</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -600,48 +612,48 @@ export default function FinancialReportsPage() {
                   </Pie>
                   <Tooltip
                     formatter={(val: number | string | readonly (number | string)[] | undefined) => `${Number(val).toLocaleString()} ج`}
-                    contentStyle={{ borderRadius: '12px', background: '#0F172A', color: '#fff', border: 'none' }}
+                    contentStyle={{ borderRadius: '12px', background: '#111827', color: '#F8FAFC', border: '1px solid #2A3B56' }}
                   />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#94A3B8' }} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
-          <div className="pt-3 border-t border-slate-100 dark:border-white/5 space-y-1.5 text-xs">
+          <div className="pt-3 border-t border-[#2A3B56] space-y-1.5 text-xs">
             <div className="flex justify-between">
-              <span className="text-slate-500">رسوم الكورسات:</span>
-              <strong className="font-mono text-teal-400">{courseRevenue.toLocaleString()} ج</strong>
+              <span className="text-[#94A3B8]">رسوم الكورسات:</span>
+              <strong className="font-mono text-[#2DD4BF]">{courseRevenue.toLocaleString()} ج</strong>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">مبيعات الأدوات:</span>
-              <strong className="font-mono text-blue-500">{suppliesRevenue.toLocaleString()} ج</strong>
+              <span className="text-[#94A3B8]">مبيعات الأدوات:</span>
+              <strong className="font-mono text-blue-400">{suppliesRevenue.toLocaleString()} ج</strong>
             </div>
           </div>
         </div>
 
         {/* Payment Methods Treasury Breakdown */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-            <CreditCard size={16} className="text-teal-400" />
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <h3 className="text-sm font-bold text-[#F8FAFC] flex items-center gap-2 mb-3">
+            <CreditCard size={16} className="text-[#2DD4BF]" />
             حركة الخزينة حسب طريقة الدفع
           </h3>
-          <div className="space-y-3 my-auto">
+          <div className="space-y-3.5 my-auto">
             {paymentMethodsBreakdown.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">لا توجد مدفوعات مسجلة في هذه الفترة</p>
+              <p className="text-xs text-[#94A3B8] text-center py-8">لا توجد مدفوعات مسجلة في هذه الفترة</p>
             ) : (
               paymentMethodsBreakdown.map(pm => {
                 const pct = totalGrossRevenue > 0 ? Math.round((pm.value / totalGrossRevenue) * 100) : 0;
                 return (
-                  <div key={pm.key} className="space-y-1">
+                  <div key={pm.key} className="space-y-1.5">
                     <div className="flex justify-between text-xs font-bold">
-                      <span className="text-slate-700 dark:text-slate-300">{pm.name}</span>
-                      <span className="font-mono text-slate-900 dark:text-white">
+                      <span className="text-[#F8FAFC]">{pm.name}</span>
+                      <span className="font-mono text-[#2DD4BF]">
                         {pm.value.toLocaleString()} ج ({pct}%)
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 dark:bg-white/5 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-[#111827] border border-[#2A3B56] h-2.5 rounded-full overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-teal-500 to-teal-700 h-full rounded-full transition-all"
+                        className="bg-gradient-to-r from-[#0D9488] to-[#2DD4BF] h-full rounded-full transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -650,39 +662,39 @@ export default function FinancialReportsPage() {
               })
             )}
           </div>
-          <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex justify-between items-center text-xs">
-            <span className="font-bold text-slate-600 dark:text-slate-400">إجمالي السيولة المحصلة:</span>
-            <span className="font-black text-sm text-teal-400 font-mono">{totalGrossRevenue.toLocaleString()} ج</span>
+          <div className="pt-3 border-t border-[#2A3B56] flex justify-between items-center text-xs">
+            <span className="font-bold text-[#94A3B8]">إجمالي السيولة المحصلة:</span>
+            <span className="font-black text-sm text-[#2DD4BF] font-mono">{totalGrossRevenue.toLocaleString()} ج</span>
           </div>
         </div>
 
         {/* Top Selling Art Supplies */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-            <ShoppingBag size={16} className="text-teal-400" />
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm flex flex-col justify-between">
+          <h3 className="text-sm font-bold text-[#F8FAFC] flex items-center gap-2 mb-3">
+            <ShoppingBag size={16} className="text-[#2DD4BF]" />
             الأدوات والخامات الأكثر مبيعاً
           </h3>
           <div className="space-y-2.5 my-auto">
             {topSellingSupplies.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">لا توجد مبيعات أدوات في هذه الفترة</p>
+              <p className="text-xs text-[#94A3B8] text-center py-8">لا توجد مبيعات أدوات في هذه الفترة</p>
             ) : (
               topSellingSupplies.map((it, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-xs">
+                <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-xs">
                   <div className="min-w-0 pr-2">
-                    <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{it.name}</p>
-                    <p className="text-[11px] text-slate-400">تم بيع {it.qty} قطعة</p>
+                    <p className="font-bold text-[#F8FAFC] truncate">{it.name}</p>
+                    <p className="text-[11px] text-[#94A3B8] mt-0.5">تم بيع {it.qty} قطعة</p>
                   </div>
                   <div className="text-left shrink-0">
-                    <span className="font-bold font-mono text-slate-900 dark:text-white">{it.revenue.toLocaleString()} ج</span>
-                    <p className="text-[10px] text-teal-400 font-bold">ربح: +{it.profit.toLocaleString()} ج</p>
+                    <span className="font-bold font-mono text-[#2DD4BF]">{it.revenue.toLocaleString()} ج</span>
+                    <p className="text-[10px] text-teal-400 font-bold mt-0.5">ربح: +{it.profit.toLocaleString()} ج</p>
                   </div>
                 </div>
               ))
             )}
           </div>
-          <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex justify-between items-center text-xs">
-            <span className="text-slate-500">إجمالي قطع المخزن:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">
+          <div className="pt-3 border-t border-[#2A3B56] flex justify-between items-center text-xs">
+            <span className="text-[#94A3B8]">إجمالي قطع المخزن:</span>
+            <span className="font-bold text-[#F8FAFC]">
               {supplyItems.reduce((acc, i) => acc + i.stockQty, 0)} قطعة
             </span>
           </div>
@@ -690,60 +702,29 @@ export default function FinancialReportsPage() {
       </div>
 
       {/* 5. Detailed Tables with Tabs */}
-      <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1E293B] shadow-xs space-y-4">
+      <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-4">
         {/* Table Tabs */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-white/10 pb-3">
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => setActiveReportTab('overview')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeReportTab === 'overview'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-              }`}
-            >
-              كشف حركة الخزينة العام ({filteredPayments.length + filteredSales.length + filteredExpenses.length})
-            </button>
-            <button
-              onClick={() => setActiveReportTab('supplies')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeReportTab === 'supplies'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-              }`}
-            >
-              فواتير متجر الأدوات ({filteredSales.length})
-            </button>
-            <button
-              onClick={() => setActiveReportTab('courses')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeReportTab === 'courses'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-              }`}
-            >
-              إيصالات الكورسات ({filteredPayments.length})
-            </button>
-            <button
-              onClick={() => setActiveReportTab('receivables')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeReportTab === 'receivables'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-              }`}
-            >
-              المتبقيات والأقساط المستحقة
-            </button>
-            <button
-              onClick={() => setActiveReportTab('expenses')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeReportTab === 'expenses'
-                  ? 'bg-teal-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-              }`}
-            >
-              المصروفات ({filteredExpenses.length})
-            </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3B56] pb-3">
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { id: 'overview', label: `كشف حركة الخزينة العام (${filteredPayments.length + filteredSales.length + filteredExpenses.length})` },
+              { id: 'supplies', label: `فواتير متجر الأدوات (${filteredSales.length})` },
+              { id: 'courses', label: `إيصالات الكورسات (${filteredPayments.length})` },
+              { id: 'receivables', label: 'المتبقيات والأقساط المستحقة' },
+              { id: 'expenses', label: `المصروفات (${filteredExpenses.length})` },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveReportTab(tab.id as any)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  activeReportTab === tab.id
+                    ? 'bg-[#0D9488] text-[#F8FAFC] shadow-md shadow-teal-900/30'
+                    : 'bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -751,7 +732,7 @@ export default function FinancialReportsPage() {
         {activeReportTab === 'overview' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 font-bold border-b border-slate-200 dark:border-white/10">
+              <thead className="bg-[#111827]/70 text-[#94A3B8] font-bold border-b border-[#2A3B56]">
                 <tr>
                   <th className="p-3">نوع الحركة</th>
                   <th className="p-3">رقم الإيصال / الفاتورة</th>
@@ -761,7 +742,7 @@ export default function FinancialReportsPage() {
                   <th className="p-3 text-left">المبلغ المحصل</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-[#2A3B56]">
                 {[
                   ...filteredPayments.map(p => ({
                     type: 'كورس',
@@ -803,17 +784,29 @@ export default function FinancialReportsPage() {
                   .sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0))
                   .slice(0, 30)
                   .map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    <tr key={idx} className="hover:bg-[#111827]/40 transition-colors">
                       <td className="p-3">
-                        <span className={`badge ${row.type === 'كورس' ? 'badge-teal' : row.type === 'مصروف' ? 'badge-gray' : row.type === 'مرتجع متجر' ? 'bg-amber-500/10 text-amber-400' : 'badge-info'}`}>
+                        <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
+                          row.type === 'كورس'
+                            ? 'bg-[#115E59] text-[#2DD4BF]'
+                            : row.type === 'مصروف'
+                            ? 'bg-[#111827] border border-[#334155] text-[#94A3B8]'
+                            : row.type === 'مرتجع متجر'
+                            ? 'bg-[#78350F] text-[#D97706]'
+                            : 'bg-blue-950/40 border border-blue-900/60 text-blue-400'
+                        }`}>
                           {row.type}
                         </span>
                       </td>
-                      <td className="p-3 font-mono font-bold text-slate-700 dark:text-slate-300">{row.ref}</td>
-                      <td className="p-3 font-semibold text-slate-900 dark:text-white">{row.name}</td>
-                      <td className="p-3 text-slate-500">{row.date}</td>
-                      <td className="p-3"><span className="badge badge-gray">{row.method}</span></td>
-                      <td className={`p-3 text-left font-black font-mono text-sm ${row.isPositive ? 'text-teal-400' : 'text-red-500'}`}>
+                      <td className="p-3 font-mono font-bold text-[#2DD4BF]">{row.ref}</td>
+                      <td className="p-3 font-semibold text-[#F8FAFC]">{row.name}</td>
+                      <td className="p-3 text-[#94A3B8]">{row.date}</td>
+                      <td className="p-3">
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] bg-[#111827] border border-[#2A3B56] text-[#94A3B8]">
+                          {row.method}
+                        </span>
+                      </td>
+                      <td className={`p-3 text-left font-black font-mono text-sm ${row.isPositive ? 'text-[#2DD4BF]' : 'text-red-400'}`}>
                         {row.isPositive ? '+' : '−'}{Math.abs(row.amount).toLocaleString()} ج
                       </td>
                     </tr>
@@ -827,7 +820,7 @@ export default function FinancialReportsPage() {
         {activeReportTab === 'supplies' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 font-bold border-b border-slate-200 dark:border-white/10">
+              <thead className="bg-[#111827]/70 text-[#94A3B8] font-bold border-b border-[#2A3B56]">
                 <tr>
                   <th className="p-3">رقم الفاتورة</th>
                   <th className="p-3">اسم المشتري</th>
@@ -842,7 +835,7 @@ export default function FinancialReportsPage() {
                   <th className="p-3 text-left">مجمل الربح</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-[#2A3B56]">
                 {filteredSales.map(s => {
                   const saleReturns = filteredReturns.filter(item => item.saleId === s.id);
                   const refunded = saleReturns.reduce((sum, item) => sum + item.totalRefund, 0);
@@ -850,22 +843,27 @@ export default function FinancialReportsPage() {
                   const netRevenue = s.totalAmount - refunded;
                   const netCost = s.totalCost - restockedCost;
                   return (
-                  <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                    <td className="p-3 font-mono font-bold text-teal-400">{s.invoiceNumber}</td>
-                    <td className="p-3 font-semibold text-slate-900 dark:text-white">{s.customerName}</td>
-                    <td className="p-3 text-slate-500">{s.date}</td>
-                    <td className="p-3 text-slate-600 dark:text-slate-300">
-                      {s.items.map(i => `${i.productName} (${i.quantity})`).join(', ')}
-                    </td>
-                    <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod}</span></td>
-                    <td className="p-3 font-mono text-amber-600 dark:text-amber-300">{(s.discountAmount ?? 0).toLocaleString()} ج</td>
-                    <td className="p-3 font-bold text-slate-900 dark:text-white font-mono">{s.totalAmount} ج</td>
-                    <td className="p-3 font-mono text-amber-400">{refunded > 0 ? `−${refunded.toLocaleString()} ج` : '—'}</td>
-                    <td className="p-3 font-bold text-slate-900 dark:text-white font-mono">{netRevenue.toLocaleString()} ج</td>
-                    <td className="p-3 text-slate-400 font-mono">{netCost.toLocaleString()} ج</td>
-                    <td className="p-3 text-left font-black text-teal-400 font-mono">{(netRevenue - netCost).toLocaleString()} ج</td>
-                  </tr>
-                );})}
+                    <tr key={s.id} className="hover:bg-[#111827]/40 transition-colors">
+                      <td className="p-3 font-mono font-bold text-[#2DD4BF]">{s.invoiceNumber}</td>
+                      <td className="p-3 font-semibold text-[#F8FAFC]">{s.customerName}</td>
+                      <td className="p-3 text-[#94A3B8]">{s.date}</td>
+                      <td className="p-3 text-[#CBD5E1]">
+                        {s.items.map(i => `${i.productName} (${i.quantity})`).join(', ')}
+                      </td>
+                      <td className="p-3">
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] bg-[#111827] border border-[#2A3B56] text-[#94A3B8]">
+                          {PAYMENT_METHOD_LABELS[s.paymentMethod] || s.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="p-3 font-mono text-amber-400">{(s.discountAmount ?? 0).toLocaleString()} ج</td>
+                      <td className="p-3 font-bold text-[#F8FAFC] font-mono">{s.totalAmount} ج</td>
+                      <td className="p-3 font-mono text-amber-400">{refunded > 0 ? `−${refunded.toLocaleString()} ج` : '—'}</td>
+                      <td className="p-3 font-bold text-[#2DD4BF] font-mono">{netRevenue.toLocaleString()} ج</td>
+                      <td className="p-3 text-[#94A3B8] font-mono">{netCost.toLocaleString()} ج</td>
+                      <td className="p-3 text-left font-black text-[#2DD4BF] font-mono">{(netRevenue - netCost).toLocaleString()} ج</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -875,7 +873,7 @@ export default function FinancialReportsPage() {
         {activeReportTab === 'courses' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 font-bold border-b border-slate-200 dark:border-white/10">
+              <thead className="bg-[#111827]/70 text-[#94A3B8] font-bold border-b border-[#2A3B56]">
                 <tr>
                   <th className="p-3">رقم الإيصال</th>
                   <th className="p-3">اسم الطالب</th>
@@ -886,21 +884,27 @@ export default function FinancialReportsPage() {
                   <th className="p-3 text-left">المبلغ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-[#2A3B56]">
                 {filteredPayments.map(p => {
                   const enr = enrollments.find(e => e.id === p.enrollmentId);
                   const stu = students.find(s => s.id === enr?.studentId);
                   const grp = groups.find(g => g.id === enr?.groupId);
                   const crs = courses.find(c => c.id === grp?.courseId);
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                      <td className="p-3 font-mono font-bold text-teal-400">{p.receiptNumber}</td>
-                      <td className="p-3 font-semibold text-slate-900 dark:text-white">{stu?.name || 'طالب'}</td>
-                      <td className="p-3 text-slate-600 dark:text-slate-300">{crs?.name || 'دورة فنية'}</td>
-                      <td className="p-3 text-slate-500">{p.date}</td>
-                      <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[p.method] || p.method}</span></td>
-                      <td className="p-3 text-slate-500">{p.notes || '-'}</td>
-                      <td className={`p-3 text-left font-black font-mono ${p.amount >= 0 ? 'text-teal-400' : 'text-red-500'}`}>{p.amount >= 0 ? '+' : '−'}{Math.abs(p.amount).toLocaleString()} ج</td>
+                    <tr key={p.id} className="hover:bg-[#111827]/40 transition-colors">
+                      <td className="p-3 font-mono font-bold text-[#2DD4BF]">{p.receiptNumber}</td>
+                      <td className="p-3 font-semibold text-[#F8FAFC]">{stu?.name || 'طالب'}</td>
+                      <td className="p-3 text-[#CBD5E1]">{crs?.name || 'دورة فنية'}</td>
+                      <td className="p-3 text-[#94A3B8]">{p.date}</td>
+                      <td className="p-3">
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] bg-[#111827] border border-[#2A3B56] text-[#94A3B8]">
+                          {PAYMENT_METHOD_LABELS[p.method] || p.method}
+                        </span>
+                      </td>
+                      <td className="p-3 text-[#94A3B8]">{p.notes || '-'}</td>
+                      <td className={`p-3 text-left font-black font-mono ${p.amount >= 0 ? 'text-[#2DD4BF]' : 'text-red-400'}`}>
+                        {p.amount >= 0 ? '+' : '−'}{Math.abs(p.amount).toLocaleString()} ج
+                      </td>
                     </tr>
                   );
                 })}
@@ -913,7 +917,7 @@ export default function FinancialReportsPage() {
         {activeReportTab === 'receivables' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 font-bold border-b border-slate-200 dark:border-white/10">
+              <thead className="bg-[#111827]/70 text-[#94A3B8] font-bold border-b border-[#2A3B56]">
                 <tr>
                   <th className="p-3">اسم الطالب</th>
                   <th className="p-3">الكورس المسجل به</th>
@@ -922,7 +926,7 @@ export default function FinancialReportsPage() {
                   <th className="p-3 text-left">المبلغ المتبقي المطلوب</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-[#2A3B56]">
                 {enrollments
                   .filter(e => (e.totalAmount - e.totalPaid) > 0)
                   .map(e => {
@@ -931,12 +935,12 @@ export default function FinancialReportsPage() {
                     const crs = courses.find(c => c.id === grp?.courseId);
                     const rem = e.totalAmount - e.totalPaid;
                     return (
-                      <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <td className="p-3 font-semibold text-slate-900 dark:text-white">{stu?.name}</td>
-                        <td className="p-3 text-slate-600 dark:text-slate-300">{crs?.name}</td>
-                        <td className="p-3 font-mono">{e.totalAmount} ج</td>
-                        <td className="p-3 font-mono text-teal-400">{e.totalPaid} ج</td>
-                        <td className="p-3 text-left font-black text-red-500 font-mono">{rem} ج</td>
+                      <tr key={e.id} className="hover:bg-[#111827]/40 transition-colors">
+                        <td className="p-3 font-semibold text-[#F8FAFC]">{stu?.name}</td>
+                        <td className="p-3 text-[#CBD5E1]">{crs?.name}</td>
+                        <td className="p-3 font-mono text-[#94A3B8]">{e.totalAmount} ج</td>
+                        <td className="p-3 font-mono text-[#2DD4BF]">{e.totalPaid} ج</td>
+                        <td className="p-3 text-left font-black text-red-400 font-mono">{rem} ج</td>
                       </tr>
                     );
                   })}
@@ -948,11 +952,11 @@ export default function FinancialReportsPage() {
         {/* TAB E: OPERATING EXPENSES */}
         {activeReportTab === 'expenses' && (
           <div className="space-y-5">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+            <h3 className="text-sm font-bold text-[#F8FAFC]">
               {editingExpenseId ? 'تعديل بيانات المصروف' : 'إضافة مصروف تشغيل'}
             </h3>
             <form
-              className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
+              className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-[#111827] border border-[#2A3B56]"
               onSubmit={event => {
                 event.preventDefault();
                 try {
@@ -981,44 +985,50 @@ export default function FinancialReportsPage() {
                 }
               }}
             >
-              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className="space-y-1 text-xs font-bold text-[#94A3B8]">
                 التاريخ
-                <input className="input w-full text-xs" type="date" required value={expenseDate} onChange={event => setExpenseDate(event.target.value)} />
+                <input className="w-full mt-1 p-2 rounded-xl bg-[#0E1629] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none" type="date" required value={expenseDate} onChange={event => setExpenseDate(event.target.value)} />
               </label>
-              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className="space-y-1 text-xs font-bold text-[#94A3B8]">
                 البند
-                <select className="input w-full text-xs" value={expenseCategory} onChange={event => setExpenseCategory(event.target.value as OperatingExpenseCategory)}>
-                  {Object.entries(EXPENSE_CATEGORY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                <select className="w-full mt-1 p-2 rounded-xl bg-[#0E1629] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none" value={expenseCategory} onChange={event => setExpenseCategory(event.target.value as OperatingExpenseCategory)}>
+                  {Object.entries(EXPENSE_CATEGORY_LABELS).map(([key, label]) => <option key={key} value={key} className="bg-[#111827] text-[#F8FAFC]">{label}</option>)}
                 </select>
               </label>
-              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300 lg:col-span-2">
+              <label className="space-y-1 text-xs font-bold text-[#94A3B8] lg:col-span-2">
                 البيان
-                <input className="input w-full text-xs" required minLength={2} maxLength={200} value={expenseDescription} onChange={event => setExpenseDescription(event.target.value)} placeholder="مثال: إيجار شهر أكتوبر" />
+                <input className="w-full mt-1 p-2 rounded-xl bg-[#0E1629] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none" required minLength={2} maxLength={200} value={expenseDescription} onChange={event => setExpenseDescription(event.target.value)} placeholder="مثال: إيجار شهر أكتوبر" />
               </label>
-              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className="space-y-1 text-xs font-bold text-[#94A3B8]">
                 المبلغ (ج.م)
-                <input className="input w-full text-xs" type="number" min="0.01" step="0.01" required value={expenseAmount} onChange={event => setExpenseAmount(event.target.value)} />
+                <input className="w-full mt-1 p-2 rounded-xl bg-[#0E1629] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none" type="number" min="0.01" step="0.01" required value={expenseAmount} onChange={event => setExpenseAmount(event.target.value)} />
               </label>
-              <label className="space-y-1 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <label className="space-y-1 text-xs font-bold text-[#94A3B8]">
                 طريقة الدفع
-                <select className="input w-full text-xs" value={expensePaymentMethod} onChange={event => setExpensePaymentMethod(event.target.value as typeof expensePaymentMethod)}>
-                  {Object.entries(PAYMENT_METHOD_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                <select className="w-full mt-1 p-2 rounded-xl bg-[#0E1629] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:border-[#0D9488] focus:outline-none" value={expensePaymentMethod} onChange={event => setExpensePaymentMethod(event.target.value as typeof expensePaymentMethod)}>
+                  {Object.entries(PAYMENT_METHOD_LABELS).map(([key, label]) => <option key={key} value={key} className="bg-[#111827] text-[#F8FAFC]">{label}</option>)}
                 </select>
               </label>
-              <div className="flex gap-2 lg:col-span-6">
-                <button className="btn btn-primary flex-1 text-xs font-bold" type="submit">{editingExpenseId ? 'حفظ التعديل' : 'تسجيل المصروف'}</button>
-                {editingExpenseId && <button className="btn btn-secondary flex items-center gap-1 text-xs" type="button" onClick={resetExpenseForm}><X size={14} /> إلغاء التعديل</button>}
+              <div className="flex gap-2 lg:col-span-6 pt-1">
+                <button className="flex-1 py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold transition-colors shadow-md shadow-teal-900/30" type="submit">
+                  {editingExpenseId ? 'حفظ التعديل' : 'تسجيل المصروف'}
+                </button>
+                {editingExpenseId && (
+                  <button className="px-5 py-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#CBD5E1] hover:text-[#F8FAFC] flex items-center gap-1 text-xs transition-colors" type="button" onClick={resetExpenseForm}>
+                    <X size={14} /> إلغاء التعديل
+                  </button>
+                )}
               </div>
             </form>
 
-            <div className="flex flex-wrap justify-between items-center gap-2 text-sm">
-              <span className="font-bold text-slate-600 dark:text-slate-300">إجمالي مصروفات الفترة</span>
-              <strong className="font-mono text-red-500">{totalOperatingExpenses.toLocaleString()} ج.م</strong>
+            <div className="flex flex-wrap justify-between items-center gap-2 text-sm pt-2">
+              <span className="font-bold text-[#94A3B8]">إجمالي مصروفات الفترة</span>
+              <strong className="font-mono text-red-400">{totalOperatingExpenses.toLocaleString()} ج.م</strong>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 font-bold border-b border-slate-200 dark:border-white/10">
+                <thead className="bg-[#111827]/70 text-[#94A3B8] font-bold border-b border-[#2A3B56]">
                   <tr>
                     <th className="p-3">التاريخ</th>
                     <th className="p-3">البند</th>
@@ -1028,23 +1038,27 @@ export default function FinancialReportsPage() {
                     <th className="p-3 text-center">إجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-[#2A3B56]">
                   {filteredExpenses.map(expense => (
-                    <tr key={expense.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                      <td className="p-3 text-slate-500">{expense.date}</td>
-                      <td className="p-3 font-semibold text-slate-700 dark:text-slate-200">{EXPENSE_CATEGORY_LABELS[expense.category]}</td>
-                      <td className="p-3 text-slate-600 dark:text-slate-300">
+                    <tr key={expense.id} className="hover:bg-[#111827]/40">
+                      <td className="p-3 text-[#94A3B8]">{expense.date}</td>
+                      <td className="p-3 font-semibold text-[#F8FAFC]">{EXPENSE_CATEGORY_LABELS[expense.category]}</td>
+                      <td className="p-3 text-[#CBD5E1]">
                         <span>{expense.description}</span>
-                        {expense.updatedAt && <span className="block mt-0.5 text-[10px] text-slate-400">آخر تعديل: {expense.updatedAt}</span>}
+                        {expense.updatedAt && <span className="block mt-0.5 text-[10px] text-[#94A3B8]">آخر تعديل: {expense.updatedAt}</span>}
                       </td>
-                      <td className="p-3"><span className="badge badge-gray">{PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod}</span></td>
-                      <td className="p-3 text-left font-black font-mono text-red-500">−{expense.amount.toLocaleString()} ج</td>
+                      <td className="p-3">
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] bg-[#111827] border border-[#2A3B56] text-[#94A3B8]">
+                          {PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="p-3 text-left font-black font-mono text-red-400">−{expense.amount.toLocaleString()} ج</td>
                       <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
-                          <button type="button" onClick={() => startEditingExpense(expense)} className="text-teal-600 hover:text-teal-500" title="تعديل المصروف" aria-label={'تعديل المصروف ' + expense.description}>
+                          <button type="button" onClick={() => startEditingExpense(expense)} className="text-[#2DD4BF] hover:text-teal-300 transition-colors" title="تعديل المصروف" aria-label={'تعديل المصروف ' + expense.description}>
                             <Pencil size={15} />
                           </button>
-                          <button type="button" onClick={() => handleDeleteExpense(expense)} className="text-red-500 hover:text-red-400" title="حذف المصروف" aria-label={'حذف المصروف ' + expense.description}>
+                          <button type="button" onClick={() => handleDeleteExpense(expense)} className="text-red-400 hover:text-red-300 transition-colors" title="حذف المصروف" aria-label={'حذف المصروف ' + expense.description}>
                             <Trash2 size={15} />
                           </button>
                         </div>
@@ -1052,12 +1066,12 @@ export default function FinancialReportsPage() {
                     </tr>
                   ))}
                   {filteredExpenses.length === 0 && (
-                    <tr><td colSpan={6} className="p-8 text-center text-slate-400">لا توجد مصروفات مسجلة في الفترة المحددة.</td></tr>
+                    <tr><td colSpan={6} className="p-8 text-center text-[#94A3B8]">لا توجد مصروفات مسجلة في الفترة المحددة.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-[#94A3B8]">
               نتيجة النشاط = دفعات الكورسات + مجمل ربح متجر الأدوات − المصروفات المسجلة. أي تكلفة أخرى تُضاف كبند مصروف حتى تظهر في الحساب.
             </p>
           </div>

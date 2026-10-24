@@ -149,115 +149,135 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Settings size={26} className="text-teal-400" />
+          <h1 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2">
+            <Settings size={26} className="text-[#2DD4BF]" />
             إعدادات النظام والنسخ الاحتياطي
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-[#94A3B8] text-sm mt-1">
             إدارة بيانات المرسم، بنود وثائق التعاقد، ومزامنة الملفات وقاعدة البيانات المحلية
           </p>
         </div>
         {saveSuccess && (
-          <span className="badge badge-teal text-xs py-1.5 px-3 flex items-center gap-1 shadow-sm">
+          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-[#115E59] text-[#2DD4BF] flex items-center gap-1.5 shadow-md shadow-teal-950/30">
             <CheckCircle size={14} /> تم حفظ الإعدادات بنجاح
           </span>
         )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Studio Info */}
-        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
-          <h3 className="font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-            <Palette size={18} className="text-teal-400" />
+        {/* Studio Info Card */}
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-[#F8FAFC] flex items-center gap-2 pb-2.5 border-b border-[#2A3B56]">
+            <Palette size={18} className="text-[#2DD4BF]" />
             بيانات المرسم (تظهر على الشهادات، الفواتير، والعقود)
           </h3>
-          <div className="space-y-3 text-xs">
+          <div className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-slate-700 font-bold mb-1">اسم المرسم / الأكاديمية:</label>
+              <label className="block text-[#94A3B8] font-bold mb-1.5">اسم المرسم / الأكاديمية:</label>
               <input
-                className="input text-xs"
+                className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
                 value={studioName}
                 onChange={e => setStudioName(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-slate-700 font-bold mb-1">رقم الهاتف الرسمي (واتساب):</label>
+              <label className="block text-[#94A3B8] font-bold mb-1.5">رقم الهاتف الرسمي (واتساب):</label>
               <input
-                className="input text-xs font-mono"
+                className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs font-mono focus:outline-none focus:border-[#0D9488]"
                 value={studioPhone}
                 onChange={e => setStudioPhone(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-slate-700 font-bold mb-1">العنوان بالتفصيل:</label>
+              <label className="block text-[#94A3B8] font-bold mb-1.5">العنوان بالتفصيل:</label>
               <input
-                className="input text-xs"
+                className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
                 value={studioAddress}
                 onChange={e => setStudioAddress(e.target.value)}
               />
             </div>
-            <button
-              onClick={handleSaveStudioInfo}
-              className="btn btn-primary btn-sm flex items-center gap-1.5 mt-2 cursor-pointer shadow-md shadow-blue-600/20"
-            >
-              <Save size={14} /> حفظ بيانات المرسم
-            </button>
+            <div className="pt-1">
+              <button
+                onClick={handleSaveStudioInfo}
+                className="px-4 py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-teal-900/30 cursor-pointer"
+              >
+                <Save size={15} /> حفظ بيانات المرسم
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Database & Backup (Crucial Desktop feature) */}
-        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
-          <h3 className="font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-            <HardDrive size={18} className="text-teal-400" />
+        {/* Database & Backup Card */}
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-[#F8FAFC] flex items-center gap-2 pb-2.5 border-b border-[#2A3B56]">
+            <HardDrive size={18} className="text-[#2DD4BF]" />
             النسخ الاحتياطي ومزامنة القرص الصلب
           </h3>
-          <div className="space-y-3 text-xs text-slate-800">
-            <p className="leading-relaxed text-slate-500">
-              جميع بياناتك (الطلاب، الشهادات، العقود، الدفعات، المصروفات، مبيعات الأدوات، وتقييمات الحصص) مخزنة ومحمية محلياً في ملف <code className="bg-teal-500/10 border border-blue-100 px-1.5 py-0.5 rounded text-teal-300 font-mono">data/data_store.json</code> على جهازك، وتعمل 100% بدون إنترنت.
+          <div className="space-y-3.5 text-xs text-[#F8FAFC]">
+            <p className="leading-relaxed text-[#94A3B8]">
+              جميع بياناتك (الطلاب، الشهادات، العقود، الدفعات، المصروفات، مبيعات الأدوات، وتقييمات الحصص) مخزنة ومحمية محلياً في ملف <code className="bg-[#111827] border border-[#2A3B56] px-2 py-0.5 rounded text-[#2DD4BF] font-mono">data/data_store.json</code> على جهازك، وتعمل 100% بدون إنترنت.
             </p>
 
-            <div className="p-3 rounded-xl border border-teal-500/20 bg-teal-500/5 space-y-2">
+            <div className="p-3.5 rounded-xl border border-[#2A3B56] bg-[#111827] space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-slate-700">النسخ التلقائي اليومية</span>
-                <button type="button" onClick={() => void loadBackups()} disabled={backupLoading} className="text-teal-600 hover:text-teal-700 disabled:opacity-50" title="تحديث قائمة النسخ" aria-label="تحديث قائمة النسخ الاحتياطية">
+                <span className="font-bold text-[#F8FAFC]">النسخ التلقائي اليومية</span>
+                <button
+                  type="button"
+                  onClick={() => void loadBackups()}
+                  disabled={backupLoading}
+                  className="text-[#2DD4BF] hover:text-teal-300 disabled:opacity-50 transition-colors"
+                  title="تحديث قائمة النسخ"
+                  aria-label="تحديث قائمة النسخ الاحتياطية"
+                >
                   <RefreshCw size={15} className={backupLoading ? 'animate-spin' : ''} />
                 </button>
               </div>
-              <p className="text-slate-500 leading-relaxed">
+              <p className="text-[#94A3B8] leading-relaxed">
                 ينشئ النظام نسخة محلية تلقائيًا عند أول حفظ للبيانات كل يوم.
               </p>
-              <p className="text-slate-600">
-                آخر نسخة: <strong className="text-teal-700">{backupLoading ? 'جارٍ التحميل…' : backups[0] ? new Date(backups[0].modifiedAt).toLocaleString('ar-EG') : 'لا توجد نسخة محفوظة بعد'}</strong>
+              <p className="text-[#94A3B8]">
+                آخر نسخة: <strong className="text-[#2DD4BF]">{backupLoading ? 'جارٍ التحميل…' : backups[0] ? new Date(backups[0].modifiedAt).toLocaleString('ar-EG') : 'لا توجد نسخة محفوظة بعد'}</strong>
               </p>
-              <div className="grid sm:grid-cols-[1fr_auto] gap-2">
-                <select className="input text-xs" value={selectedBackup} onChange={event => setSelectedBackup(event.target.value)} disabled={backupLoading || backups.length === 0}>
-                  {backups.length === 0 && <option value="">لا توجد نسخ متاحة للاستعادة</option>}
+              <div className="grid sm:grid-cols-[1fr_auto] gap-2 pt-1">
+                <select
+                  className="w-full p-2.5 rounded-xl bg-[#0E1629] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
+                  value={selectedBackup}
+                  onChange={event => setSelectedBackup(event.target.value)}
+                  disabled={backupLoading || backups.length === 0}
+                >
+                  {backups.length === 0 && <option value="" className="bg-[#111827] text-[#94A3B8]">لا توجد نسخ متاحة للاستعادة</option>}
                   {backups.map(backup => (
-                    <option key={backup.filename} value={backup.filename}>
-                      {new Date(backup.modifiedAt).toLocaleString('ar-EG')} — {backup.filename}
+                    <option key={backup.filename} value={backup.filename} className="bg-[#111827] text-[#F8FAFC]">
+                      {backup.filename} — {new Date(backup.modifiedAt).toLocaleTimeString('ar-EG')}
                     </option>
                   ))}
                 </select>
-                <button type="button" onClick={() => void handleRestoreSelectedBackup()} disabled={!selectedBackup || backupLoading || backupRestoring} className="btn btn-secondary flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                <button
+                  type="button"
+                  onClick={() => void handleRestoreSelectedBackup()}
+                  disabled={!selectedBackup || backupLoading || backupRestoring}
+                  className="px-3.5 py-2.5 rounded-xl bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488] flex items-center justify-center gap-1.5 text-xs font-semibold disabled:opacity-50 transition-colors"
+                >
                   <RotateCcw size={14} /> {backupRestoring ? 'جارٍ الاستعادة…' : 'استعادة النسخة المحددة'}
                 </button>
               </div>
-              {backupStatus && <p role="status" className="text-[11px] text-slate-600 break-words">{backupStatus}</p>}
+              {backupStatus && <p role="status" className="text-[11px] text-[#2DD4BF] break-words pt-1">{backupStatus}</p>}
             </div>
 
-            <div className="pt-2 space-y-2.5">
+            <div className="pt-1 space-y-2.5">
               <button
                 onClick={exportDatabase}
-                className="w-full btn btn-primary flex items-center justify-center gap-2 py-2.5 text-xs shadow-md shadow-blue-600/20 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold flex items-center justify-center gap-2 text-xs shadow-md shadow-teal-900/30 transition-all cursor-pointer"
               >
                 <Download size={16} />
                 تصدير نسخة احتياطية فورية (Download JSON Backup)
               </button>
 
-              <label className="w-full btn btn-secondary flex items-center justify-center gap-2 py-2.5 text-xs cursor-pointer border border-slate-200 hover:border-teal-500/30">
-                <Upload size={16} className="text-teal-400" />
+              <label className="w-full py-2.5 px-4 rounded-xl bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488] font-bold flex items-center justify-center gap-2 text-xs cursor-pointer transition-colors">
+                <Upload size={16} className="text-[#94A3B8]" />
                 استعادة قاعدة البيانات من ملف نسخة احتياطية
                 <input
                   type="file"
@@ -270,58 +290,162 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Contract Clauses Editor */}
-        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white lg:col-span-2 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900 flex items-center gap-2">
-              <FileText size={18} className="text-teal-400" />
+        {/* Contract Clauses Editor Card */}
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm lg:col-span-2 space-y-3.5">
+          <div className="flex items-center justify-between pb-2.5 border-b border-[#2A3B56]">
+            <h3 className="font-bold text-sm text-[#F8FAFC] flex items-center gap-2">
+              <FileText size={18} className="text-[#2DD4BF]" />
               محرر بنود وثيقة التعاقد الرسمية
             </h3>
-            <span className="badge badge-teal text-xs font-mono">الإصدار v2.0 المعتمد</span>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#115E59] text-[#2DD4BF] font-mono">
+              الإصدار v2.0 (المعتمد)
+            </span>
           </div>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#94A3B8]">
             هذه البنود تُدرج تلقائياً في وثائق تعاقد جميع الطلاب الجدد وتظهر عند طباعة العقد:
           </p>
 
           <textarea
-            className="input w-full text-xs font-sans leading-relaxed"
+            className="w-full p-3.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs font-sans leading-relaxed focus:outline-none focus:border-[#0D9488]"
             rows={7}
             value={contractTerms}
             onChange={e => setContractTerms(e.target.value)}
           />
 
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
             <p className="text-[11px] text-[#94A3B8]">
               أي تعديل هنا سينعكس فوراً على كل العقود التي سيتم طباعتها لاحقاً.
             </p>
             <button
               onClick={handleSaveStudioInfo}
-              className="btn btn-primary btn-sm flex items-center gap-1.5 cursor-pointer shadow-md shadow-blue-600/20"
+              className="px-4 py-2.5 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-teal-900/30 cursor-pointer self-start sm:self-auto"
             >
-              <Save size={14} /> حفظ بنود التعاقد
+              <Save size={15} /> حفظ بنود التعاقد
             </button>
           </div>
         </div>
 
-        <div className="glass p-5 rounded-2xl border border-slate-200 bg-white lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="font-bold text-slate-900 flex items-center gap-2"><UserPlus size={18} className="text-teal-500" />إدارة ملفات المستخدمين والمشرفين</h3>
-            <span className="text-xs text-slate-500">{users.length} مستخدم</span>
+        {/* Users Management Card */}
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between border-b border-[#2A3B56] pb-2.5">
+            <h3 className="font-bold text-sm text-[#F8FAFC] flex items-center gap-2">
+              <UserPlus size={18} className="text-[#2DD4BF]" />
+              إدارة ملفات المستخدمين والمشرفين
+            </h3>
+            <span className="text-xs text-[#94A3B8]">{users.length} مستخدم</span>
           </div>
-          <form onSubmit={saveUser} className="grid md:grid-cols-5 gap-2 items-end">
-            <label className="text-xs font-semibold text-slate-600">الاسم<input className="input mt-1" required minLength={3} value={userDraft.name} onChange={event => setUserDraft({ ...userDraft, name: event.target.value })} /></label>
-            <label className="text-xs font-semibold text-slate-600">الهاتف<input className="input mt-1" required value={userDraft.phone} onChange={event => setUserDraft({ ...userDraft, phone: event.target.value })} /></label>
-            <label className="text-xs font-semibold text-slate-600">البريد<input className="input mt-1" type="email" value={userDraft.email} onChange={event => setUserDraft({ ...userDraft, email: event.target.value })} /></label>
-            <label className="text-xs font-semibold text-slate-600">الصلاحية<select className="input mt-1" value={userDraft.role} onChange={event => setUserDraft({ ...userDraft, role: event.target.value as User['role'] })}><option value="supervisor">مشرف</option><option value="guardian">ولي أمر</option>{userDraft.role === 'admin' && <option value="admin">مدير</option>}</select></label>
-            <button className="btn btn-primary text-xs" type="submit">{editingUserId ? 'حفظ التعديل' : 'إضافة المستخدم'}</button>
+
+          <form onSubmit={saveUser} className="grid md:grid-cols-5 gap-3 items-end">
+            <label className="text-xs font-semibold text-[#94A3B8]">
+              الاسم
+              <input
+                className="w-full mt-1 p-2 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
+                required
+                minLength={3}
+                value={userDraft.name}
+                onChange={event => setUserDraft({ ...userDraft, name: event.target.value })}
+              />
+            </label>
+            <label className="text-xs font-semibold text-[#94A3B8]">
+              الهاتف
+              <input
+                className="w-full mt-1 p-2 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs font-mono focus:outline-none focus:border-[#0D9488]"
+                required
+                value={userDraft.phone}
+                onChange={event => setUserDraft({ ...userDraft, phone: event.target.value })}
+              />
+            </label>
+            <label className="text-xs font-semibold text-[#94A3B8]">
+              البريد
+              <input
+                className="w-full mt-1 p-2 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
+                type="email"
+                value={userDraft.email}
+                onChange={event => setUserDraft({ ...userDraft, email: event.target.value })}
+              />
+            </label>
+            <label className="text-xs font-semibold text-[#94A3B8]">
+              الصلاحية
+              <select
+                className="w-full mt-1 p-2 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] text-xs focus:outline-none focus:border-[#0D9488]"
+                value={userDraft.role}
+                onChange={event => setUserDraft({ ...userDraft, role: event.target.value as User['role'] })}
+              >
+                <option value="supervisor" className="bg-[#111827] text-[#F8FAFC]">مشرف</option>
+                <option value="guardian" className="bg-[#111827] text-[#F8FAFC]">ولي أمر</option>
+                {userDraft.role === 'admin' && <option value="admin" className="bg-[#111827] text-[#F8FAFC]">مدير</option>}
+              </select>
+            </label>
+            <button
+              className="py-2.5 px-4 rounded-xl bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold text-xs transition-colors shadow-md shadow-teal-900/30"
+              type="submit"
+            >
+              {editingUserId ? 'حفظ التعديل' : 'إضافة المستخدم'}
+            </button>
           </form>
-          {userError && <p role="alert" className="text-xs text-red-600">{userError}</p>}
-          {editingUserId && <button type="button" className="text-xs text-slate-500 underline" onClick={() => { setEditingUserId(null); setUserDraft({ name: '', email: '', phone: '', role: 'supervisor' }); }}>إلغاء التعديل</button>}
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
+
+          {userError && <p role="alert" className="text-xs text-red-400">{userError}</p>}
+          {editingUserId && (
+            <button
+              type="button"
+              className="text-xs text-[#2DD4BF] hover:underline"
+              onClick={() => { setEditingUserId(null); setUserDraft({ name: '', email: '', phone: '', role: 'supervisor' }); }}
+            >
+              إلغاء التعديل
+            </button>
+          )}
+
+          <div className="overflow-x-auto rounded-xl border border-[#2A3B56]">
             <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 text-slate-600"><tr><th className="p-3">الاسم</th><th className="p-3">الهاتف</th><th className="p-3">البريد</th><th className="p-3">الدور</th><th className="p-3">الإجراءات</th></tr></thead>
-              <tbody className="divide-y divide-slate-100">{users.map(user => <tr key={user.id}><td className="p-3 font-semibold">{user.name}{currentUser?.id === user.id && <span className="mr-2 text-teal-600">(الحساب الحالي)</span>}</td><td className="p-3 font-mono">{user.phone}</td><td className="p-3">{user.email}</td><td className="p-3">{user.role === 'admin' ? 'مدير' : user.role === 'supervisor' ? 'مشرف' : 'ولي أمر'}</td><td className="p-3"><div className="flex gap-1"><button type="button" className="btn btn-secondary btn-sm text-slate-700 border-slate-300" onClick={() => beginUserEdit(user)} title="تعديل" aria-label={`تعديل المستخدم ${user.name}`}><Pencil size={13} /></button><button type="button" className="btn btn-secondary btn-sm text-red-700 border-slate-300" onClick={() => removeUser(user)} title="حذف" aria-label={`حذف المستخدم ${user.name}`}><Trash2 size={13} /></button></div></td></tr>)}</tbody>
+              <thead className="bg-[#111827]/70 text-[#94A3B8] border-b border-[#2A3B56]">
+                <tr>
+                  <th className="p-3">الاسم</th>
+                  <th className="p-3">الهاتف</th>
+                  <th className="p-3">البريد</th>
+                  <th className="p-3">الدور</th>
+                  <th className="p-3 text-center">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#2A3B56]">
+                {users.map(user => (
+                  <tr key={user.id} className="hover:bg-[#111827]/40 transition-colors">
+                    <td className="p-3 font-semibold text-[#F8FAFC]">
+                      {user.name}
+                      {currentUser?.id === user.id && <span className="mr-2 text-[#2DD4BF]">(الحساب الحالي)</span>}
+                    </td>
+                    <td className="p-3 font-mono text-[#94A3B8]">{user.phone}</td>
+                    <td className="p-3 text-[#94A3B8]">{user.email}</td>
+                    <td className="p-3">
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] bg-[#111827] border border-[#2A3B56] text-[#CBD5E1]">
+                        {user.role === 'admin' ? 'مدير' : user.role === 'supervisor' ? 'مشرف' : 'ولي أمر'}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          className="w-7 h-7 rounded-lg bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#0D9488] flex items-center justify-center transition-colors"
+                          onClick={() => beginUserEdit(user)}
+                          title="تعديل"
+                          aria-label={`تعديل المستخدم ${user.name}`}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          className="w-7 h-7 rounded-lg bg-[#111827] border border-[#334155] text-red-400 hover:text-red-300 hover:border-red-500/50 flex items-center justify-center transition-colors"
+                          onClick={() => removeUser(user)}
+                          title="حذف"
+                          aria-label={`حذف المستخدم ${user.name}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </div>

@@ -92,29 +92,39 @@ export default function ProgressPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#F8FAFC]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black gradient-text flex items-center gap-2">
-            <Award className="text-teal-400" size={26} />
+          <h1 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#0D9488]/20 border border-[#0D9488]/40 flex items-center justify-center text-[#2DD4BF]">
+              <Award size={22} />
+            </div>
             متابعة وتقييم مستوى الطلاب
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-[#94A3B8] text-xs mt-1">
             تقييم المهارات الفنية بعد كل ورشة وحفظ سجل التطور الأكاديمي
           </p>
         </div>
 
         <div className="flex gap-2">
           <button
-            className={`btn text-xs font-bold ${viewMode === 'record' ? 'btn-primary shadow-sm shadow-blue-600/20' : 'btn-secondary'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+              viewMode === 'record'
+                ? 'bg-[#0D9488] text-white shadow-md shadow-[#0D9488]/30 border border-[#0D9488]'
+                : 'bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1B2537]'
+            }`}
             onClick={() => setViewMode('record')}
           >
             <TrendingUp size={15} />
             تسجيل تقييم حصة
           </button>
           <button
-            className={`btn text-xs font-bold ${viewMode === 'history' ? 'btn-primary shadow-sm shadow-blue-600/20' : 'btn-secondary'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+              viewMode === 'history'
+                ? 'bg-[#0D9488] text-white shadow-md shadow-[#0D9488]/30 border border-[#0D9488]'
+                : 'bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1B2537]'
+            }`}
             onClick={() => setViewMode('history')}
           >
             <Calendar size={15} />
@@ -124,8 +134,8 @@ export default function ProgressPage() {
       </div>
 
       {savedSuccess && (
-        <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300 flex items-center gap-3 text-sm font-bold animate-in fade-in">
-          <CheckCircle size={20} className="shrink-0 text-teal-400" />
+        <div className="p-4 rounded-xl bg-[#0D9488]/15 border border-[#0D9488]/40 text-[#2DD4BF] flex items-center gap-3 text-xs font-bold shadow-lg animate-in fade-in">
+          <CheckCircle size={18} className="shrink-0 text-[#2DD4BF]" />
           <span>تم حفظ التقييمات بنجاح في قاعدة البيانات المحلية ومزامنتها على القرص الصلب.</span>
         </div>
       )}
@@ -134,14 +144,14 @@ export default function ProgressPage() {
       {viewMode === 'record' && (
         <div className="space-y-5">
           {/* Session Selector */}
-          <div className="glass p-5 rounded-2xl border border-slate-200 bg-white">
+          <div className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl shadow-xl">
             <div className="grid md:grid-cols-3 gap-4 items-center">
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-600 mb-1.5">
+                <label className="block text-xs font-bold text-[#94A3B8] mb-1.5">
                   اختر الحصة والورشة التدريبية:
                 </label>
                 <select
-                  className="input text-xs font-semibold"
+                  className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#F8FAFC] focus:outline-none focus:border-[#0D9488] transition-colors shadow-inner"
                   value={selectedSessionId}
                   onChange={e => setSelectedSessionId(e.target.value)}
                 >
@@ -149,7 +159,7 @@ export default function ProgressPage() {
                     const grp = groups.find(g => g.id === sess.groupId);
                     const crs = courses.find(c => c.id === grp?.courseId);
                     return (
-                      <option key={sess.id} value={sess.id}>
+                      <option key={sess.id} value={sess.id} className="bg-[#111827] text-[#F8FAFC]">
                         {crs?.name || 'ورشة فنية'} — تاريخ {sess.date} ({sess.time})
                       </option>
                     );
@@ -157,34 +167,34 @@ export default function ProgressPage() {
                 </select>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <p className="text-[11px] text-slate-500 font-medium">الكورس المحدد:</p>
-                <p className="font-bold text-xs text-slate-900 mt-0.5">{activeCourse?.name || 'الفنون التشكيلية'}</p>
-                <p className="text-[10px] text-teal-300 font-semibold mt-0.5">عدد الطلاب: {currentStudents.length} طلاب</p>
+              <div className="p-3.5 rounded-xl bg-[#111827] border border-[#2A3B56] shadow-inner">
+                <p className="text-[11px] text-[#94A3B8] font-medium">الكورس المحدد:</p>
+                <p className="font-bold text-xs text-[#F8FAFC] mt-0.5">{activeCourse?.name || 'الفنون التشكيلية'}</p>
+                <p className="text-[11px] text-[#2DD4BF] font-bold mt-0.5">عدد الطلاب: {currentStudents.length} طلاب</p>
               </div>
             </div>
           </div>
 
           {/* Students Evaluation Form */}
-          <div className="glass p-6 rounded-2xl border border-slate-200 space-y-4 bg-white">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="bg-[#1B2537] border border-[#2A3B56] p-5 sm:p-6 rounded-2xl space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#2A3B56]">
               <div>
-                <h3 className="font-bold text-sm text-slate-900">تقييم مهارات الطلاب في هذه الحصة</h3>
-                <p className="text-xs text-slate-500">حدد مستوى الإتقان، التقدير بالنجوم، وملاحظة الموجه الفني</p>
+                <h3 className="font-bold text-sm text-[#F8FAFC]">تقييم مهارات الطلاب في هذه الحصة</h3>
+                <p className="text-xs text-[#94A3B8] mt-0.5">حدد مستوى الإتقان، التقدير بالنجوم، وملاحظة الموجه الفني</p>
               </div>
               <button
                 onClick={handleSaveAll}
                 disabled={currentStudents.length === 0}
-                className="btn btn-primary text-xs font-bold shadow-md shadow-blue-600/20"
+                className="bg-[#0D9488] hover:bg-[#0F766E] disabled:bg-[#111827] disabled:text-[#64748B] disabled:border-[#2A3B56] disabled:border text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-[#0D9488]/20 transition-all disabled:shadow-none disabled:cursor-not-allowed"
               >
                 <CheckCircle size={15} />
                 حفظ التقييمات للجميع
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {currentStudents.length === 0 && (
-                <p className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-500">
+                <p className="rounded-xl border border-[#2A3B56] bg-[#111827] p-6 text-center text-xs text-[#94A3B8]">
                   لا يوجد طلاب مسجلون في مجموعة هذه الحصة.
                 </p>
               )}
@@ -198,33 +208,33 @@ export default function ProgressPage() {
                 return (
                   <div
                     key={student.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:border-teal-500/30 transition-all space-y-3"
+                    className="p-4.5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] hover:border-[#0D9488]/50 transition-all space-y-3.5 shadow-md"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[#0D9488] flex items-center justify-center text-white font-black text-sm shadow-md shrink-0 border border-[#2DD4BF]/30">
                           {student.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-sm text-slate-900">{student.name}</p>
+                          <p className="font-bold text-sm text-[#F8FAFC]">{student.name}</p>
                           <span className="text-[10px] text-[#94A3B8] font-mono">{student.qrToken}</span>
                         </div>
                       </div>
 
                       {/* Star Rating */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-600 font-semibold">التقدير:</span>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs text-[#94A3B8] font-bold">التقدير:</span>
                         <div className="flex gap-1">
                           {ratings.map(r => (
                             <button
                               key={r}
                               type="button"
                               onClick={() => setStudentRatingField(student.id, 'rating', r)}
-                              className="cursor-pointer transition-transform hover:scale-110 p-0.5"
+                              className="cursor-pointer transition-transform hover:scale-125 p-0.5"
                             >
                               <Star
                                 size={19}
-                                className={r <= current.rating ? 'text-teal-400 fill-blue-600' : 'text-slate-200'}
+                                className={r <= current.rating ? 'text-[#D97706] fill-[#D97706] drop-shadow-[0_0_6px_rgba(217,119,6,0.5)]' : 'text-[#334155]'}
                               />
                             </button>
                           ))}
@@ -232,30 +242,30 @@ export default function ProgressPage() {
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-3 pt-1">
+                    <div className="grid md:grid-cols-2 gap-3.5 pt-1">
                       {/* Level */}
                       <div>
-                        <label className="text-[11px] font-bold text-slate-600 mb-1 block">
+                        <label className="text-[11px] font-bold text-[#94A3B8] mb-1.5 block">
                           المستوى المنجز:
                         </label>
                         <select
-                          className="input text-xs"
+                          className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#0D9488] transition-colors"
                           value={current.level}
                           onChange={e => setStudentRatingField(student.id, 'level', e.target.value)}
                         >
                           {levels.map(l => (
-                            <option key={l} value={l}>{l}</option>
+                            <option key={l} value={l} className="bg-[#111827] text-[#F8FAFC]">{l}</option>
                           ))}
                         </select>
                       </div>
 
                       {/* Notes */}
                       <div>
-                        <label className="text-[11px] font-bold text-slate-600 mb-1 block">
-                          ملاحظات وتوجيهات الموجه الفني:
+                        <label className="text-[11px] font-bold text-[#94A3B8] mb-1.5 block">
+                          ملحوظات وتوجيهات الموجه الفني:
                         </label>
                         <input
-                          className="input text-xs"
+                          className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#0D9488] transition-colors"
                           placeholder="مثال: تحسن ملحوظ في دقة الظلال ومزج الألوان الزيتية..."
                           value={current.notes}
                           onChange={e => setStudentRatingField(student.id, 'notes', e.target.value)}
@@ -267,10 +277,11 @@ export default function ProgressPage() {
               })}
             </div>
 
-            <div className="pt-4 flex justify-end">
+            <div className="pt-3 flex justify-end">
               <button
                 onClick={handleSaveAll}
-                className="btn btn-primary text-xs font-bold shadow-md shadow-blue-600/20"
+                disabled={currentStudents.length === 0}
+                className="bg-[#0D9488] hover:bg-[#0F766E] disabled:bg-[#111827] disabled:text-[#64748B] disabled:border-[#2A3B56] disabled:border text-white text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-md shadow-[#0D9488]/20 transition-all disabled:shadow-none disabled:cursor-not-allowed"
               >
                 <CheckCircle size={15} />
                 حفظ التقييمات للجميع
@@ -284,11 +295,11 @@ export default function ProgressPage() {
       {viewMode === 'history' && (
         <div className="space-y-4">
           {/* Search bar */}
-          <div className="glass p-3 rounded-xl border border-slate-200 bg-white">
+          <div className="bg-[#1B2537] border border-[#2A3B56] p-3 rounded-xl shadow-md">
             <div className="relative">
               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" size={17} />
               <input
-                className="input pr-10 text-xs"
+                className="w-full bg-[#111827] border border-[#2A3B56] rounded-xl pr-10 pl-4 py-2.5 text-xs text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-[#0D9488] transition-colors"
                 placeholder="بحث باسم الطالب لعرض سجل تقييماته السابقة..."
                 value={historySearch}
                 onChange={e => setHistorySearch(e.target.value)}
@@ -301,36 +312,36 @@ export default function ProgressPage() {
               const studentEvals = progress.filter(p => p.studentId === student.id);
 
               return (
-                <div key={student.id} className="glass p-5 rounded-2xl border border-slate-200 bg-white space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div key={student.id} className="bg-[#1B2537] border border-[#2A3B56] p-5 rounded-2xl space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between pb-3.5 border-b border-[#2A3B56]">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-teal-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
+                      <div className="w-11 h-11 rounded-xl bg-[#0D9488] flex items-center justify-center text-white font-black text-base shadow-md border border-[#2DD4BF]/30">
                         {student.name.charAt(0)}
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm text-slate-900">{student.name}</h4>
-                        <p className="text-xs text-slate-500">كود الطالب: {student.qrToken} • {student.level}</p>
+                        <h4 className="font-bold text-sm text-[#F8FAFC]">{student.name}</h4>
+                        <p className="text-xs text-[#94A3B8]">كود الطالب: {student.qrToken} • {student.level}</p>
                       </div>
                     </div>
 
-                    <span className="badge badge-teal text-xs">
+                    <span className="bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] text-xs px-2.5 py-0.5 rounded-lg font-bold">
                       {studentEvals.length} تقييمات مسجلة
                     </span>
                   </div>
 
                   {studentEvals.length === 0 ? (
-                    <p className="text-xs text-[#94A3B8] text-center py-3">
+                    <p className="text-xs text-[#94A3B8] text-center py-4">
                       لا توجد تقييمات مسجلة لهذا الطالب بعد. يمكنك تسجيل تقييم جديد من تبويب &quot;تسجيل تقييم حصة&quot;.
                     </p>
                   ) : (
-                    <div className="grid md:grid-cols-2 gap-3">
+                    <div className="grid md:grid-cols-2 gap-3.5">
                       {studentEvals.map(evalItem => (
                         <div
                           key={evalItem.id}
-                          className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
+                          className="p-3.5 rounded-xl border border-[#2A3B56] bg-[#111827] space-y-2 shadow-inner"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-teal-300">
+                            <span className="text-xs font-bold text-[#2DD4BF]">
                               {evalItem.level}
                             </span>
                             <div className="flex gap-0.5">
@@ -338,24 +349,28 @@ export default function ProgressPage() {
                                 <Star
                                   key={r}
                                   size={13}
-                                  className={r <= evalItem.rating ? 'text-teal-400 fill-blue-600' : 'text-slate-200'}
+                                  className={r <= evalItem.rating ? 'text-[#D97706] fill-[#D97706]' : 'text-[#334155]'}
                                 />
                               ))}
                             </div>
                           </div>
 
                           {evalItem.notes && (
-                            <p className="text-xs text-slate-600 leading-relaxed">
+                            <p className="text-xs text-[#94A3B8] leading-relaxed">
                               {evalItem.notes}
                             </p>
                           )}
 
-                          <div className="text-[10px] text-[#94A3B8] pt-1 border-t border-slate-200 flex justify-between">
-                            <span>تاريخ التقييم:</span>
-                            <span className="font-mono">{evalItem.date}</span>
-                          </div>
-                          <div className="flex justify-end">
-                            <button type="button" className="btn btn-secondary btn-sm text-red-600" onClick={() => handleDeleteProgress(evalItem.id)}><Trash2 size={12} />حذف التقييم</button>
+                          <div className="text-[10px] text-[#64748B] pt-2 border-t border-[#2A3B56] flex justify-between items-center">
+                            <span>تاريخ التقييم: <strong className="font-mono text-[#94A3B8]">{evalItem.date}</strong></span>
+                            <button
+                              type="button"
+                              className="text-red-400 hover:text-red-300 text-[11px] flex items-center gap-1 transition-colors"
+                              onClick={() => handleDeleteProgress(evalItem.id)}
+                            >
+                              <Trash2 size={12} />
+                              حذف التقييم
+                            </button>
                           </div>
                         </div>
                       ))}

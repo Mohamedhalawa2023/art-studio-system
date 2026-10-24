@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/copy-standalone.js",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
     "lint": "eslint",
     "test": "node --test scripts/enrollment.service.test.cjs",
     "desktop": "concurrently -k -s first \"next dev --hostname 127.0.0.1\" \"wait-on http://127.0.0.1:3000 && electron .\"",
