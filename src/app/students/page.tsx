@@ -329,67 +329,81 @@ export default function StudentsPage() {
               {/* Profile Header */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between pb-4 border-b border-[#2A3B56] gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-2xl shadow-md shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-[#0D9488] text-[#F8FAFC] flex items-center justify-center font-black text-2xl shadow-md shrink-0">
                     {selectedStudent.name.charAt(0)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-xl font-black text-[#F8FAFC]">{selectedStudent.name}</h2>
-                      <span className="badge badge-teal text-xs font-mono">{selectedStudent.qrToken}</span>
+                      <span className="font-mono text-xs font-bold bg-[#115E59] text-[#2DD4BF] border border-[#2DD4BF]/30 px-2.5 py-0.5 rounded-lg">
+                        {selectedStudent.qrToken}
+                      </span>
                     </div>
                     <p className="text-xs text-[#94A3B8] mt-1">
                       تاريخ الميلاد: {selectedStudent.birthDate} • المستوى: {selectedStudent.level}
                     </p>
-                    <p className="text-xs text-[#2DD4BF] font-semibold mt-0.5">
-                      الكورس الحالي: {primaryCourse?.name || 'غير مسجل بكورس'}
+                    <p className="text-xs text-[#94A3B8] font-semibold mt-0.5">
+                      الكورس الحالي: <span className="text-[#2DD4BF]">{primaryCourse?.name || 'غير مسجل بكورس'}</span>
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={beginStudentEdit} className="btn btn-secondary text-xs flex items-center gap-1.5"><Pencil size={14} />تعديل البيانات</button>
-                  <button type="button" onClick={removeStudent} className="btn btn-secondary text-red-400 text-xs flex items-center gap-1.5"><Trash2 size={14} />حذف الملف</button>
+                  <button
+                    type="button"
+                    onClick={beginStudentEdit}
+                    className="bg-[#111827] hover:bg-[#1e293b] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all font-medium"
+                  >
+                    <Pencil size={14} />تعديل البيانات
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeStudent}
+                    className="bg-[#111827] hover:bg-[#1e293b] border border-[#334155] text-[#94A3B8] hover:text-red-400 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all font-medium"
+                  >
+                    <Trash2 size={14} />حذف الملف
+                  </button>
                   <button
                     onClick={() => {
                       setDiplomaStudent(selectedStudent);
                       setShowDiplomaModal(true);
                     }}
-                    className="btn bg-[#0D9488] hover:bg-[#0F766E] text-white font-black shadow-md shadow-[#0D9488]/30 text-xs flex items-center gap-1.5 cursor-pointer py-2 px-3.5 rounded-xl"
+                    className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] font-bold shadow-md shadow-[#0D9488]/30 text-xs flex items-center gap-1.5 cursor-pointer py-2 px-3.5 rounded-xl border-0 transition-all"
                   >
-                    <Award size={15} className="text-white" />
+                    <Award size={15} className="text-[#F8FAFC]" />
                     <span>🎓 الشهادة الملكية (A4 Diploma)</span>
                   </button>
 
-                  <div className="flex gap-1 bg-[#111827] border border-[#2A3B56] p-1 rounded-xl">
-                  <button
-                    onClick={() => setProfileTab('info')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${profileTab === 'info' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
-                  >
-                    البيانات والكارنيه
-                  </button>
-                  <button
-                    onClick={() => setProfileTab('contract')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'contract' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
-                  >
-                    <FileText size={13} />
-                    وثيقة التعاقد
-                  </button>
-                  <button
-                    onClick={() => setProfileTab('financials')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'financials' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
-                  >
-                    <CreditCard size={13} />
-                    الماليات
-                  </button>
-                  <button
-                    onClick={() => setProfileTab('progress')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${profileTab === 'progress' ? 'bg-[#0D9488] text-white shadow-sm' : 'text-[#94A3B8] hover:text-[#F8FAFC]'}`}
-                  >
-                    <Award size={13} />
-                    تقدم الدروس
-                  </button>
+                  <div className="flex gap-1.5 bg-[#111827] border border-[#2A3B56] p-1 rounded-xl">
+                    <button
+                      onClick={() => setProfileTab('info')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${profileTab === 'info' ? 'bg-[#0D9488] text-[#F8FAFC] border-[#0D9488] shadow-sm' : 'bg-[#111827] border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC]'}`}
+                    >
+                      البيانات والكارنيه
+                    </button>
+                    <button
+                      onClick={() => setProfileTab('contract')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border ${profileTab === 'contract' ? 'bg-[#0D9488] text-[#F8FAFC] border-[#0D9488] shadow-sm' : 'bg-[#111827] border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC]'}`}
+                    >
+                      <FileText size={13} />
+                      وثيقة التعاقد
+                    </button>
+                    <button
+                      onClick={() => setProfileTab('financials')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border ${profileTab === 'financials' ? 'bg-[#0D9488] text-[#F8FAFC] border-[#0D9488] shadow-sm' : 'bg-[#111827] border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC]'}`}
+                    >
+                      <CreditCard size={13} />
+                      الماليات
+                    </button>
+                    <button
+                      onClick={() => setProfileTab('progress')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border ${profileTab === 'progress' ? 'bg-[#0D9488] text-[#F8FAFC] border-[#0D9488] shadow-sm' : 'bg-[#111827] border-[#2A3B56] text-[#94A3B8] hover:text-[#F8FAFC]'}`}
+                    >
+                      <Award size={13} />
+                      تقدم الدروس
+                    </button>
+                  </div>
                 </div>
-              </div>
             </div>
 
               {/* TAB 1: INFO & ID BADGE */}
@@ -555,17 +569,17 @@ export default function StudentsPage() {
                   {/* Financial Summary */}
                   {primaryEnrollment && (
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-slate-50/70 text-center">
+                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-[#1B2537] text-center">
                         <p className="text-xs text-[#94A3B8] font-medium">إجمالي رسوم الكورس</p>
                         <p className="text-xl font-black text-[#F8FAFC] mt-1">{primaryEnrollment.totalAmount} ج</p>
                       </div>
-                      <div className="p-4 rounded-xl border border-teal-500/20 bg-teal-500/10/70 text-center">
-                        <p className="text-xs text-teal-300 font-medium">المبلغ المسدد</p>
-                        <p className="text-xl font-black text-teal-300 mt-1">{primaryEnrollment.totalPaid} ج</p>
+                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-[#1B2537] text-center">
+                        <p className="text-xs text-[#94A3B8] font-medium">المبلغ المسدد</p>
+                        <p className="text-xl font-black text-[#2DD4BF] mt-1">{primaryEnrollment.totalPaid} ج</p>
                       </div>
-                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-slate-50/70 text-center">
+                      <div className="p-4 rounded-xl border border-[#2A3B56] bg-[#1B2537] text-center">
                         <p className="text-xs text-[#94A3B8] font-medium">المتبقي المطلوب</p>
-                        <p className="text-xl font-black text-slate-800 mt-1">
+                        <p className="text-xl font-black text-[#F8FAFC] mt-1">
                           {Math.max(0, primaryEnrollment.totalAmount - primaryEnrollment.totalPaid)} ج
                         </p>
                       </div>
@@ -577,7 +591,7 @@ export default function StudentsPage() {
                     {primaryEnrollment && primaryEnrollment.totalPaid < primaryEnrollment.totalAmount && (
                       <button
                         onClick={() => setShowPaymentModal(true)}
-                        className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white btn-sm flex items-center gap-1.5 shadow-sm"
+                        className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0"
                       >
                         <CreditCard size={14} /> تسجيل دفعة نقدية جديدة
                       </button>
@@ -590,15 +604,7 @@ export default function StudentsPage() {
                       <p className="text-xs text-[#94A3B8] py-3 text-center">لم يتم تسجيل دفعات بعد.</p>
                     ) : (
                       studentPayments.map(pay => (
-                        <div key={pay.id} className="p-3.5 bg-slate-50 border border-[#2A3B56] rounded-xl flex items-center justify-between text-xs">
-                          <div>
-                            <span className="font-mono font-bold text-teal-300 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded mr-2">
-                              {pay.receiptNumber}
-                            </span>
-                            <span className="font-bold text-[#F8FAFC]">{pay.amount} ج</span>
-                            <span className="text-[#94A3B8] mr-2">({pay.method})</span>
-                            <p className="text-[11px] text-[#94A3B8] mt-1">{pay.date} • {pay.notes}</p>
-                          </div>
+                        <div key={pay.id} className="p-3.5 bg-[#111827] border border-[#2A3B56] rounded-xl flex items-center justify-between text-xs">
                           <button
                             onClick={() => setReceiptData({
                               receiptNumber: pay.receiptNumber,
@@ -609,10 +615,18 @@ export default function StudentsPage() {
                               remaining: Math.max(0, (primaryEnrollment?.totalAmount || 0) - (primaryEnrollment?.totalPaid || 0)),
                               method: pay.method
                             })}
-                            className="btn btn-secondary btn-sm flex items-center gap-1 text-slate-700 border-[#2A3B56]"
+                            className="bg-[#111827] hover:bg-[#1e293b] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs transition-all font-medium"
                           >
-                            <Printer size={12} /> طباعة إيصال الدفع
+                            <Printer size={13} className="text-[#94A3B8]" />
+                            <span>طباعة إيصال الدفع</span>
                           </button>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[#94A3B8] text-xs font-medium">({pay.method})</span>
+                            <span className="font-mono font-bold text-[#2DD4BF] bg-[#115E59] border border-[#2DD4BF]/30 px-2.5 py-0.5 rounded-lg text-xs">
+                              {pay.receiptNumber}
+                            </span>
+                            <p className="text-xs text-[#94A3B8]">{pay.date} • {pay.notes}</p>
+                          </div>
                         </div>
                       ))
                     )}
@@ -621,18 +635,18 @@ export default function StudentsPage() {
                   {/* Installments Schedule */}
                   <div className="pt-3 border-t border-[#2A3B56]">
                     <h4 className="font-black text-sm text-[#F8FAFC] mb-3 flex items-center gap-1.5">
-                      <Clock size={15} className="text-teal-400" /> جدول الأقساط المتبقية
+                      <Clock size={15} className="text-[#2DD4BF]" /> جدول الأقساط المتبقية
                     </h4>
                     <div className="space-y-2">
                       {studentInstallments.map((inst, idx) => (
-                        <div key={inst.id} className="p-3 bg-white border border-[#2A3B56] rounded-xl flex items-center justify-between text-xs">
+                        <div key={inst.id} className="p-3 bg-[#111827] border border-[#2A3B56] rounded-xl flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-800">القسط #{idx + 1}</span>
+                            <span className="font-bold text-[#F8FAFC]">القسط #{idx + 1}</span>
                             <span className="text-[#94A3B8]">تاريخ الاستحقاق: {inst.dueDate}</span>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-black text-[#F8FAFC]">{inst.amount} ج</span>
-                            <span className={`badge text-[10px] ${inst.status === 'paid' ? 'badge-teal' : inst.status === 'overdue' ? 'badge-danger' : 'badge-gray'}`}>
+                            <span className={`badge text-[10px] ${inst.status === 'paid' ? 'bg-[#115E59] text-[#2DD4BF] border border-[#2DD4BF]/30' : inst.status === 'overdue' ? 'bg-[#450A0A] text-[#EF4444] border border-[#7F1D1D]' : 'bg-[#1e293b] text-[#94A3B8] border border-[#2A3B56]'}`}>
                               {inst.status === 'paid' ? 'مدفوع' : inst.status === 'overdue' ? 'متأخر' : 'معلق'}
                             </span>
                           </div>
