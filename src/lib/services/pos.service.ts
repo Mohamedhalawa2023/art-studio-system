@@ -227,7 +227,7 @@ export class PosService {
       if (sale.status === 'voided') throw new Error('لا يمكن إرجاع أصناف من فاتورة ملغاة.');
       if (!Array.isArray(dto.items) || dto.items.length === 0) throw new Error('حدد صنفًا واحدًا على الأقل للإرجاع.');
 
-      const requested = new Map<string, { quantity: number; restockQuantity: number }>();
+      const requested = new Map<string, { quantity: number; restockQuantity: number; condition?: SupplyReturn['items'][number]['condition'] }>();
       for (const requestedItem of dto.items) {
         const quantity = Validators.requireNonNegativeInteger(requestedItem.quantity, 'كمية الإرجاع');
         const restockQuantity = Validators.requireNonNegativeInteger(requestedItem.restockQuantity, 'الكمية الصالحة لإعادة المخزون');
@@ -235,7 +235,8 @@ export class PosService {
         if (requestedItem.condition && !conditions.includes(requestedItem.condition)) throw new Error('حالة الصنف المرتجع غير صالحة.');
         if (quantity === 0) continue;
         if (restockQuantity > quantity) throw new Error('الكمية المعادة للمخزون لا يمكن أن تتجاوز كمية الإرجاع.');
-        const existing = requested.get(requestedItem.productId) || { quantity: 0, restockQuantity: 0 };
+        const existing = requested.get(requestedItem.productId) || { quantity: 0, restockQuantity: 0, condition: requestedItem.condition };
+        if (requestedItem.condition) existing.condition = requestedItem.condition;
         existing.quantity += quantity;
         existing.restockQuantity += restockQuantity;
         if (!Number.isSafeInteger(existing.quantity) || !Number.isSafeInteger(existing.restockQuantity)) {

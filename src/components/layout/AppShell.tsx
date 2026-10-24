@@ -12,7 +12,20 @@ import {
 import { useMarsam } from '@/lib/store';
 import { formatLocalDate } from '@/lib/dates';
 
-const navigationGroups = [
+interface NavigationItem {
+  href: string;
+  label: string;
+  description: string;
+  icon: any;
+  keywords: string;
+}
+
+interface NavigationGroup {
+  label: string;
+  items: NavigationItem[];
+}
+
+const navigationGroups: NavigationGroup[] = [
   {
     label: 'الرئيسية',
     items: [{ href: '/', label: 'لوحة التحكم', description: 'نظرة عامة ومؤشرات اليوم', icon: LayoutDashboard, keywords: 'الرئيسية احصائيات ملخص' }],
@@ -43,9 +56,9 @@ const navigationGroups = [
     label: 'إدارة النظام',
     items: [{ href: '/settings', label: 'الإعدادات والنسخ الاحتياطي', description: 'بيانات المرسم والمستخدمون والاستعادة', icon: Settings, keywords: 'اعدادات نسخة احتياطية مستخدم' }],
   },
-] as const;
+];
 
-const allNavigationItems = navigationGroups.flatMap(group => group.items);
+const allNavigationItems: NavigationItem[] = navigationGroups.flatMap(group => group.items);
 const roleLabels = { admin: 'مدير النظام', supervisor: 'مشرف', guardian: 'ولي أمر' } as const;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
