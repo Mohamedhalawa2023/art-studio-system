@@ -531,4 +531,55 @@ body {
     color: #0f172a !important;
   }
 
+
+  /* ========================================================
+     LUXURY ART DIPLOMA PRINT ISOLATION (A4 LANDSCAPE)
+     ======================================================== */
+  @page diploma-page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  html.diploma-printing {
+    page: diploma-page;
+    background: #ffffff !important;
+  }
+
+  html.diploma-printing body * {
+    visibility: hidden !important;
+  }
+
+  html.diploma-printing body *:has(#printDiplomaArea) {
+    display: contents !important;
+  }
+
+  html.diploma-printing #printDiplomaArea,
+  html.diploma-printing #printDiplomaArea * {
+    visibility: visible !important;
+  }
+
+  html.diploma-printing #printDiplomaArea {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    max-width: 297mm !important;
+    max-height: 210mm !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 8mm 12mm !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    z-index: 999999 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html.diploma-printing .no-print {
+    display: none !important;
+  }
+
 }

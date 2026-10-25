@@ -101,7 +101,14 @@ export default function ArtDiplomaModal({
 
   // Print isolation trigger
   const handlePrint = () => {
+    document.documentElement.classList.add('diploma-printing');
+    const cleanup = () => {
+      document.documentElement.classList.remove('diploma-printing');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
     window.print();
+    setTimeout(cleanup, 2500);
   };
 
   const applyCritiquePreset = (type: string) => {
