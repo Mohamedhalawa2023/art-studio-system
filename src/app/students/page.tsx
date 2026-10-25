@@ -498,31 +498,45 @@ export default function StudentsPage() {
                       <p className="text-xs text-[#94A3B8]">مسجلة بتاريخ الانضمام: {primaryEnrollment?.enrollDate || '2026-10-01'}</p>
                     </div>
                     <button
-                      onClick={() => window.print()}
-                      className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0"
+                      onClick={() => {
+                        document.documentElement.classList.add('contract-printing');
+                        const cleanup = () => {
+                          document.documentElement.classList.remove('contract-printing');
+                          window.removeEventListener('afterprint', cleanup);
+                        };
+                        window.addEventListener('afterprint', cleanup);
+                        window.print();
+                        setTimeout(cleanup, 2500);
+                      }}
+                      className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0 cursor-pointer"
                     >
                       <Printer size={15} /> طباعة وثيقة التعاقد (A4)
                     </button>
                   </div>
 
                   {/* Printable Formal A4 Paper */}
-                  <div className="bg-[#1B2537] text-[#F8FAFC] p-8 rounded-2xl shadow-md font-sans border border-[#2A3B56] space-y-6">
+                  <div id="printable-contract" className="bg-[#1B2537] text-[#F8FAFC] p-8 rounded-2xl shadow-md font-sans border border-[#2A3B56] space-y-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-[#2A3B56] pb-4">
+                    <div className="contract-print-header flex items-center justify-between border-b border-[#2A3B56] pb-4">
                       <div>
-                        <h2 className="text-2xl font-black text-[#F8FAFC] flex items-center gap-2">🎨 {settings.name}</h2>
-                        <p className="text-xs text-[#94A3B8] mt-1">{settings.address} • هاتف: {settings.phone}</p>
+                        <h2 className="contract-print-title text-2xl font-black text-[#F8FAFC] flex items-center gap-2">🎨 {settings.name}</h2>
+                        <p className="contract-print-sub text-xs text-[#94A3B8] mt-1">{settings.address} • هاتف: {settings.phone}</p>
                       </div>
                       <div className="text-left">
-                        <span className="text-xs font-mono font-bold bg-[#111827] text-[#2DD4BF] px-3 py-1.5 rounded-lg border border-[#2A3B56] inline-block">
+                        <span className="contract-print-badge text-xs font-mono font-bold bg-[#111827] text-[#2DD4BF] px-3 py-1.5 rounded-lg border border-[#2A3B56] inline-block">
                           عقد رقم: CTR-{selectedStudent.id.slice(-5)}
                         </span>
-                        <p className="text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate || '2026-10-18'}</p>
+                        <p className="contract-print-sub text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate || '2026-10-18'}</p>
                       </div>
                     </div>
 
+                    {/* Contract Document Banner */}
+                    <div className="text-center py-1">
+                      <h3 className="contract-print-title text-base font-black text-[#F8FAFC] tracking-wide">وثيقة التعاقد والاشتراك الرسمي</h3>
+                    </div>
+
                     {/* Parties */}
-                    <div className="bg-[#111827] p-4 rounded-xl border border-[#2A3B56] text-xs space-y-2">
+                    <div className="contract-print-box bg-[#111827] p-4 rounded-xl border border-[#2A3B56] text-xs space-y-2">
                       <p className="text-[#94A3B8] leading-relaxed">
                         <strong className="text-[#F8FAFC]">الطرف الأول (إدارة المرسم):</strong> {settings.name}، ويمثلها المدير التنفيذي.
                       </p>
@@ -536,27 +550,27 @@ export default function StudentsPage() {
 
                     {/* Clauses */}
                     <div className="space-y-2 text-xs leading-relaxed">
-                      <h4 className="font-bold text-[#F8FAFC] text-sm">بنود وشروط التعاقد</h4>
-                      <div className="whitespace-pre-line text-[#F8FAFC] bg-[#111827] p-4 rounded-xl border border-[#2A3B56] leading-relaxed text-xs">
+                      <h4 className="contract-print-title font-bold text-[#F8FAFC] text-sm">بنود وشروط التعاقد</h4>
+                      <div className="contract-print-clauses whitespace-pre-line text-[#F8FAFC] bg-[#111827] p-4 rounded-xl border border-[#2A3B56] leading-relaxed text-xs">
                         {settings.contractTerms}
                       </div>
                     </div>
 
                     {/* Signatures */}
-                    <div className="pt-8 border-t border-[#2A3B56] grid grid-cols-2 gap-8 text-center text-xs">
+                    <div className="contract-print-signatures pt-8 border-t border-[#2A3B56] grid grid-cols-2 gap-8 text-center text-xs">
                       <div className="space-y-6">
-                        <p className="font-bold text-[#F8FAFC]">توقيع ولي الأمر / الطالب</p>
-                        <div className="h-10 border-b border-dashed border-[#2A3B56]"></div>
-                        <p className="text-[#94A3B8] font-medium">{selectedGuardian?.name || 'saber'}</p>
+                        <p className="contract-print-title font-bold text-[#F8FAFC]">توقيع ولي الأمر / الطالب</p>
+                        <div className="contract-print-dash h-10 border-b border-dashed border-[#2A3B56]"></div>
+                        <p className="contract-print-sub text-[#94A3B8] font-medium">{selectedGuardian?.name || 'saber'}</p>
                       </div>
                       <div className="space-y-6">
-                        <p className="font-bold text-[#F8FAFC]">ختم وتوقيع إدارة المرسم</p>
-                        <div className="h-10 border-b border-dashed border-[#2A3B56] flex items-center justify-center">
-                          <span className="text-[11px] text-[#34D399] font-bold border border-[#34D399]/30 px-3 py-1 rounded-full bg-[#115E59] shadow-sm flex items-center gap-1">
+                        <p className="contract-print-title font-bold text-[#F8FAFC]">ختم وتوقيع إدارة المرسم</p>
+                        <div className="contract-print-dash h-10 border-b border-dashed border-[#2A3B56] flex items-center justify-center">
+                          <span className="contract-print-seal text-[11px] text-[#34D399] font-bold border border-[#34D399]/30 px-3 py-1 rounded-full bg-[#115E59] shadow-sm flex items-center gap-1">
                             معتمد رسمياً ✅
                           </span>
                         </div>
-                        <p className="text-[#94A3B8] font-medium">إدارة {settings.name}</p>
+                        <p className="contract-print-sub text-[#94A3B8] font-medium">إدارة {settings.name}</p>
                       </div>
                     </div>
                   </div>
