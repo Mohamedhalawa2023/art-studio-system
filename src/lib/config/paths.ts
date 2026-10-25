@@ -86,3 +86,18 @@ export function getLogsDir(): string {
 export function getLogFilePath(): string {
   return path.join(getLogsDir(), 'app.log');
 }
+
+export function getWorkspaceDbPath(): string | null {
+  const cwd = process.cwd();
+  const localDb = path.join(cwd, 'data', 'data_store.json');
+  try {
+    if (path.resolve(localDb) === path.resolve(getDbPath())) {
+      return null;
+    }
+    const localDir = path.join(cwd, 'data');
+    if (fs.existsSync(localDir) && isWritable(localDir)) {
+      return localDb;
+    }
+  } catch {}
+  return null;
+}

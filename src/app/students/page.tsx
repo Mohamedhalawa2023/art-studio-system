@@ -11,6 +11,7 @@ import {
   Printer, X, Shield, HeartPulse, Pencil, Trash2
 } from 'lucide-react';
 import ArtDiplomaModal from '@/components/diploma/ArtDiplomaModal';
+import { printContractDocument, printStudentIdCard } from '@/lib/printing';
 
 export default function StudentsPage() {
   const {
@@ -457,16 +458,7 @@ export default function StudentsPage() {
 
                     <button
                       type="button"
-                      onClick={() => {
-                        document.documentElement.classList.add('student-id-printing');
-                        const cleanup = () => {
-                          document.documentElement.classList.remove('student-id-printing');
-                          window.removeEventListener('afterprint', cleanup);
-                        };
-                        window.addEventListener('afterprint', cleanup);
-                        window.print();
-                        setTimeout(cleanup, 2500);
-                      }}
+                      onClick={() => printStudentIdCard()}
                       className="id-no-print w-full mt-4 bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all border-0 cursor-pointer"
                     >
                       <Printer size={14} /> طباعة بطاقة الطالب (ID)
@@ -514,16 +506,7 @@ export default function StudentsPage() {
                       <p className="text-xs text-[#94A3B8]">مسجلة بتاريخ الانضمام: {primaryEnrollment?.enrollDate || '2026-10-01'}</p>
                     </div>
                     <button
-                      onClick={() => {
-                        document.documentElement.classList.add('contract-printing');
-                        const cleanup = () => {
-                          document.documentElement.classList.remove('contract-printing');
-                          window.removeEventListener('afterprint', cleanup);
-                        };
-                        window.addEventListener('afterprint', cleanup);
-                        window.print();
-                        setTimeout(cleanup, 2500);
-                      }}
+                      onClick={() => printContractDocument()}
                       className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0 cursor-pointer"
                     >
                       <Printer size={15} /> طباعة وثيقة التعاقد (A4)

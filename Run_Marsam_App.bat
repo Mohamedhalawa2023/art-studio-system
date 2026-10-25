@@ -7,7 +7,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING
 )
 
 :: Start fresh standalone production server in background
-start /min "" cmd /c "cd /d ""%~dp0"" && node .next\standalone\server.js"
+start /min "" cmd /c "cd /d ""%~dp0"" && set MARSAM_DESKTOP=1 && node .next\standalone\server.js"
 ping -n 3 127.0.0.1 >nul
 
 :: Launch browser in standalone app mode

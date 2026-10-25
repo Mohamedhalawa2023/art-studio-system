@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getDataDir, getBackupDir, getDbPath, getDbTmpPath, getLogFilePath } from '@/lib/config/paths';
+import { getDataDir, getBackupDir, getDbPath, getDbTmpPath, getLogFilePath, getWorkspaceDbPath } from '@/lib/config/paths';
 
 /**
  * Mutex Concurrency Lock with 5000ms Busy Timeout
@@ -201,7 +201,13 @@ export async function POST(request: Request) {
   try {
     releaseLock = await dbMutex.acquire(5000);
 
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      const rawText = await request.text();
+      body = JSON.parse(rawText);
+    }
     if (!validateDatabaseIntegrity(body)) {
       return NextResponse.json({ success: false, error: 'Integrity validation failed: payload missing required tables.' }, { status: 400 });
     }

@@ -32,3 +32,79 @@ export function printInvoice(paperSize: InvoicePaperSize) {
   window.requestAnimationFrame(() => window.print());
   window.setTimeout(cleanup, 60_000);
 }
+
+/** Print formal contract document isolated strictly as a single A4 page. */
+export function printContractDocument() {
+  const root = document.documentElement;
+  const styleId = 'contract-print-page-rules';
+  let pageStyle = document.getElementById(styleId) as HTMLStyleElement | null;
+
+  if (!pageStyle) {
+    pageStyle = document.createElement('style');
+    pageStyle.id = styleId;
+    document.head.appendChild(pageStyle);
+  }
+
+  pageStyle.textContent = '@page { size: A4 portrait; margin: 0; }';
+  root.classList.add('contract-printing');
+
+  const cleanup = () => {
+    root.classList.remove('contract-printing');
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  window.addEventListener('afterprint', cleanup, { once: true });
+  window.requestAnimationFrame(() => window.print());
+  window.setTimeout(cleanup, 10_000);
+}
+
+/** Print student ID badge card centered strictly on a single A4 page. */
+export function printStudentIdCard() {
+  const root = document.documentElement;
+  const styleId = 'id-print-page-rules';
+  let pageStyle = document.getElementById(styleId) as HTMLStyleElement | null;
+
+  if (!pageStyle) {
+    pageStyle = document.createElement('style');
+    pageStyle.id = styleId;
+    document.head.appendChild(pageStyle);
+  }
+
+  pageStyle.textContent = '@page { size: A4 portrait; margin: 0; }';
+  root.classList.add('student-id-printing');
+
+  const cleanup = () => {
+    root.classList.remove('student-id-printing');
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  window.addEventListener('afterprint', cleanup, { once: true });
+  window.requestAnimationFrame(() => window.print());
+  window.setTimeout(cleanup, 10_000);
+}
+
+/** Print Luxury Art Diploma strictly as a single A4 page in chosen orientation. */
+export function printArtDiploma(orientation: 'portrait' | 'landscape' = 'portrait') {
+  const root = document.documentElement;
+  const styleId = 'diploma-print-page-rules';
+  let pageStyle = document.getElementById(styleId) as HTMLStyleElement | null;
+
+  if (!pageStyle) {
+    pageStyle = document.createElement('style');
+    pageStyle.id = styleId;
+    document.head.appendChild(pageStyle);
+  }
+
+  pageStyle.textContent = '@page { size: A4 ' + orientation + '; margin: 0; }';
+  const classModifier = orientation === 'landscape' ? 'diploma-printing-landscape' : 'diploma-printing-portrait';
+  root.classList.add('diploma-printing', classModifier);
+
+  const cleanup = () => {
+    root.classList.remove('diploma-printing', 'diploma-printing-portrait', 'diploma-printing-landscape');
+    window.removeEventListener('afterprint', cleanup);
+  };
+
+  window.addEventListener('afterprint', cleanup, { once: true });
+  window.requestAnimationFrame(() => window.print());
+  window.setTimeout(cleanup, 10_000);
+}

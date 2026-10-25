@@ -6,6 +6,7 @@ import {
   CheckCircle, Sliders, Edit3, ShieldCheck, Undo2
 } from 'lucide-react';
 import type { Student } from '@/lib/store';
+import { printArtDiploma } from '@/lib/printing';
 
 export interface ArtDiplomaData {
   certificateNumber: string;
@@ -47,6 +48,7 @@ export default function ArtDiplomaModal({
   branchName = 'المقر الرئيسي'
 }: ArtDiplomaModalProps) {
   const [theme, setTheme] = useState<'gold' | 'emerald' | 'sapphire' | 'burgundy'>('sapphire');
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showEditor, setShowEditor] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
@@ -99,16 +101,9 @@ export default function ArtDiplomaModal({
 
   if (!isOpen || !student) return null;
 
-  // Print isolation trigger
+  // Print isolation trigger (strictly 1 single A4 page)
   const handlePrint = () => {
-    document.documentElement.classList.add('diploma-printing');
-    const cleanup = () => {
-      document.documentElement.classList.remove('diploma-printing');
-      window.removeEventListener('afterprint', cleanup);
-    };
-    window.addEventListener('afterprint', cleanup);
-    window.print();
-    setTimeout(cleanup, 2500);
+    printArtDiploma(orientation);
   };
 
   const applyCritiquePreset = (type: string) => {
@@ -169,7 +164,7 @@ export default function ArtDiplomaModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-5xl w-full p-4 sm:p-6 space-y-4 text-right shadow-2xl relative border border-slate-200 my-auto text-slate-900">
+      <div className={`bg-white rounded-3xl ${orientation === 'portrait' ? 'max-w-3xl' : 'max-w-5xl'} w-full p-4 sm:p-6 space-y-4 text-right shadow-2xl relative border border-slate-200 my-auto text-slate-900 transition-all`}>
         
         {/* Top Control Bar (Hidden on print) */}
         <div className="no-print flex items-center justify-between border-b border-slate-200 pb-3 flex-wrap gap-2">
@@ -241,6 +236,32 @@ export default function ArtDiplomaModal({
               <Edit3 size={14} />
               <span>لوحة التعديل ✏️</span>
             </button>
+
+                        {/* Orientation Selector (Portrait Default vs Landscape) */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+              <button
+                type="button"
+                onClick={() => setOrientation('portrait')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                  orientation === 'portrait' ? 'bg-white shadow-xs text-teal-800 border border-teal-300' : 'text-slate-600 hover:bg-white'
+                }`}
+                title="طباعة رأسية A4 بالطول (المقترح)"
+              >
+                <span>📄</span>
+                <span>بالطول (A4)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrientation('landscape')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                  orientation === 'landscape' ? 'bg-white shadow-xs text-teal-800 border border-teal-300' : 'text-slate-600 hover:bg-white'
+                }`}
+                title="طباعة أفقية A4 بالعرض"
+              >
+                <span>📑</span>
+                <span>بالعرض (A4)</span>
+              </button>
+            </div>
 
             {/* Print A4 */}
             <button
@@ -413,7 +434,7 @@ export default function ArtDiplomaModal({
         {/* ============================================================ */}
         <div
           id="printDiplomaArea"
-          className={`relative p-8 sm:p-12 rounded-3xl text-center space-y-5 select-none border-[12px] border-double ${st.border} ${st.frameBg} shadow-inner min-h-[640px]`}
+          className={`relative p-6 sm:p-10 rounded-3xl text-center select-none border-[12px] border-double ${st.border} ${st.frameBg} shadow-inner transition-all flex flex-col justify-between ${orientation === "portrait" ? "min-h-[780px] max-w-[680px] mx-auto space-y-4" : "min-h-[600px] space-y-5"}`}
           style={{
             backgroundImage: 'radial-gradient(circle at center, rgba(255,255,255,0.9) 60%, rgba(254,249,235,0.7) 100%)'
           }}
@@ -496,7 +517,7 @@ export default function ArtDiplomaModal({
 
           {/* 4 Core Skills Radar Meters */}
           {diploma.showSkills && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-right">
+            <div className={`grid ${orientation === "portrait" ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"} gap-2.5 text-right`}>
               <div className={`bg-white/95 p-2.5 rounded-2xl border ${st.accentBorder} shadow-2xs`}>
                 <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
                   <span>التحكم في الفرشاة</span>

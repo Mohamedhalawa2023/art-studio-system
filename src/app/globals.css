@@ -367,10 +367,34 @@ body {
     page-break-inside: avoid !important;
   }
 
-  /* Contract Document Printing Isolation (Single A4 Page) */
-  html.contract-printing {
+  /* ========================================================
+     UNIFIED MULTI-ELEMENT SINGLE-PAGE PRINT ISOLATION RULES
+     Guarantees STRICTLY 1 physical page per print operation
+     Eliminates phantom page duplicate stamping and distortions
+     ======================================================== */
+  html.contract-printing,
+  html.student-id-printing,
+  html.diploma-printing {
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
     background: #ffffff !important;
   }
+
+  html.contract-printing body,
+  html.student-id-printing body,
+  html.diploma-printing body {
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* ----------------------------------------------------
+     1. FORMAL CONTRACT (A4 PORTRAIT - FULL SHEET FIT)
+     ---------------------------------------------------- */
   html.contract-printing body * {
     visibility: hidden !important;
   }
@@ -382,23 +406,32 @@ body {
     visibility: visible !important;
   }
   html.contract-printing #printable-contract {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
+    right: 0 !important;
     top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    margin: 8mm auto !important;
+    width: 194mm !important;
+    height: 280mm !important;
+    min-height: 280mm !important;
+    max-height: 280mm !important;
     box-sizing: border-box !important;
-    margin: 0 !important;
-    padding: 10mm 14mm !important;
+    padding: 10mm 12mm !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    border: 2px solid #1e293b !important;
+    border: 2px solid #0f172a !important;
     border-radius: 8px !important;
     box-shadow: none !important;
     font-family: 'Cairo', Arial, sans-serif !important;
-    page-break-inside: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
     z-index: 999999 !important;
+    overflow: hidden !important;
   }
   html.contract-printing #printable-contract * {
     color: #0f172a !important;
@@ -431,9 +464,14 @@ body {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 6px !important;
-    padding: 10px 14px !important;
+    padding: 12px 14px !important;
     color: #0f172a !important;
-    line-height: 1.55 !important;
+    line-height: 1.6 !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
   }
   html.contract-printing #printable-contract .contract-print-badge {
     background: #f1f5f9 !important;
@@ -451,13 +489,12 @@ body {
   html.contract-printing #printable-contract .contract-print-signatures {
     border-top: 1px solid #cbd5e1 !important;
     padding-top: 16px !important;
+    margin-top: auto !important;
   }
 
-
-  /* Student ID Card Printing Isolation */
-  html.student-id-printing {
-    background: #ffffff !important;
-  }
+  /* ----------------------------------------------------
+     2. STUDENT ID CARD (CENTERED SINGLE A4 PAGE)
+     ---------------------------------------------------- */
   html.student-id-printing body * {
     visibility: hidden !important;
   }
@@ -469,16 +506,16 @@ body {
     visibility: visible !important;
   }
   html.student-id-printing #printable-student-id {
-    position: fixed !important;
+    position: absolute !important;
     left: 50% !important;
-    top: 50% !important;
+    top: 45% !important;
     transform: translate(-50%, -50%) !important;
     width: 86mm !important;
     height: 125mm !important;
     max-width: 86mm !important;
     max-height: 125mm !important;
     box-sizing: border-box !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     padding: 6mm 8mm !important;
     background: #ffffff !important;
     color: #0f172a !important;
@@ -491,9 +528,12 @@ body {
     align-items: center !important;
     text-align: center !important;
     font-family: 'Cairo', Arial, sans-serif !important;
-    page-break-inside: avoid !important;
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
     z-index: 999999 !important;
+    overflow: hidden !important;
   }
   html.student-id-printing #printable-student-id * {
     color: #0f172a !important;
@@ -531,51 +571,59 @@ body {
     color: #0f172a !important;
   }
 
-
-  /* ========================================================
-     LUXURY ART DIPLOMA PRINT ISOLATION (A4 LANDSCAPE)
-     ======================================================== */
-  @page diploma-page {
-    size: A4 landscape;
-    margin: 0;
-  }
-
-  html.diploma-printing {
-    page: diploma-page;
-    background: #ffffff !important;
-  }
-
+  /* ----------------------------------------------------
+     3. LUXURY ART DIPLOMA (PORTRAIT OR LANDSCAPE SINGLE A4)
+     ---------------------------------------------------- */
   html.diploma-printing body * {
     visibility: hidden !important;
   }
-
   html.diploma-printing body *:has(#printDiplomaArea) {
     display: contents !important;
   }
-
   html.diploma-printing #printDiplomaArea,
   html.diploma-printing #printDiplomaArea * {
     visibility: visible !important;
   }
-
   html.diploma-printing #printDiplomaArea {
-    position: fixed !important;
+    position: absolute !important;
     left: 0 !important;
+    right: 0 !important;
     top: 0 !important;
-    width: 297mm !important;
-    height: 210mm !important;
-    max-width: 297mm !important;
-    max-height: 210mm !important;
     box-sizing: border-box !important;
-    margin: 0 !important;
-    padding: 8mm 12mm !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    page-break-inside: avoid !important;
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
     z-index: 999999 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+  }
+
+  /* Portrait mode (Default) */
+  html.diploma-printing-portrait #printDiplomaArea,
+  html.diploma-printing:not(.diploma-printing-landscape) #printDiplomaArea {
+    margin: 8mm auto !important;
+    width: 194mm !important;
+    height: 280mm !important;
+    min-height: 280mm !important;
+    max-height: 280mm !important;
+    padding: 8mm 10mm !important;
+  }
+
+  /* Landscape mode (Optional) */
+  html.diploma-printing-landscape #printDiplomaArea {
+    margin: 8mm auto !important;
+    width: 280mm !important;
+    height: 194mm !important;
+    min-height: 194mm !important;
+    max-height: 194mm !important;
+    padding: 6mm 10mm !important;
   }
 
   html.diploma-printing .no-print {
