@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getDataDir, getBackupDir, getDbPath, getDbTmpPath, getLogFilePath, getWorkspaceDbPath } from '@/lib/config/paths';
+import { createHash } from 'node:crypto';
+import { getBackupDir, getDbPath, getDbTmpPath, getLogFilePath } from '@/lib/config/paths';
+import { isAuthenticatedLocalRequest, isSameOriginRequest } from '@/lib/auth/local-auth';
+import { getDatabaseIntegrityError } from '@/lib/db/schema';
+
+const MAX_DATABASE_SIZE_BYTES = 50 * 1024 * 1024;
+
+function getDatabaseRevision(dbFile: string): string {
+  if (!fs.existsSync(dbFile)) return 'missing';
+  return createHash('sha256').update(fs.readFileSync(dbFile)).digest('hex');
+}
 
 /**
  * Mutex Concurrency Lock with 5000ms Busy Timeout
@@ -75,14 +85,15 @@ function atomicFsyncWrite(targetPath: string, tmpPath: string, content: string) 
 
   try {
     fs.renameSync(tmpPath, targetPath);
-  } catch (err: any) {
-    if (err.code === 'EPERM' || err.code === 'EBUSY') {
+  } catch (error) {
+    const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+    if (code === 'EPERM' || code === 'EBUSY') {
       try {
         if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
       } catch {}
       fs.renameSync(tmpPath, targetPath);
     } else {
-      throw err;
+      throw error;
     }
   }
 }
@@ -90,23 +101,14 @@ function atomicFsyncWrite(targetPath: string, tmpPath: string, content: string) 
 /**
  * Validates database JSON schema integrity
  */
-function validateDatabaseIntegrity(data: any): boolean {
-  if (!data || typeof data !== 'object') return false;
-  const requiredArrays = ['students', 'courses', 'payments', 'attendance', 'supplyItems'];
-  for (const key of requiredArrays) {
-    if (!Array.isArray(data[key])) {
-      return false;
-    }
-  }
-  if (data.expenses !== undefined && !Array.isArray(data.expenses)) return false;
-  if (data.supplyReturns !== undefined && !Array.isArray(data.supplyReturns)) return false;
-  return true;
+function validateDatabaseIntegrity(data: unknown): boolean {
+  return getDatabaseIntegrityError(data) === null;
 }
 
 /**
  * Scans backup directory for the latest valid uncorrupted snapshot
  */
-function tryRecoverFromLatestBackup(backupDir: string): { data: any; backupFilename: string } | null {
+function tryRecoverFromLatestBackup(backupDir: string): { data: unknown; backupFilename: string } | null {
   if (!fs.existsSync(backupDir)) return null;
   const files = fs.readdirSync(backupDir)
     .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
@@ -142,14 +144,17 @@ function appendIncidentLog(message: string) {
 }
 
 // GET: Retrieve full database safely with automated corruption detection & auto-healing
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    if (!isAuthenticatedLocalRequest(request)) {
+      return NextResponse.json({ success: false, error: 'يلزم تسجيل الدخول لفتح بيانات المرسم.' }, { status: 401 });
+    }
     const dbFile = getDbPath();
     const dbTmpFile = getDbTmpPath();
     const backupDir = getBackupDir();
 
     let needsRecovery = false;
-    let loadedData: any = null;
+    let loadedData: unknown = null;
 
     if (fs.existsSync(dbFile)) {
       try {
@@ -159,7 +164,7 @@ export async function GET() {
           loadedData = parsed;
         } else {
           needsRecovery = true;
-          appendIncidentLog('Database schema integrity check failed: missing essential table arrays.');
+          appendIncidentLog(`Database schema integrity check failed: ${getDatabaseIntegrityError(parsed) || 'unknown integrity error'}`);
         }
       } catch (parseError) {
         needsRecovery = true;
@@ -177,21 +182,34 @@ export async function GET() {
         return NextResponse.json({
           success: true,
           data: recovered.data,
+          savedAt: fs.statSync(dbFile).mtimeMs,
+          revision: getDatabaseRevision(dbFile),
           warning: `Database auto-recovered from backup: ${recovered.backupFilename}`
-        });
+        }, { headers: { 'Cache-Control': 'no-store' } });
       }
 
       if (loadedData) {
-        return NextResponse.json({ success: true, data: loadedData });
+        return NextResponse.json({
+          success: true,
+          data: loadedData,
+          savedAt: fs.statSync(dbFile).mtimeMs,
+          revision: getDatabaseRevision(dbFile),
+        }, { headers: { 'Cache-Control': 'no-store' } });
       }
 
-      return NextResponse.json({ success: false, message: 'No valid database file or backup found on disk.' });
+      return NextResponse.json(
+        { success: false, revision: getDatabaseRevision(dbFile), message: 'No valid database file or backup found on disk.' },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
     }
 
-    return NextResponse.json({ success: true, data: loadedData });
+    return NextResponse.json(
+      { success: true, data: loadedData, savedAt: fs.statSync(dbFile).mtimeMs, revision: getDatabaseRevision(dbFile) },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
   } catch (error) {
     appendIncidentLog(`GET /api/database fatal error: ${String(error)}`);
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }
 
@@ -199,20 +217,50 @@ export async function GET() {
 export async function POST(request: Request) {
   let releaseLock: (() => void) | null = null;
   try {
-    releaseLock = await dbMutex.acquire(5000);
-
-    let body: any;
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ success: false, error: 'الطلب غير مسموح.' }, { status: 403 });
+    }
+    if (!isAuthenticatedLocalRequest(request)) {
+      return NextResponse.json({ success: false, error: 'يلزم تسجيل الدخول لحفظ بيانات المرسم.' }, { status: 401 });
+    }
+    const contentLength = Number(request.headers.get('content-length') || 0);
+    if (contentLength > MAX_DATABASE_SIZE_BYTES) {
+      return NextResponse.json({ success: false, error: 'حجم قاعدة البيانات أكبر من المسموح.' }, { status: 413 });
+    }
+    const raw = await request.text();
+    if (Buffer.byteLength(raw, 'utf8') > MAX_DATABASE_SIZE_BYTES) {
+      return NextResponse.json({ success: false, error: 'حجم قاعدة البيانات أكبر من المسموح.' }, { status: 413 });
+    }
+    let body: unknown;
     try {
-      body = await request.json();
+      body = JSON.parse(raw) as unknown;
     } catch {
-      const rawText = await request.text();
-      body = JSON.parse(rawText);
+      return NextResponse.json({ success: false, error: 'صيغة قاعدة البيانات غير صالحة.' }, { status: 400 });
     }
     if (!validateDatabaseIntegrity(body)) {
-      return NextResponse.json({ success: false, error: 'Integrity validation failed: payload missing required tables.' }, { status: 400 });
+      return NextResponse.json({
+        success: false,
+        error: getDatabaseIntegrityError(body) || 'بيانات قاعدة البيانات لا تطابق المخطط المطلوب.',
+      }, { status: 400 });
     }
 
+    const expectedRevision = request.headers.get('x-marsam-expected-revision');
+    if (!expectedRevision || !/^(?:missing|[a-f0-9]{64})$/.test(expectedRevision)) {
+      return NextResponse.json({ success: false, error: 'إصدار قاعدة البيانات المطلوب حفظه غير محدد.' }, { status: 428 });
+    }
+
+    releaseLock = await dbMutex.acquire(5000);
     const dbFile = getDbPath();
+    const currentRevision = getDatabaseRevision(dbFile);
+    if (currentRevision !== expectedRevision) {
+      return NextResponse.json({
+        success: false,
+        conflict: true,
+        revision: currentRevision,
+        error: 'تغيرت قاعدة البيانات من نافذة أخرى. حدّث الصفحة قبل متابعة التعديل حتى لا تضيع التغييرات.',
+      }, { status: 409 });
+    }
+
     const dbTmpFile = getDbTmpPath();
     const backupDir = getBackupDir();
     const jsonString = JSON.stringify(body, null, 2);
@@ -227,9 +275,14 @@ export async function POST(request: Request) {
       atomicFsyncWrite(backupFile, path.join(backupDir, `backup-${dateStr}.tmp.json`), jsonString);
     }
 
-    return NextResponse.json({ success: true, message: 'Database saved atomically with fsync' });
-  } catch (error: any) {
-    const isTimeout = error?.message?.includes('DATABASE_BUSY_TIMEOUT');
+    return NextResponse.json({
+      success: true,
+      savedAt: fs.statSync(dbFile).mtimeMs,
+      revision: createHash('sha256').update(jsonString).digest('hex'),
+      message: 'Database saved atomically with fsync'
+    });
+  } catch (error) {
+    const isTimeout = error instanceof Error && error.message.includes('DATABASE_BUSY_TIMEOUT');
     appendIncidentLog(`POST /api/database error: ${String(error)}`);
     return NextResponse.json(
       { success: false, error: String(error) },

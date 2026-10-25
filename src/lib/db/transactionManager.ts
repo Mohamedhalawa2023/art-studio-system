@@ -7,10 +7,11 @@
 import {
   Student, User, Course, Group, Session, Enrollment,
   Installment, Payment, OperatingExpense, Attendance, Progress, SupplyItem,
-  SupplySale, SupplyReturn, PortfolioItem, Announcement, mockAnnouncements
+  SupplySale, SupplyReturn, PortfolioItem, Announcement
 } from '@/lib/mockData';
 import { logger } from '@/lib/logger/logger';
 import { AcademySettings } from '@/lib/store';
+import { getDatabaseIntegrityError } from '@/lib/db/schema';
 
 export interface DatabaseState {
   users: User[];
@@ -41,9 +42,15 @@ export function normalizeDatabaseState(value: unknown): DatabaseState {
   const state = value as Partial<DatabaseState>;
   return {
     ...state,
-    announcements: Array.isArray(state.announcements) ? state.announcements : mockAnnouncements,
+    announcements: Array.isArray(state.announcements) ? state.announcements : [],
     expenses: Array.isArray(state.expenses) ? state.expenses : [],
     supplyReturns: Array.isArray(state.supplyReturns) ? state.supplyReturns : [],
+    customDiplomas: state.customDiplomas && typeof state.customDiplomas === 'object' && !Array.isArray(state.customDiplomas)
+      ? state.customDiplomas
+      : {},
+    settings: state.settings && typeof state.settings === 'object' && !Array.isArray(state.settings)
+      ? state.settings
+      : { name: '', phone: '', address: '', contractTerms: '' },
   } as DatabaseState;
 }
 
@@ -157,41 +164,10 @@ export class DatabaseEngine {
     this.rebuildIndexes();
   }
 
-  /**
-   * Verifies Referential Integrity (Foreign Keys)
-   * Throws TransactionError if any entity points to a non-existent parent.
-   */
+  /** Checks database constraints before committing a transaction. */
   private verifyIntegrity(draft: DatabaseState) {
-    const studentIds = new Set(draft.students.map(s => s.id));
-    const groupIds = new Set(draft.groups.map(g => g.id));
-    const enrollmentIds = new Set(draft.enrollments.map(e => e.id));
-    const supplySaleIds = new Set(draft.supplySales.map(sale => sale.id));
-
-    // Check Enrollments -> Students & Groups
-    for (const enr of draft.enrollments) {
-      if (!studentIds.has(enr.studentId)) {
-        throw new TransactionError(`FOREIGN_KEY_VIOLATION: الاشتراك ${enr.id} يشير إلى طالب غير موجود (${enr.studentId})`);
-      }
-      if (!groupIds.has(enr.groupId)) {
-        throw new TransactionError(`FOREIGN_KEY_VIOLATION: الاشتراك ${enr.id} يشير إلى مجموعة غير موجودة (${enr.groupId})`);
-      }
-    }
-
-    // Check Payments -> Enrollments
-    for (const pay of draft.payments) {
-      if (!enrollmentIds.has(pay.enrollmentId)) {
-        throw new TransactionError(`FOREIGN_KEY_VIOLATION: الإيصال ${pay.receiptNumber} يشير إلى اشتراك غير موجود (${pay.enrollmentId})`);
-      }
-    }
-
-    for (const returned of draft.supplyReturns || []) {
-      if (!supplySaleIds.has(returned.saleId)) {
-        throw new TransactionError(`FOREIGN_KEY_VIOLATION: المرتجع ${returned.returnNumber} يشير إلى فاتورة بيع غير موجودة (${returned.saleId})`);
-      }
-    }
-
-    // Sale lines contain immutable product name, price, cost, and quantity snapshots.
-    // Keep historical invoices valid when a product is removed from active inventory.
+    const error = getDatabaseIntegrityError(draft);
+    if (error) throw new TransactionError(`DATABASE_INTEGRITY_VIOLATION: ${error}`);
   }
 
   /**
@@ -222,11 +198,10 @@ export class DatabaseEngine {
 
       logger.transaction(transactionName, 'COMMIT');
 
-      // 5. Trigger Non-blocking Disk Persistence & optional sync callback
+      // 5. Notify the reactive store; it owns durable persistence and reports save status to the UI.
       if (onSuccessSync) {
         onSuccessSync(this.state);
       }
-      this.persistToDiskAsync(this.state);
 
       return result;
     } catch (error) {
@@ -243,23 +218,4 @@ export class DatabaseEngine {
     }
   }
 
-  /**
-   * Background asynchronous persistence to /api/database without freezing UI
-   */
-  private async persistToDiskAsync(dataToSave: DatabaseState) {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const res = await fetch('/api/database', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSave),
-      });
-      if (!res.ok) {
-        logger.warn('DatabaseEngine', 'Server returned non-200 while persisting to disk');
-      }
-    } catch (err) {
-      logger.error('DatabaseEngine', 'Failed to asynchronously persist database to disk', err);
-    }
-  }
 }

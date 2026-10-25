@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect, useMemo, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useRef, ReactNode, useCallback } from 'react';
 import {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment, OperatingExpense, Announcement,
   Attendance, Progress, SupplyItem, SupplySale, SupplyReturn, PortfolioItem,
@@ -18,6 +18,26 @@ import { AnnouncementDTO, CatalogService, CreateCourseDTO, CreateGroupDTO, Updat
 import { BackupService } from '@/lib/services/backup.service';
 import { logger } from '@/lib/logger/logger';
 import { formatLocalDate } from '@/lib/dates';
+import LocalAuthScreen, { type LocalAuthAction, type LocalAuthCredentials, type LocalAuthStage } from '@/components/auth/LocalAuthScreen';
+import type { LocalAuthRole } from '@/lib/auth/roles';
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+  timeoutMessage: string,
+) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error(timeoutMessage);
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
 
 export type {
   User, Student, Course, Group, Session, Enrollment, Payment, Installment,
@@ -33,8 +53,16 @@ export interface AcademySettings {
 
 interface MarsamContextType {
   currentUser: User | null;
-  login: (role: 'admin' | 'supervisor' | 'guardian') => void;
-  logout: () => void;
+  localAuthRole: LocalAuthRole | null;
+  localAuthUsername: string | null;
+  authStage: LocalAuthStage;
+  authenticate: (action: LocalAuthAction, credentials: LocalAuthCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+  persistenceStatus: 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
+  conflictBackupAvailable: boolean;
+  downloadConflictBackup: () => void;
+  retryPendingSave: () => void;
+  clearConflictBackup: () => void;
   
   // Theme state (Default: light)
   theme: 'light' | 'dark';
@@ -71,7 +99,7 @@ interface MarsamContextType {
   reverseCoursePayment: (params: ReversePaymentDTO) => Payment;
   addOperatingExpense: (params: RecordExpenseDTO) => OperatingExpense;
   updateOperatingExpense: (params: UpdateExpenseDTO) => OperatingExpense;
-  deleteOperatingExpense: (id: string, deletedBy?: string) => void;
+  deleteOperatingExpense: (id: string, reason: string, deletedBy?: string) => void;
   recordStudentAttendance: (params: { studentId: string; sessionId: string; status: 'present' | 'absent' | 'late'; lessonTopic?: string }) => Attendance;
   deleteAttendance: (id: string) => void;
   processBarcodeScan: (barcode: string, sessionId: string) => BarcodeScanResult;
@@ -107,19 +135,28 @@ interface MarsamContextType {
   saveStudentDiploma: (studentId: string, diplomaData: unknown) => void;
   updateSettings: (newSettings: Partial<AcademySettings>) => void;
   exportDatabase: () => Promise<void>;
-  importDatabase: (jsonData: string) => Promise<boolean>;
+  importDatabase: (jsonData: string, safetyBackupAlreadyCreated?: boolean) => Promise<boolean>;
   resetDatabase: () => void;
 }
 
 const MarsamContext = createContext<MarsamContextType | null>(null);
 
 const STORAGE_KEY = 'marsam_erp_db_v1';
+const CONFLICT_BACKUP_KEY = 'marsam_erp_db_conflict_backup_v1';
 const THEME_KEY = 'marsam_theme';
 
+function hasConflictBackup(): boolean {
+  try {
+    return typeof window !== 'undefined' && Boolean(localStorage.getItem(CONFLICT_BACKUP_KEY));
+  } catch {
+    return false;
+  }
+}
+
 const initialSettings: AcademySettings = {
-  name: 'مرسم الإبداع للفنون التشكيلية',
-  phone: '01012345678',
-  address: 'القاهرة — مصر الجديدة — شارع النزهة',
+  name: 'مرسمي',
+  phone: '',
+  address: '',
   contractTerms: `بنود التعاقد مع مرسم الإبداع:
 ١. يلتزم الطالب بمواعيد الحصص المحددة، وأي تأخير يتجاوز 15 دقيقة يحتسب تأخيراً.
 ٢. في حال الغياب بعذر مسبق، يتم التنسيق لحصة تعويضية حسب السعة المتاحة.
@@ -128,8 +165,29 @@ const initialSettings: AcademySettings = {
 ٥. المرسم مسؤول عن توفير بيئة تعليمية آمنة وأدوات تدريب مطابقة للمعايير الفنية.`
 };
 
+function createEmptyDatabaseState(): DatabaseState {
+  return {
+    users: [{ id: 'u1', name: 'مدير المرسم', phone: '', email: '', role: 'admin' }],
+    students: [], courses: [], groups: [], sessions: [], announcements: [],
+    enrollments: [], installments: [], payments: [], expenses: [], attendance: [],
+    progress: [], supplyItems: [], supplySales: [], supplyReturns: [], portfolio: [],
+    customDiplomas: {},
+    settings: initialSettings,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(mockUsers[0]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [localAuthRole, setLocalAuthRole] = useState<LocalAuthRole | null>(null);
+  const [localAuthUsername, setLocalAuthUsername] = useState<string | null>(null);
+  const [authStage, setAuthStage] = useState<LocalAuthStage>('checking');
+  const [authError, setAuthError] = useState('');
+  const [persistenceStatus, setPersistenceStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'conflict'>(
+    () => hasConflictBackup() ? 'conflict' : 'idle',
+  );
+  const [conflictBackupAvailable, setConflictBackupAvailable] = useState(hasConflictBackup);
+  const [saveBlockedByConflict, setSaveBlockedByConflict] = useState(hasConflictBackup);
+  const diskRevisionRef = useRef('missing');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   
   // 1. Reactive Presentation State
@@ -210,53 +268,176 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSettings({ ...committedState.settings });
   }, []);
 
-  // 3. Hydrate state from local disk storage (/api/database) or fallback to localStorage
+  const hydrateDatabase = useCallback(async (operatorRole: LocalAuthRole): Promise<DatabaseState> => {
+    let diskState: DatabaseState | null = null;
+    let localState: DatabaseState | null = null;
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) localState = normalizeDatabaseState(JSON.parse(saved));
+    } catch (error) {
+      logger.error('AuthProvider', 'تعذر قراءة نسخة بيانات المتصفح.', error);
+    }
+
+    try {
+      const response = await fetchWithTimeout(
+        '/api/database',
+        { cache: 'no-store' },
+        30_000,
+        'انتهت مهلة تحميل قاعدة البيانات. أعد المحاولة.',
+      );
+      if (response.status === 401) throw new Error('انتهت جلسة الدخول. سجّل الدخول مرة أخرى.');
+      if (response.ok) {
+        const payload = await response.json();
+        if (payload.success && payload.data) {
+          diskState = normalizeDatabaseState(payload.data);
+          diskRevisionRef.current = typeof payload.revision === 'string' ? payload.revision : 'missing';
+        } else {
+          diskRevisionRef.current = typeof payload.revision === 'string' ? payload.revision : 'missing';
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && (
+        error.message.includes('انتهت جلسة الدخول')
+        || error.message.includes('انتهت مهلة تحميل قاعدة البيانات')
+      )) throw error;
+      logger.warn('AuthProvider', 'تعذر تحميل قاعدة البيانات من القرص؛ جارٍ فحص نسخة المتصفح.');
+    }
+
+    // The server file is authoritative whenever it is readable. The browser copy
+    // is a recovery fallback only when the local server cannot provide a database.
+    let restored = diskState || localState;
+    if (!restored) restored = createEmptyDatabaseState();
+    dbEngine.hydrate(restored);
+    syncFromEngine(restored);
+    const operatorRecordRole = operatorRole === 'manager' ? 'admin' : 'supervisor';
+    setCurrentUser(restored.users.find(user => user.role === operatorRecordRole) || restored.users.find(user => user.role === 'admin') || null);
+    setIsHydrated(true);
+    return restored;
+  }, [dbEngine, syncFromEngine]);
+
+  const checkAuthStatus = useCallback(async () => {
+    setAuthError('');
+    try {
+      const response = await fetchWithTimeout(
+        '/api/auth',
+        { cache: 'no-store' },
+        15_000,
+        'انتهت مهلة الاتصال بخدمة الدخول. أعد المحاولة.',
+      );
+      const payload = await response.json();
+      if (!response.ok || !payload.success) throw new Error(payload.error || 'تعذر التحقق من حالة الدخول.');
+      if (payload.setupRequired) {
+        setAuthStage('setup');
+        return;
+      }
+      if (payload.upgradeRequired) {
+        setAuthStage('upgrade');
+        return;
+      }
+      if (!payload.authenticated) {
+        setLocalAuthRole(null);
+        setLocalAuthUsername(null);
+        setAuthStage('login');
+        return;
+      }
+      if ((payload.role !== 'manager' && payload.role !== 'employee') || typeof payload.username !== 'string') {
+        throw new Error('تعذر تحديد صلاحية حساب الدخول. سجّل الدخول مرة أخرى.');
+      }
+      setLocalAuthRole(payload.role);
+      setLocalAuthUsername(payload.username);
+      await hydrateDatabase(payload.role);
+      setAuthStage('authenticated');
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'تعذر الاتصال بخدمة الدخول.');
+      setAuthStage('error');
+    }
+  }, [hydrateDatabase]);
+
+  // Read theme settings and check the local administrator session before loading private records.
   useEffect(() => {
     const savedTheme = (localStorage.getItem(THEME_KEY) as 'light' | 'dark') || 'light';
-    // Hydrate the context value from browser storage after mount to avoid an SSR/client theme mismatch.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
+    void checkAuthStatus();
+  }, [checkAuthStatus]);
 
-    async function hydrateDatabase() {
-      let loaded = false;
-      try {
-        const res = await fetch('/api/database');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            const normalized = normalizeDatabaseState(json.data);
-            dbEngine.hydrate(normalized);
-            syncFromEngine(normalized);
-            loaded = true;
-            logger.info('AuthProvider', 'Database hydrated successfully from disk storage.');
-          }
-        }
-      } catch {
-        logger.warn('AuthProvider', 'Failed to reach /api/database on boot, checking localStorage fallback.');
+  const authenticate = useCallback(async (action: LocalAuthAction, credentials: LocalAuthCredentials) => {
+    setAuthError('');
+    let response: Response;
+    try {
+      response = await fetchWithTimeout(
+        '/api/auth',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, ...credentials }),
+        },
+        30_000,
+        'انتهت مهلة تسجيل الدخول. أعد المحاولة.',
+      );
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('انتهت مهلة تسجيل الدخول')) {
+        setAuthError(error.message);
+        setAuthStage('error');
       }
-
-      if (!loaded) {
-        try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) {
-            const parsed = normalizeDatabaseState(JSON.parse(saved));
-            dbEngine.hydrate(parsed);
-            syncFromEngine(parsed);
-          }
-        } catch (e) {
-          logger.error('AuthProvider', 'Failed to parse database from localStorage', e);
-        }
-      }
-      setIsHydrated(true);
+      throw error;
     }
+    const payload = await response.json();
+    if (!response.ok || !payload.success) throw new Error(payload.error || 'تعذر تسجيل الدخول.');
+    if ((payload.role !== 'manager' && payload.role !== 'employee') || typeof payload.username !== 'string') {
+      throw new Error('لم تُرسل خدمة الدخول صلاحية الحساب. أعد المحاولة.');
+    }
+    setLocalAuthRole(payload.role);
+    setLocalAuthUsername(payload.username);
+    try {
+      await hydrateDatabase(payload.role);
+      setAuthStage('authenticated');
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'تم الدخول لكن تعذر تحميل قاعدة البيانات.');
+      setAuthStage('error');
+      throw error;
+    }
+  }, [hydrateDatabase]);
 
-    hydrateDatabase();
-  }, [dbEngine, syncFromEngine]);
+  const logout = useCallback(async () => {
+    try {
+      await fetch('/api/auth', { method: 'DELETE' });
+    } catch (error) {
+      logger.warn('AuthProvider', 'تعذر إغلاق الجلسة على الخادم.', { error: String(error) });
+    }
+    setCurrentUser(null);
+    setLocalAuthRole(null);
+    setLocalAuthUsername(null);
+    setAuthStage('login');
+  }, []);
+
+  const downloadConflictBackup = useCallback(() => {
+    const saved = localStorage.getItem(CONFLICT_BACKUP_KEY);
+    if (!saved) return;
+    const url = URL.createObjectURL(new Blob([saved], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `marsam-unsaved-changes-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, []);
+
+  const retryPendingSave = useCallback(() => {
+    setSaveBlockedByConflict(false);
+    setPersistenceStatus('saving');
+  }, []);
+
+  const clearConflictBackup = useCallback(() => {
+    if (!window.confirm('مسح نسخة التغييرات غير المحفوظة؟ لا يمكن التراجع عن ذلك.')) return;
+    localStorage.removeItem(CONFLICT_BACKUP_KEY);
+    window.location.reload();
+  }, []);
 
   // 4. Background Persistence & Snapshot Sync
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || authStage !== 'authenticated' || saveBlockedByConflict) return;
 
     const currentState: DatabaseState = {
       users, students, courses, groups, sessions, announcements,
@@ -269,25 +450,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Keep database engine synchronized
     dbEngine.hydrate(currentState);
 
-    // Browser localStorage mirror
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-    } catch {
-      logger.warn('AuthProvider', 'LocalStorage quota exceeded or restricted.');
-    }
+    const statusTimer = window.setTimeout(() => setPersistenceStatus('saving'), 0);
 
-    // Debounced asynchronous server disk sync
+    // Debounced server save. The UI reports success only after the disk API confirms the write.
     const timer = setTimeout(() => {
-      fetch('/api/database', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentState)
-      }).catch(err => logger.warn('AuthProvider', 'Async background disk sync error: ' + String(err)));
+      void (async () => {
+        try {
+          const response = await fetch('/api/database', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-marsam-expected-revision': diskRevisionRef.current,
+            },
+            body: JSON.stringify(currentState),
+          });
+          const result = await response.json();
+          if (response.status === 401) {
+            setCurrentUser(null);
+            setAuthStage('login');
+            throw new Error('انتهت جلسة المدير. سجّل الدخول مرة أخرى لحفظ التغييرات.');
+          }
+          if (response.status === 409) {
+            try {
+              localStorage.setItem(CONFLICT_BACKUP_KEY, JSON.stringify(currentState));
+              setConflictBackupAvailable(true);
+            } catch (storageError) {
+              logger.error('AuthProvider', 'تعذر حفظ نسخة محلية من التغييرات المتعارضة.', storageError);
+            }
+            setSaveBlockedByConflict(true);
+            setPersistenceStatus('conflict');
+            return;
+          }
+          if (!response.ok || !result.success) throw new Error(result.error || 'تعذر حفظ البيانات على القرص.');
+          diskRevisionRef.current = String(result.revision || 'missing');
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
+            localStorage.removeItem(CONFLICT_BACKUP_KEY);
+            setConflictBackupAvailable(false);
+          } catch {
+            logger.warn('AuthProvider', 'تعذر تحديث نسخة المتصفح، لكن حفظ القرص نجح.');
+          }
+          setPersistenceStatus('saved');
+        } catch (error) {
+          logger.error('AuthProvider', 'تعذر حفظ التغييرات على القرص.', error);
+          try {
+            localStorage.setItem(CONFLICT_BACKUP_KEY, JSON.stringify(currentState));
+            setConflictBackupAvailable(true);
+            setSaveBlockedByConflict(true);
+          } catch (storageError) {
+            logger.error('AuthProvider', 'تعذر حفظ نسخة محلية من التغييرات غير المحفوظة.', storageError);
+          }
+          setPersistenceStatus('error');
+        }
+      })();
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(statusTimer);
+      clearTimeout(timer);
+    };
   }, [
-    isHydrated, dbEngine, users, students, courses, groups, sessions,
+    isHydrated, authStage, saveBlockedByConflict, dbEngine, users, students, courses, groups, sessions,
     enrollments, installments, payments, expenses, attendance,
     progress, supplyItems, supplySales, supplyReturns, portfolio, announcements, customDiplomas, settings
   ]);
@@ -298,13 +521,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(THEME_KEY, nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
   };
-
-  const login = (role: 'admin' | 'supervisor' | 'guardian') => {
-    const user = users.find(u => u.role === role) || users[0];
-    setCurrentUser(user);
-  };
-
-  const logout = () => setCurrentUser(null);
 
   // ================= DOMAIN ACTIONS =================
 
@@ -380,9 +596,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteOperatingExpense = (id: string, deletedBy?: string) => {
+  const deleteOperatingExpense = (id: string, reason: string, deletedBy?: string) => {
     try {
-      financeService.deleteOperatingExpense(id, deletedBy, syncFromEngine);
+      financeService.deleteOperatingExpense(id, reason, deletedBy, syncFromEngine);
     } catch (error) {
       const userMessage = logger.formatUserError(error);
       alert(userMessage);
@@ -719,7 +935,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Action 12: Schema-Validated Database Import
    */
-  const importDatabase = async (jsonData: string): Promise<boolean> => {
+  const importDatabase = async (jsonData: string, safetyBackupAlreadyCreated = false): Promise<boolean> => {
     const verification = BackupService.validateImportSchema(jsonData);
     if (!verification.valid || !verification.data) {
       alert(`خطأ في استيراد البيانات: ${verification.error}`);
@@ -727,21 +943,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const importedData = normalizeDatabaseState(verification.data);
-    dbEngine.hydrate(importedData);
-    syncFromEngine(importedData);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData));
+      if (!safetyBackupAlreadyCreated) {
+        const safetyResponse = await fetch('/api/backups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'snapshot-current' }),
+        });
+        const safetyResult = await safetyResponse.json();
+        if (!safetyResponse.ok || !safetyResult.success) {
+          throw new Error(safetyResult.error || 'تعذر حفظ نسخة أمان من البيانات الحالية. لم يتم الاستيراد.');
+        }
+      }
+
       const response = await fetch('/api/database', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-marsam-expected-revision': diskRevisionRef.current,
+        },
         body: JSON.stringify(importedData),
       });
-      if (!response.ok) {
-        logger.warn('AuthProvider', `Imported database is active locally; server sync returned ${response.status}.`);
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'تعذر حفظ البيانات المستوردة على القرص.');
+      diskRevisionRef.current = String(result.revision || 'missing');
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData));
+      } catch (storageError) {
+        logger.warn('AuthProvider', 'تعذر تحديث نسخة المتصفح، لكن قاعدة البيانات المستوردة حُفظت على القرص.', { error: String(storageError) });
       }
+      try {
+        localStorage.removeItem(CONFLICT_BACKUP_KEY);
+        setConflictBackupAvailable(false);
+      } catch {}
+      setSaveBlockedByConflict(false);
+      setPersistenceStatus('saved');
     } catch (error) {
-      logger.warn('AuthProvider', 'Imported database is active locally; server sync is unavailable.', { error: String(error) });
+      const message = error instanceof Error ? error.message : 'تعذر حفظ البيانات المستوردة على القرص.';
+      logger.error('AuthProvider', 'Database import aborted because a safe disk save failed.', error);
+      alert(`${message} لم يتم تفعيل النسخة المستوردة.`);
+      return false;
     }
+
+    dbEngine.hydrate(importedData);
+    syncFromEngine(importedData);
     alert('تم استيراد واستعادة قاعدة البيانات بنجاح وبأمان تام ✅');
     return true;
   };
@@ -751,32 +996,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const resetDatabase = () => {
     localStorage.removeItem(STORAGE_KEY);
-    dbEngine.hydrate({
-      users: mockUsers,
-      students: mockStudents,
-      courses: mockCourses,
-      groups: mockGroups,
-      sessions: mockSessions,
-      announcements: mockAnnouncements,
-      enrollments: mockEnrollments,
-      installments: mockInstallments,
-      payments: mockPayments,
-      expenses: [],
-      attendance: mockAttendance,
-      progress: mockProgress,
-      supplyItems: mockSupplyItems,
-      supplySales: mockSupplySales,
-      supplyReturns: [],
-      portfolio: mockPortfolio,
-      customDiplomas: {},
-      settings: initialSettings
-    });
+    dbEngine.hydrate(createEmptyDatabaseState());
     syncFromEngine(dbEngine.getState());
   };
 
   return (
     <MarsamContext.Provider value={{
-      currentUser, login, logout,
+      currentUser, localAuthRole, localAuthUsername, authStage, authenticate, logout, persistenceStatus,
+      conflictBackupAvailable, downloadConflictBackup, retryPendingSave, clearConflictBackup,
       theme, toggleTheme,
       users, students, courses, groups, sessions, announcements,
       enrollments, installments, payments, expenses, attendance,
@@ -792,7 +1019,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       saveStudentDiploma,
       updateSettings, exportDatabase, importDatabase, resetDatabase
     }}>
-      {children}
+      {authStage === 'authenticated' && isHydrated
+        ? children
+        : <LocalAuthScreen stage={authStage} error={authError} onSubmit={authenticate} onRetry={() => void checkAuthStatus()} />}
     </MarsamContext.Provider>
   );
 }

@@ -91,6 +91,14 @@ export default function StudentsPage() {
   const primaryEnrollment = studentEnrollments[0];
   const primaryGroup = primaryEnrollment ? groups.find(g => g.id === primaryEnrollment.groupId) : null;
   const primaryCourse = primaryGroup ? courses.find(c => c.id === primaryGroup.courseId) : null;
+  const contractReady = Boolean(
+    primaryEnrollment?.enrollDate?.trim()
+    && primaryCourse?.name?.trim()
+    && selectedGuardian?.name?.trim()
+    && selectedGuardian?.phone?.trim()
+    && Number.isFinite(primaryEnrollment?.totalAmount)
+    && (primaryEnrollment?.totalAmount ?? -1) >= 0
+  );
   
   const studentInstallments = primaryEnrollment ? installments.filter(i => i.enrollmentId === primaryEnrollment.id) : [];
   const studentPayments = primaryEnrollment ? payments.filter(p => p.enrollmentId === primaryEnrollment.id) : [];
@@ -228,7 +236,7 @@ export default function StudentsPage() {
         </div>
         <button
           onClick={() => { setContractAccepted(false); setShowAddModal(true); }}
-          className="btn btn-primary flex items-center gap-2 shadow-md shadow-blue-600/20"
+          className="btn btn-primary flex items-center gap-2 shadow-md shadow-[#0D9488]/20"
         >
           <Plus size={18} />
           تسجيل طالب جديد
@@ -474,7 +482,7 @@ export default function StudentsPage() {
                       <div className="space-y-2 text-xs text-[#94A3B8]">
                         <p className="flex justify-between border-b border-[#2A3B56] pb-1.5"><span className="text-[#94A3B8]">الاسم:</span> <strong className="text-[#F8FAFC]">{selectedGuardian?.name}</strong></p>
                         <p className="flex justify-between border-b border-[#2A3B56] pb-1.5"><span className="text-[#94A3B8]">رقم الهاتف:</span> <strong className="font-mono text-teal-300 font-bold">{selectedGuardian?.phone}</strong></p>
-                        <p className="flex justify-between"><span className="text-[#94A3B8]">البريد:</span> <span className="font-mono text-slate-600">{selectedGuardian?.email || 'غير مسجل'}</span></p>
+                        <p className="flex justify-between"><span className="text-[#94A3B8]">البريد:</span> <span className="font-mono text-[#CBD5E1]">{selectedGuardian?.email || 'غير مسجل'}</span></p>
                       </div>
                     </div>
 
@@ -483,7 +491,7 @@ export default function StudentsPage() {
                         <HeartPulse size={16} className="text-teal-400" /> ملاحظات صحية وتراخيص
                       </h4>
                       <div className="space-y-2.5 text-xs">
-                        <p className="text-slate-600 bg-white p-3 rounded-xl border border-[#2A3B56] leading-relaxed">
+                        <p className="text-[#CBD5E1] bg-[#0E1629] p-3 rounded-xl border border-[#2A3B56] leading-relaxed">
                           {selectedStudent.healthNotes || 'لا توجد ملاحظات أو حساسيات مسجلة.'}
                         </p>
                         <div className="pt-2 flex items-center gap-2">
@@ -503,15 +511,23 @@ export default function StudentsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-black text-[#F8FAFC]">وثيقة التعاقد والاشتراك الرسمي</h3>
-                      <p className="text-xs text-[#94A3B8]">مسجلة بتاريخ الانضمام: {primaryEnrollment?.enrollDate || '2026-10-01'}</p>
+                      <p className="text-xs text-[#94A3B8]">مسجلة بتاريخ الانضمام: {primaryEnrollment?.enrollDate || 'غير مسجل'}</p>
                     </div>
                     <button
                       onClick={() => printContractDocument()}
-                      className="bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0 cursor-pointer"
+                      disabled={!contractReady}
+                      title={contractReady ? 'طباعة وثيقة التعاقد' : 'أكمل بيانات الاشتراك وولي الأمر قبل الطباعة'}
+                      className="bg-[#0D9488] hover:bg-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50 text-[#F8FAFC] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all border-0"
                     >
                       <Printer size={15} /> طباعة وثيقة التعاقد (A4)
                     </button>
                   </div>
+
+                  {!contractReady && (
+                    <p role="status" className="rounded-xl border border-amber-500/30 bg-amber-950/20 px-4 py-3 text-xs leading-6 text-amber-200">
+                      لا يمكن طباعة عقد رسمي قبل تسجيل بيانات ولي الأمر والاشتراك والكورس وتاريخ الانضمام.
+                    </p>
+                  )}
 
                   {/* Printable Formal A4 Paper */}
                   <div id="printable-contract" className="bg-[#1B2537] text-[#F8FAFC] p-8 rounded-2xl shadow-md font-sans border border-[#2A3B56] space-y-6">
@@ -525,7 +541,7 @@ export default function StudentsPage() {
                         <span className="contract-print-badge text-xs font-mono font-bold bg-[#111827] text-[#2DD4BF] px-3 py-1.5 rounded-lg border border-[#2A3B56] inline-block">
                           عقد رقم: CTR-{selectedStudent.id.slice(-5)}
                         </span>
-                        <p className="contract-print-sub text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate || '2026-10-18'}</p>
+                        <p className="contract-print-sub text-xs text-[#94A3B8] mt-1">تاريخ التعاقد: {primaryEnrollment?.enrollDate || 'غير مسجل'}</p>
                       </div>
                     </div>
 
@@ -540,10 +556,10 @@ export default function StudentsPage() {
                         <strong className="text-[#F8FAFC]">الطرف الأول (إدارة المرسم):</strong> {settings.name}، ويمثلها المدير التنفيذي.
                       </p>
                       <p className="text-[#94A3B8] leading-relaxed">
-                        <strong className="text-[#F8FAFC]">الطرف الثاني (المتدرب / ولي الأمر):</strong> السيد/ة <strong className="text-[#F8FAFC]">{selectedGuardian?.name || 'Saber'}</strong>، ولي أمر الطالب: <strong className="text-[#F8FAFC]">{selectedStudent.name}</strong>، هاتف: <strong className="text-[#F8FAFC]">{selectedGuardian?.phone || '01295555918'}</strong>.
+                        <strong className="text-[#F8FAFC]">الطرف الثاني (المتدرب / ولي الأمر):</strong> السيد/ة <strong className="text-[#F8FAFC]">{selectedGuardian?.name || 'غير مسجل'}</strong>، ولي أمر الطالب: <strong className="text-[#F8FAFC]">{selectedStudent.name}</strong>، هاتف: <strong className="text-[#F8FAFC]">{selectedGuardian?.phone || 'غير مسجل'}</strong>.
                       </p>
                       <p className="text-[#94A3B8] leading-relaxed">
-                        <strong className="text-[#F8FAFC]">موضوع العقد:</strong> اشتراك وتدريب في <strong className="text-[#F8FAFC]">{primaryCourse?.name || 'الرسم والتصوير'}</strong>، بإجمالي رسوم متفق عليها: <strong className="text-[#2DD4BF]">{primaryEnrollment?.totalAmount || '1200'} جنيه مصري</strong>.
+                        <strong className="text-[#F8FAFC]">موضوع العقد:</strong> اشتراك وتدريب في <strong className="text-[#F8FAFC]">{primaryCourse?.name || 'غير مسجل'}</strong>، بإجمالي رسوم متفق عليها: <strong className="text-[#2DD4BF]">{primaryEnrollment?.totalAmount ?? 'غير مسجل'} جنيه مصري</strong>.
                       </p>
                     </div>
 
@@ -558,18 +574,18 @@ export default function StudentsPage() {
                     {/* Signatures */}
                     <div className="contract-print-signatures pt-8 border-t border-[#2A3B56] grid grid-cols-2 gap-8 text-center text-xs">
                       <div className="space-y-6">
-                        <p className="contract-print-title font-bold text-[#F8FAFC]">توقيع ولي الأمر / الطالب</p>
-                        <div className="contract-print-dash h-10 border-b border-dashed border-[#2A3B56]"></div>
-                        <p className="contract-print-sub text-[#94A3B8] font-medium">{selectedGuardian?.name || 'saber'}</p>
+                        <p className="font-bold text-[#F8FAFC]">توقيع ولي الأمر / الطالب</p>
+                        <div className="h-10 border-b border-dashed border-[#2A3B56]"></div>
+                        <p className="text-[#94A3B8] font-medium">{selectedGuardian?.name || 'غير مسجل'}</p>
                       </div>
                       <div className="space-y-6">
-                        <p className="contract-print-title font-bold text-[#F8FAFC]">ختم وتوقيع إدارة المرسم</p>
-                        <div className="contract-print-dash h-10 border-b border-dashed border-[#2A3B56] flex items-center justify-center">
-                          <span className="contract-print-seal text-[11px] text-[#34D399] font-bold border border-[#34D399]/30 px-3 py-1 rounded-full bg-[#115E59] shadow-sm flex items-center gap-1">
-                            معتمد رسمياً ✅
+                        <p className="font-bold text-[#F8FAFC]">ختم وتوقيع إدارة المرسم</p>
+                        <div className="h-10 border-b border-dashed border-[#2A3B56] flex items-center justify-center">
+                          <span className="text-[11px] text-[#94A3B8] font-bold border border-dashed border-[#64748B] px-3 py-1 rounded-full flex items-center gap-1">
+                            ختم الإدارة
                           </span>
                         </div>
-                        <p className="contract-print-sub text-[#94A3B8] font-medium">إدارة {settings.name}</p>
+                        <p className="text-[#94A3B8] font-medium">{settings.name}</p>
                       </div>
                     </div>
                   </div>
@@ -638,6 +654,7 @@ export default function StudentsPage() {
                             <span className="font-mono font-bold text-[#2DD4BF] bg-[#115E59] border border-[#2DD4BF]/30 px-2.5 py-0.5 rounded-lg text-xs">
                               {pay.receiptNumber}
                             </span>
+                            <span className="font-black text-[#F8FAFC]">{pay.amount} ج</span>
                             <p className="text-xs text-[#94A3B8]">{pay.date} • {pay.notes}</p>
                           </div>
                         </div>
@@ -691,17 +708,17 @@ export default function StudentsPage() {
                         <div
                           key={index}
                           className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                            completed ? 'bg-teal-500/10/70 border-teal-500/20' : 'bg-slate-50/50 border-[#2A3B56]'
+                            completed ? 'bg-[#0D9488]/15 border-[#0D9488]/40' : 'bg-[#111827] border-[#2A3B56]'
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                              completed ? 'bg-[#0D9488] text-white shadow-sm' : 'bg-slate-200 text-[#94A3B8]'
+                              completed ? 'bg-[#0D9488] text-white shadow-sm' : 'bg-[#1B2537] text-[#94A3B8]'
                             }`}>
                               {index + 1}
                             </div>
                             <div>
-                              <p className={`text-xs font-bold ${completed ? 'text-blue-900' : 'text-slate-700'}`}>
+                              <p className={`text-xs font-bold ${completed ? 'text-[#99F6E4]' : 'text-[#CBD5E1]'}`}>
                                 {topic}
                               </p>
                               <p className="text-[10px] text-[#94A3B8]">موضوع الدرس المعتمد بالمنهج</p>
@@ -720,7 +737,7 @@ export default function StudentsPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-[#2A3B56] bg-[#1B2537] p-12 text-center text-[#94A3B8] space-y-3 shadow-sm">
-              <Users size={48} className="mx-auto text-blue-300" />
+              <Users size={48} className="mx-auto text-[#2DD4BF]" />
               <p className="font-bold text-[#F8FAFC]">اختر طالباً من القائمة لعرض ملفه وعقده ومالياته</p>
             </div>
           )}
@@ -917,26 +934,26 @@ export default function StudentsPage() {
 
       {/* ================= MODAL: QUICK PAYMENT ================= */}
       {showPaymentModal && primaryEnrollment && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl border border-blue-100">
+        <div className="fixed inset-0 bg-[#0E1629]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1B2537] p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl border border-[#2A3B56] text-[#F8FAFC]">
             <div className="flex items-center justify-between pb-2 border-b border-[#2A3B56]">
               <h3 className="font-black text-base text-[#F8FAFC]">تسجيل دفعة قسط دراسي</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-[#94A3B8] hover:text-slate-800 p-1">
+              <button onClick={() => setShowPaymentModal(false)} className="text-[#94A3B8] hover:text-white p-1">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-slate-700">
+              <p className="text-[#CBD5E1]">
                 الطالب: <strong className="text-[#F8FAFC]">{selectedStudent?.name}</strong>
               </p>
-              <div className="p-3 bg-teal-500/10 rounded-xl border border-teal-500/20">
-                <span className="text-slate-600">المتبقي حالياً:</span>{' '}
-                <strong className="text-teal-300 font-black text-sm">{Math.max(0, primaryEnrollment.totalAmount - primaryEnrollment.totalPaid)} ج</strong>
+              <div className="p-3 bg-[#0D9488]/15 rounded-xl border border-[#0D9488]/40">
+                <span className="text-[#94A3B8]">المتبقي حالياً:</span>{' '}
+                <strong className="text-[#2DD4BF] font-black text-sm">{Math.max(0, primaryEnrollment.totalAmount - primaryEnrollment.totalPaid)} ج</strong>
               </div>
 
               <div>
-                <label className="block text-slate-600 mb-1 font-bold">المبلغ المدفوع (ج):</label>
+                <label className="block text-[#CBD5E1] mb-1 font-bold">المبلغ المدفوع (ج):</label>
                 <input
                   type="number"
                   className="input text-sm font-black text-teal-300"
@@ -946,7 +963,7 @@ export default function StudentsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-600 mb-1 font-bold">طريقة السداد:</label>
+                <label className="block text-[#CBD5E1] mb-1 font-bold">طريقة السداد:</label>
                 <select
                   className="input text-xs"
                   value={payMethod}
@@ -961,7 +978,7 @@ export default function StudentsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-600 mb-1 font-bold">ملاحظات إضافية:</label>
+                <label className="block text-[#CBD5E1] mb-1 font-bold">ملاحظات إضافية:</label>
                 <input
                   className="input text-xs"
                   placeholder="مثال: سداد القسط الثاني"

@@ -110,7 +110,7 @@ export default function SettingsPage() {
         throw new Error(result.error || 'تعذرت استعادة النسخة الاحتياطية.');
       }
 
-      const restored = await importDatabase(JSON.stringify(result.data));
+      const restored = await importDatabase(JSON.stringify(result.data), true);
       if (restored) {
         setBackupStatus(result.safetyBackup
           ? `تمت الاستعادة. نسخة أمان الحالة السابقة: ${result.safetyBackup}`

@@ -6,17 +6,19 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Activity, AlertTriangle, ArrowLeft, Award, BarChart3, Bell, BookOpen,
   Calendar, CalendarDays, Check, ChevronDown, CreditCard, FileCheck,
-  LayoutDashboard, Megaphone, Menu, Palette, QrCode, RotateCcw, Search,
+  LayoutDashboard, LogOut, Megaphone, Menu, Palette, QrCode, RotateCcw, Search,
   Settings, ShieldCheck, ShoppingBag, Sparkles, Users, Warehouse, X,
+  type LucideIcon,
 } from 'lucide-react';
 import { useMarsam } from '@/lib/store';
 import { formatLocalDate } from '@/lib/dates';
+import { canLocalRoleAccessPath, EMPLOYEE_HOME, localRoleLabel } from '@/lib/auth/roles';
 
 interface NavigationItem {
   href: string;
   label: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   keywords: string;
 }
 
@@ -59,7 +61,6 @@ const navigationGroups: NavigationGroup[] = [
 ];
 
 const allNavigationItems: NavigationItem[] = navigationGroups.flatMap(group => group.items);
-const roleLabels = { admin: 'مدير النظام', supervisor: 'مشرف', guardian: 'ولي أمر' } as const;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -71,11 +72,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { settings, students, supplyItems, installments, sessions, currentUser } = useMarsam();
+  const {
+    settings, students, supplyItems, installments, sessions, currentUser,
+    localAuthRole, localAuthUsername, logout,
+    persistenceStatus, conflictBackupAvailable, downloadConflictBackup, retryPendingSave, clearConflictBackup,
+  } = useMarsam();
 
-  const currentPage = allNavigationItems.find(item =>
+  const visibleNavigationGroups = useMemo(() => navigationGroups
+    .map(group => ({
+      ...group,
+      label: group.label === 'المالية والمتجر' && localAuthRole === 'employee' ? 'المخزون والمتجر' : group.label,
+      items: group.items.filter(item => localAuthRole === 'manager' || (localAuthRole !== null && canLocalRoleAccessPath(localAuthRole, item.href))),
+    }))
+    .filter(group => group.items.length > 0), [localAuthRole]);
+  const visibleNavigationItems = useMemo(() => visibleNavigationGroups.flatMap(group => group.items), [visibleNavigationGroups]);
+  const homeHref = localAuthRole === 'employee' ? EMPLOYEE_HOME : '/';
+  const currentPage = visibleNavigationItems.find(item =>
     item.href === '/' ? pathname === '/' : pathname === item.href || pathname.startsWith(`${item.href}/`)
-  ) || allNavigationItems[0];
+  ) || visibleNavigationItems[0] || allNavigationItems[0];
+  const routeAccessDenied = localAuthRole !== null && !canLocalRoleAccessPath(localAuthRole, pathname);
 
   const lowStockItems = useMemo(() => supplyItems.filter(item => item.stockQty <= item.minStock), [supplyItems]);
   const overdueInstallments = useMemo(() => {
@@ -91,18 +106,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   ), [sessions, today]);
 
   const alerts = useMemo(() => [
-    ...(overdueInstallments.length ? [{ href: '/payments', label: `${overdueInstallments.length} أقساط متأخرة`, description: 'راجع الأرصدة المستحقة وتابع التحصيل.', icon: AlertTriangle, tone: 'danger' as const }] : []),
+    ...(localAuthRole === 'manager' && overdueInstallments.length ? [{ href: '/payments', label: `${overdueInstallments.length} أقساط متأخرة`, description: 'راجع الأرصدة المستحقة وتابع التحصيل.', icon: AlertTriangle, tone: 'danger' as const }] : []),
     ...(lowStockItems.length ? [{ href: '/supplies', label: `${lowStockItems.length} أصناف وصلت لحد إعادة الطلب`, description: 'راجع الرصيد وحدّث كميات المخزون.', icon: Warehouse, tone: 'warning' as const }] : []),
     ...(todaysSessions.length ? [{ href: '/schedule', label: `${todaysSessions.length} حصص مجدولة اليوم`, description: 'افتح الجدول لمراجعة المواعيد.', icon: CalendarDays, tone: 'info' as const }] : []),
-  ], [overdueInstallments.length, lowStockItems.length, todaysSessions.length]);
+  ], [localAuthRole, overdueInstallments.length, lowStockItems.length, todaysSessions.length]);
 
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase('ar');
-    const items = allNavigationItems.filter(item => !query ||
+    const items = visibleNavigationItems.filter(item => !query ||
       `${item.label} ${item.description} ${item.keywords}`.toLocaleLowerCase('ar').includes(query)
     );
     return query ? items.slice(0, 8) : items;
-  }, [searchQuery]);
+  }, [searchQuery, visibleNavigationItems]);
+
+  useEffect(() => {
+    if (routeAccessDenied) router.replace(EMPLOYEE_HOME);
+  }, [routeAccessDenied, router]);
 
   useEffect(() => {
     const updateToday = () => setToday(formatLocalDate(new Date()));
@@ -171,7 +190,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <aside className={`fixed inset-y-0 right-0 z-50 flex w-[min(86vw,290px)] flex-col border-l border-[#2A3B56] bg-[#1B2537] shadow-xl transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-[270px] lg:translate-x-0 lg:shadow-none ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between border-b border-[#2A3B56] p-4">
-          <Link href="/" onClick={() => setSidebarOpen(false)} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400">
+          <Link href={homeHref} onClick={() => setSidebarOpen(false)} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#0D9488] to-[#0F766E] text-white shadow-lg shadow-[#0D9488]/25"><Palette size={23} /></span>
             <span className="min-w-0"><span className="block truncate text-sm font-black text-[#F8FAFC]">{settings.name || 'مرسم الإبداع'}</span><span className="mt-0.5 block text-[10px] font-bold text-[#2DD4BF]">إدارة المرسم والأكاديمية</span></span>
           </Link>
@@ -179,7 +198,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav aria-label="القائمة الرئيسية" className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-          {navigationGroups.map(group => <section key={group.label} aria-label={group.label}>
+          {visibleNavigationGroups.map(group => <section key={group.label} aria-label={group.label}>
             <h2 className="mb-2 px-3 text-[10px] font-black tracking-wide text-[#64748B]">{group.label}</h2>
             <div className="space-y-1">{group.items.map(item => {
               const Icon = item.icon;
@@ -199,7 +218,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 rounded-xl border border-[#2A3B56] bg-[#0E1629] p-3">
             <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${localServiceStatus === 'error' ? 'bg-red-950 text-red-300' : 'bg-teal-950 text-teal-300'}`}><ShieldCheck size={16} /></span>
             <span className="min-w-0 flex-1"><span className="block text-[10px] font-bold text-[#F8FAFC]">{statusText}</span><span className="mt-0.5 block truncate text-[9px] text-[#64748B]">ملفاتك محفوظة على هذا الجهاز</span></span>
-            <span className={`h-2 w-2 rounded-full ${localServiceStatus === 'ready' ? 'bg-emerald-400' : localServiceStatus === 'error' ? 'bg-red-400' : 'animate-pulse bg-amber-400'}`} />
+            <span className={`h-2 w-2 rounded-full ${localServiceStatus === 'ready' ? 'bg-[#2DD4BF]' : localServiceStatus === 'error' ? 'bg-red-400' : 'animate-pulse bg-amber-400'}`} />
           </div>
         </div>
       </aside>
@@ -209,7 +228,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="mx-auto flex w-full max-w-[1500px] items-center gap-3">
             <button type="button" onClick={() => setSidebarOpen(true)} aria-label="فتح القائمة" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#2A3B56] bg-[#1B2537] text-[#F8FAFC] hover:border-teal-700 lg:hidden"><Menu size={19} /></button>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-[10px] text-[#64748B]"><Link href="/" className="hover:text-[#2DD4BF]">مرسم</Link><ChevronDown size={12} className="-rotate-90" /><span className="truncate font-bold text-[#CBD5E1]">{currentPage.label}</span></div>
+              <div className="flex items-center gap-1.5 text-[10px] text-[#64748B]"><Link href={homeHref} className="hover:text-[#2DD4BF]">مرسم</Link><ChevronDown size={12} className="-rotate-90" /><span className="truncate font-bold text-[#CBD5E1]">{currentPage.label}</span></div>
               <p className="mt-1 truncate text-xs font-black text-[#F8FAFC] sm:text-sm">{settings.name || 'مساحة العمل'}<span className="mr-2 hidden font-normal text-[#64748B] sm:inline">{currentPage.description}</span></p>
             </div>
 
@@ -233,14 +252,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>}
             </div>
 
-            <div className="hidden items-center gap-2 border-r border-[#2A3B56] pr-3 sm:flex"><span className="grid h-9 w-9 place-items-center rounded-full border border-[#0D9488]/30 bg-[#0D9488]/15 text-[#2DD4BF]">{currentUser ? currentUser.name.trim().slice(0, 1) : <Activity size={15} />}</span><span className="max-w-28"><span className="block truncate text-[10px] font-black text-[#F8FAFC]">{currentUser?.name || 'مساحة العمل'}</span><span className="mt-0.5 block text-[9px] text-[#64748B]">{currentUser ? roleLabels[currentUser.role] : 'تشغيل محلي'}</span></span></div>
+            <div className="hidden items-center gap-2 border-r border-[#2A3B56] pr-3 sm:flex"><span className="grid h-9 w-9 place-items-center rounded-full border border-[#0D9488]/30 bg-[#0D9488]/15 text-[#2DD4BF]">{(localAuthUsername || currentUser?.name)?.trim().slice(0, 1) || <Activity size={15} />}</span><span className="max-w-28"><span className="block truncate text-[10px] font-black text-[#F8FAFC]">{localAuthUsername || currentUser?.name || 'مساحة العمل'}</span><span className="mt-0.5 block text-[9px] text-[#64748B]">{localAuthRole ? localRoleLabel(localAuthRole) : 'تشغيل محلي'}</span></span></div>
+            <button type="button" onClick={() => void logout()} aria-label="قفل البرنامج وتسجيل الخروج" title="قفل البرنامج" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#2A3B56] bg-[#1B2537] text-[#CBD5E1] transition-colors hover:border-red-500/50 hover:bg-red-950/40 hover:text-red-200"><LogOut size={16} /></button>
           </div>
         </header>
 
         <main id="main-content" className="mx-auto w-full max-w-[1500px] flex-1 p-3 sm:p-5 lg:p-7">
-          {children}
+          {routeAccessDenied
+            ? <div role="alert" className="mx-auto mt-12 max-w-lg rounded-2xl border border-amber-400/20 bg-amber-400/[0.07] p-6 text-center"><ShieldCheck size={28} className="mx-auto text-amber-300" /><h1 className="mt-3 text-lg font-black">القسم متاح لمدير المرسم فقط</h1><p className="mt-2 text-sm leading-6 text-[#A9B7C9]">تم تحويلك إلى قسم الحضور المسموح لحساب الموظف.</p></div>
+            : children}
         </main>
-        <footer className="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-3 px-4 pb-4 text-[9px] text-[#64748B] sm:px-7"><span>مرسم للفنون • مساحة عمل محلية</span><span className="flex items-center gap-1.5"><span className={`h-1.5 w-1.5 rounded-full ${localServiceStatus === 'ready' ? 'bg-emerald-400' : localServiceStatus === 'error' ? 'bg-red-400' : 'bg-amber-400'}`} />{localServiceStatus === 'ready' ? 'خدمة التطبيق متاحة' : localServiceStatus === 'error' ? 'تحقق من خدمة التطبيق' : 'جارٍ التحقق'}</span></footer>
+        <footer className="mx-auto flex w-full max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 pb-4 text-[9px] text-[#64748B] sm:px-7">
+          <span>مرسم للفنون • مساحة عمل محلية</span>
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span className="flex items-center gap-1.5"><span className={`h-1.5 w-1.5 rounded-full ${localServiceStatus === 'ready' ? 'bg-[#2DD4BF]' : localServiceStatus === 'error' ? 'bg-red-400' : 'bg-amber-400'}`} />{localServiceStatus === 'ready' ? 'خدمة التطبيق متاحة' : localServiceStatus === 'error' ? 'تحقق من خدمة التطبيق' : 'جارٍ التحقق'}</span>
+            <span role="status" aria-live="polite" className={`flex items-center gap-1.5 ${persistenceStatus === 'error' || persistenceStatus === 'conflict' ? 'font-bold text-red-300' : persistenceStatus === 'saving' ? 'text-amber-300' : persistenceStatus === 'saved' ? 'text-[#2DD4BF]' : ''}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${persistenceStatus === 'error' || persistenceStatus === 'conflict' ? 'bg-red-400' : persistenceStatus === 'saving' ? 'animate-pulse bg-amber-400' : persistenceStatus === 'saved' ? 'bg-[#2DD4BF]' : 'bg-slate-500'}`} />
+              {conflictBackupAvailable ? 'توجد تغييرات لم تُحفظ على الجهاز — احتفظ بنسختها قبل المغادرة' : persistenceStatus === 'conflict' ? 'تغيرت قاعدة البيانات من نافذة أخرى؛ أوقفنا الحفظ لتجنب استبدالها' : persistenceStatus === 'error' ? 'تعذر حفظ التغييرات على الجهاز' : persistenceStatus === 'saving' ? 'جارٍ حفظ التغييرات…' : persistenceStatus === 'saved' ? 'تم حفظ التغييرات على الجهاز' : 'لم يتم الحفظ بعد'}
+            </span>
+            {conflictBackupAvailable && <span className="flex items-center gap-2">
+              <button type="button" onClick={downloadConflictBackup} className="font-bold text-teal-300 underline underline-offset-2 hover:text-teal-100">تنزيل التغييرات غير المحفوظة</button>
+              {persistenceStatus === 'error' && <button type="button" onClick={retryPendingSave} className="font-bold text-amber-300 underline underline-offset-2 hover:text-amber-100">إعادة محاولة الحفظ</button>}
+              <button type="button" onClick={clearConflictBackup} className="font-bold text-red-300 underline underline-offset-2 hover:text-red-100">تجاهلها وتحميل النسخة المحفوظة</button>
+            </span>}
+          </span>
+        </footer>
       </div>
 
       {searchOpen && <div className="fixed inset-0 z-[80] flex items-start justify-center bg-slate-950/75 p-3 pt-[12vh] backdrop-blur-sm sm:p-8 sm:pt-[15vh]" onMouseDown={event => { if (event.currentTarget === event.target) closeSearch(); }}>

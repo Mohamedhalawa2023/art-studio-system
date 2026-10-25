@@ -34,6 +34,46 @@ const { CatalogService } = require('../src/lib/services/catalog.service.ts');
 const { PosService } = require('../src/lib/services/pos.service.ts');
 const { BackupService } = require('../src/lib/services/backup.service.ts');
 const { ValidationError, Validators } = require('@/lib/validators');
+const { isSameOriginRequest } = require('../src/lib/auth/local-auth.ts');
+const { getDatabaseIntegrityError } = require('../src/lib/db/schema.ts');
+
+test('database integrity accepts optional empty email and phone fields for app users', () => {
+  const data = {
+    users: [
+      { id: 'admin-1', role: 'admin', email: '', phone: '' },
+      { id: 'supervisor-1', role: 'supervisor', email: '', phone: '' },
+    ],
+    students: [], courses: [], groups: [], sessions: [], enrollments: [],
+    installments: [], payments: [], attendance: [], progress: [],
+    supplyItems: [], supplySales: [], portfolio: [],
+  };
+
+  assert.equal(getDatabaseIntegrityError(data), null);
+
+  data.users[0].email = 'owner@example.com';
+  data.users[1].email = 'OWNER@example.com';
+  assert.match(getDatabaseIntegrityError(data), /قيمة مكررة للحقل email/);
+});
+
+test('auth accepts loopback browser requests when Next rewrites its internal host, but rejects foreign origins', () => {
+  const desktopRequest = new Request('http://localhost:3210/api/auth', {
+    method: 'POST',
+    headers: { host: '127.0.0.1:3210', origin: 'http://127.0.0.1:3210' },
+  });
+  assert.equal(isSameOriginRequest(desktopRequest), true);
+
+  const developmentRequest = new Request('http://localhost:3000/api/auth', {
+    method: 'POST',
+    headers: { host: 'localhost:3000', origin: 'http://localhost:3000' },
+  });
+  assert.equal(isSameOriginRequest(developmentRequest), true);
+
+  const foreignRequest = new Request('http://localhost:3210/api/auth', {
+    method: 'POST',
+    headers: { host: 'attacker.example:3210', origin: 'http://attacker.example:3210' },
+  });
+  assert.equal(isSameOriginRequest(foreignRequest), false);
+});
 
 test('packaged desktop stores persistent data under the user profile, outside the install directory', () => {
   const pathsModulePath = require.resolve('../src/lib/config/paths.ts');
@@ -291,7 +331,7 @@ test('course groups generate real dated sessions and cancel only scheduled sessi
   assert.ok(database.state.sessions.every(session => session.groupId === group.id && session.status === 'scheduled'));
   service.cancelSession(database.state.sessions[0].id);
   assert.equal(database.state.sessions[0].status, 'cancelled');
-  assert.throws(() => service.cancelSession(database.state.sessions[0].id), /المجدولة فقط/);
+  assert.throws(() => service.cancelSession(database.state.sessions[0].id), /المجدولة أو التعويضية فقط/);
 });
 
 test('announcement create, edit, and delete persist validated records', () => {

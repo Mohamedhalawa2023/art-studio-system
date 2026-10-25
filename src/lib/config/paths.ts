@@ -77,6 +77,10 @@ export function getDbTmpPath(): string {
   return path.join(getDataDir(), 'data_store.tmp.json');
 }
 
+export function getAuthConfigPath(): string {
+  return path.join(getDataDir(), 'local-auth.json');
+}
+
 export function getLogsDir(): string {
   const dir = path.join(getAppStorageBaseDir(), 'logs');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });

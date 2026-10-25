@@ -820,7 +820,7 @@ export default function SuppliesPage() {
                         <div className="inline-flex items-center gap-1.5">
                           <button
                             onClick={() => setStickerProduct(item)}
-                            className="p-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-400 transition-all shadow-xs"
+                            className="p-1.5 rounded-lg border border-[#2A3B56] bg-[#111827] text-[#2DD4BF] hover:bg-[#0D9488]/15 hover:border-[#0D9488] transition-all shadow-xs"
                             title="طباعة استيكرات باركود للصقها على كل قطعة"
                           >
                             <Barcode size={14} />
@@ -1370,7 +1370,7 @@ export default function SuppliesPage() {
               <button
                 type="button"
                 onClick={() => printInvoice(invoicePaperSize)}
-                className="btn btn-primary flex flex-1 items-center justify-center gap-2 shadow-md shadow-blue-600/20"
+                className="btn btn-primary flex flex-1 items-center justify-center gap-2 shadow-md shadow-[#0D9488]/20"
               >
                 <Printer size={16} /> طباعة الفاتورة
               </button>

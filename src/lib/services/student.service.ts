@@ -191,7 +191,7 @@ export class StudentService {
           group.enrolled = (group.enrolled || 0) + 1;
         }
 
-        logger.info('StudentService', `Student registered successfully: ${newStudent.name} (${newStudent.qrToken})`);
+        logger.info('StudentService', `Student registered successfully: ${newStudent.id}`);
 
         return {
           student: newStudent,

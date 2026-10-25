@@ -88,7 +88,12 @@ export default function EnrollmentsPage() {
   };
 
   const removeEnrollment = (id: string) => {
-    if (!window.confirm('حذف الاشتراك وجدول أقساطه؟ إذا كان له إيصال محفوظ سيحتفظ النظام بالسجل لحماية الحسابات.')) return;
+    if (payments.some(payment => payment.enrollmentId === id)) {
+      setFeedback('لا يمكن حذف اشتراك مرتبط بإيصالات دفع.');
+      setFeedbackIsError(true);
+      return;
+    }
+    if (!window.confirm('حذف الاشتراك وجدول أقساطه؟ لا يمكن حذف اشتراك مرتبط بإيصالات دفع.')) return;
     try { deleteEnrollment(id); setFeedback('تم حذف الاشتراك.'); setFeedbackIsError(false); }
     catch (error) { setFeedback(error instanceof Error ? error.message : 'تعذر حذف الاشتراك.'); setFeedbackIsError(true); }
   };
@@ -168,6 +173,7 @@ export default function EnrollmentsPage() {
                     const student = students.find(s => s.id === enrollment.studentId);
                     const group = groups.find(g => g.id === enrollment.groupId);
                     const course = courses.find(c => c.id === group?.courseId);
+                    const hasPayments = payments.some(payment => payment.enrollmentId === enrollment.id);
 
                     return (
                       <tr key={enrollment.id} className="hover:bg-[#111827]/40 transition-colors">
@@ -223,9 +229,10 @@ export default function EnrollmentsPage() {
                             </button>
                             <button
                               type="button"
-                              className="w-8 h-8 rounded-lg bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-red-400 hover:border-red-500/50 flex items-center justify-center transition-colors"
+                              disabled={hasPayments}
+                              className="w-8 h-8 rounded-lg bg-[#111827] border border-[#334155] text-[#94A3B8] hover:text-red-400 hover:border-red-500/50 disabled:cursor-not-allowed disabled:opacity-40 flex items-center justify-center transition-colors"
                               aria-label={`حذف اشتراك ${student?.name || 'الطالب'}`}
-                              title="حذف الاشتراك"
+                              title={hasPayments ? 'لا يمكن حذف اشتراك مرتبط بإيصالات دفع' : 'حذف الاشتراك'}
                               onClick={() => removeEnrollment(enrollment.id)}
                             >
                               <Trash2 size={13} />

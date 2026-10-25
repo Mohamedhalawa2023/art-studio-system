@@ -227,7 +227,11 @@ export class PosService {
       if (sale.status === 'voided') throw new Error('لا يمكن إرجاع أصناف من فاتورة ملغاة.');
       if (!Array.isArray(dto.items) || dto.items.length === 0) throw new Error('حدد صنفًا واحدًا على الأقل للإرجاع.');
 
-      const requested = new Map<string, { quantity: number; restockQuantity: number; condition?: SupplyReturn['items'][number]['condition'] }>();
+      const requested = new Map<string, {
+        quantity: number;
+        restockQuantity: number;
+        condition?: SupplyReturn['items'][number]['condition'];
+      }>();
       for (const requestedItem of dto.items) {
         const quantity = Validators.requireNonNegativeInteger(requestedItem.quantity, 'كمية الإرجاع');
         const restockQuantity = Validators.requireNonNegativeInteger(requestedItem.restockQuantity, 'الكمية الصالحة لإعادة المخزون');

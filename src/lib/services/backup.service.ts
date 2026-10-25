@@ -5,8 +5,8 @@
  */
 
 import { DatabaseState } from '@/lib/db/transactionManager';
+import { getDatabaseIntegrityError } from '@/lib/db/schema';
 import { logger } from '@/lib/logger/logger';
-import { mockAnnouncements } from '@/lib/mockData';
 
 export class BackupService {
   /**
@@ -76,7 +76,7 @@ export class BackupService {
       if (parsed.announcements !== undefined && !Array.isArray(parsed.announcements)) {
         return { valid: false, error: 'ملف النسخة الاحتياطية غير متوافق: جدول الإعلانات بصيغة غير صالحة.' };
       }
-      if (parsed.announcements === undefined) parsed.announcements = mockAnnouncements;
+      if (parsed.announcements === undefined) parsed.announcements = [];
 
       // Operating expenses were added after earlier database versions.
       if (parsed.expenses !== undefined && !Array.isArray(parsed.expenses)) {
@@ -91,13 +91,21 @@ export class BackupService {
       if (parsed.supplyReturns === undefined) parsed.supplyReturns = [];
 
       // Check settings object
-      if (!parsed.settings || typeof parsed.settings !== 'object') {
+      if (!parsed.settings || typeof parsed.settings !== 'object' || Array.isArray(parsed.settings)) {
         parsed.settings = {
-          name: 'مرسم الإبداع للفنون التشكيلية',
-          phone: '01012345678',
-          address: 'القاهرة — مصر الجديدة',
+          name: 'مرسمي',
+          phone: '',
+          address: '',
           contractTerms: ''
         };
+      }
+      if (!parsed.customDiplomas || typeof parsed.customDiplomas !== 'object' || Array.isArray(parsed.customDiplomas)) {
+        parsed.customDiplomas = {};
+      }
+
+      const integrityError = getDatabaseIntegrityError(parsed);
+      if (integrityError) {
+        return { valid: false, error: `النسخة الاحتياطية غير متسقة: ${integrityError}` };
       }
 
       return { valid: true, data: parsed as DatabaseState };

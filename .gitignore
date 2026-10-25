@@ -47,4 +47,5 @@ dist/
 /logs
 /backups
 /data/backups
+/data/local-auth.json
 *.tmp.json

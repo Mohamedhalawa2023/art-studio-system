@@ -369,7 +369,7 @@ export default function AttendancePage() {
                           disabled={isMarking}
                           onClick={() => handleManualMark(student.id, 'present')}
                           className={`px-2.5 py-1 rounded text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                            att?.status === 'present' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            att?.status === 'present' ? 'bg-[#0D9488] text-white shadow-sm' : 'bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:bg-[#1B2537]'
                           }`}
                         >
                           حاضر
@@ -378,7 +378,7 @@ export default function AttendancePage() {
                           disabled={isMarking}
                           onClick={() => handleManualMark(student.id, 'late')}
                           className={`px-2.5 py-1 rounded text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                            att?.status === 'late' ? 'bg-blue-400 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            att?.status === 'late' ? 'bg-amber-400 text-[#111827] shadow-sm' : 'bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:bg-[#1B2537]'
                           }`}
                         >
                           متأخر
@@ -387,12 +387,12 @@ export default function AttendancePage() {
                           disabled={isMarking}
                           onClick={() => handleManualMark(student.id, 'absent')}
                           className={`px-2.5 py-1 rounded text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                            att?.status === 'absent' ? 'bg-red-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            att?.status === 'absent' ? 'bg-red-600 text-white shadow-sm' : 'bg-[#111827] border border-[#2A3B56] text-[#94A3B8] hover:bg-[#1B2537]'
                           }`}
                         >
                           غائب
                         </button>
-                        {att && <button type="button" onClick={() => handleDeleteAttendance(att.id)} className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white text-red-600 border border-red-200 hover:bg-red-50" title="حذف سجل الحضور" aria-label="حذف سجل الحضور"><Trash2 size={12} /></button>}
+                        {att && <button type="button" onClick={() => handleDeleteAttendance(att.id)} className="px-2 py-1 rounded-lg text-[10px] font-bold bg-[#111827] text-red-300 border border-red-900/60 hover:bg-red-950/40" title="حذف سجل الحضور" aria-label="حذف سجل الحضور"><Trash2 size={12} /></button>}
                       </div>
                     </td>
                   </tr>

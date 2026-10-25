@@ -43,7 +43,7 @@ export class AttendanceService {
     const student = indexes.studentsByQr.get(cleanBarcode);
 
     if (!student) {
-      logger.warn('AttendanceService', `Unknown barcode scanned: "${cleanBarcode}"`);
+      logger.warn('AttendanceService', 'Unknown barcode scanned. The submitted token was omitted from logs.');
       return {
         success: false,
         message: 'كود الباركود غير مسجل في سجلات المرسم!'
@@ -108,7 +108,7 @@ export class AttendanceService {
       onStateCommit
     );
 
-    logger.info('AttendanceService', `Attendance recorded for ${student.name} (${student.qrToken})`);
+    logger.info('AttendanceService', `Attendance recorded for student ${student.id}`);
 
     const overdueMessage = isOverdue
       ? ` ⚠️ تنبيه: متبقي رسوم مستحقة (${remaining} ج)!`

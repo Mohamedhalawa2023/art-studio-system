@@ -4,33 +4,26 @@
   /* ========================================================
      🎨 باليتة مرسم الإبداع للفنون التشكيلية المعتمدة
      ======================================================== */
-  --bg: #0E1629;                /* 1. الخلفية العامة (Main Background) */
-  --surface: #1B2537;           /* 2. القائمة الجانبية والكروت (Sidebar & Cards) */
-  --surface-card: #1B2537;
-  --surface-card2: #111827;     /* 3. الخلفيات الداكنة جداً داخل الجداول والصفوف */
-  --border: #2A3B56;            /* 4. الحدود الرفيعة (Borders) */
-  --border-accent: #0D9488;
-
-  --primary: #0D9488;           /* 5. التركواز الأساسي (النشط والأزرار) */
+  --bg: #0E1629;
+  --surface: #1B2537;
+  --surface-inset: #111827;
+  --border: #2A3B56;
+  --border-strong: #334155;
+  --primary: #0D9488;
   --primary-hover: #0F766E;
   --primary-light: rgba(13, 148, 136, 0.15);
-
-  --accent: #2DD4BF;            /* 6. التركواز الفاتح (القيم الإيجابية والبادجات) */
+  --accent: #2DD4BF;
   --accent-light: rgba(45, 212, 191, 0.15);
-
-  --gold: #D97706;              /* 7. الذهبي الدافئ (الإحصائيات الرئيسية) */
+  --gold: #D97706;
   --gold-light: #F59E0B;
-
-  --text: #F8FAFC;              /* 8. الأبيض الثلجي (النصوص الأساسية) */
-  --text-muted: #94A3B8;        /* 9. الرمادي الباهت (النصوص الثانوية) */
-
-  /* كارت الأقساط المتأخرة والتحذيرات */
-  --card-overdue-bg: #450A0A;
-  --card-overdue-border: #7F1D1D;
-  --card-overdue-text: #FCA5A5;
-  --danger: #EF4444;
+  --text: #F8FAFC;
+  --text-muted: #94A3B8;
   --success: #2DD4BF;
   --warning: #D97706;
+  --danger: #EF4444;
+  --danger-bg: #450A0A;
+  --danger-border: #7F1D1D;
+  --danger-text: #FCA5A5;
 }
 
 * {
@@ -44,8 +37,8 @@ html {
 }
 
 body {
-  background: #0E1629;
-  color: #F8FAFC;
+  background: var(--bg);
+  color: var(--text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -55,13 +48,13 @@ body {
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2A3B56; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #0D9488; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
 /* Studio Card */
 .card {
-  background: #1B2537;
-  border: 1px solid #2A3B56;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
 }
 
@@ -81,37 +74,37 @@ body {
 }
 
 .btn:focus-visible {
-  outline: 3px solid #2DD4BF;
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 
 .btn-primary {
-  background: #0D9488;
+  background: var(--primary);
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 .btn-primary:hover {
-  background: #0F766E;
-  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+  background: var(--primary-hover);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 45%, transparent);
 }
 
 .btn-secondary {
   background: transparent;
-  color: #94A3B8;
-  border: 1px solid #2A3B56;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: #2DD4BF;
-  color: #F8FAFC;
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 /* Inputs */
 .input {
   width: 100%;
-  background: #111827;
-  border: 1px solid #2A3B56;
-  color: #F8FAFC;
+  background: var(--surface-inset);
+  border: 1px solid var(--border);
+  color: var(--text);
   border-radius: 12px;
   padding: 9px 14px;
   font-size: 0.8125rem;
@@ -119,11 +112,11 @@ body {
 }
 .input:focus {
   outline: none;
-  border-color: #0D9488;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.22);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 .input::placeholder {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 /* Badges */
@@ -288,6 +281,45 @@ body {
     height: 25mm !important;
     min-height: 25mm !important;
     max-height: 25mm !important;
+  }
+
+  /* Student contracts use their own clean A4 print surface. */
+  html.student-contract-printing body * {
+    visibility: hidden !important;
+  }
+  html.student-contract-printing body *:has(#printable-student-contract) {
+    display: contents !important;
+  }
+  html.student-contract-printing #printable-student-contract,
+  html.student-contract-printing #printable-student-contract * {
+    visibility: visible !important;
+  }
+  html.student-contract-printing #printable-student-contract {
+    position: static !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 186mm !important;
+    min-height: 273mm !important;
+    margin: 0 auto !important;
+    padding: 10mm !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    font-family: 'Cairo', Arial, sans-serif !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  html.student-contract-printing #printable-student-contract * {
+    border-color: #cbd5e1 !important;
+    background: transparent !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
   /* Invoice and receipt printing is deliberately isolated from the app shell. */

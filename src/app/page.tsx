@@ -93,7 +93,7 @@ export default function Dashboard() {
               <Users size={16} />
             </div>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-[#D97706] mt-1 font-mono">{students.length}</p>
+          <p className="text-2xl md:text-3xl font-black text-[#2DD4BF] mt-1 font-mono">{students.length}</p>
           <p className="text-xs text-[#2DD4BF] mt-1.5 font-bold flex items-center gap-1">
             <span>ملفات الطلاب والشهادات {students.length}</span>
             <ArrowUpRight size={13} />
@@ -112,7 +112,7 @@ export default function Dashboard() {
               <CreditCard size={16} />
             </div>
           </div>
-          <p className="text-2xl md:text-3xl font-black text-[#D97706] mt-1 font-mono">{totalCourseRevenue.toLocaleString()} ج</p>
+          <p className="text-2xl md:text-3xl font-black text-[#2DD4BF] mt-1 font-mono">{totalCourseRevenue.toLocaleString()} ج</p>
           <p className="text-xs text-[#94A3B8] mt-1.5 font-medium">
             صافي الدفعات بعد قيود الرد والتصحيح
           </p>
@@ -157,10 +157,10 @@ export default function Dashboard() {
         </Link>
 
         {/* Upcoming installments */}
-        <Link href="/payments" prefetch={true} className="p-4 rounded-2xl border border-[#D97706] bg-[#422006] hover:border-amber-400 transition-all group shadow-sm block text-right">
+        <Link href="/payments" prefetch={true} className="p-4 rounded-2xl border border-amber-500/40 bg-[#1B2537] hover:border-amber-400 transition-all group shadow-sm block text-right">
           <div className="flex items-center justify-between pb-1">
             <span className="text-xs font-bold text-[#FCD34D]">أقساط قادمة</span>
-            <div className="w-8 h-8 rounded-xl bg-[#2B1705] border border-[#D97706] text-[#F59E0B] flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-[#111827] border border-amber-500/40 text-amber-300 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Clock size={16} />
             </div>
           </div>
@@ -267,7 +267,7 @@ export default function Dashboard() {
                     </div>
                     <p className="text-[11px] text-[#94A3B8] mt-1 text-right">{sale.date}{sale.status === 'voided' ? ' • أُعيدت للمخزون' : refunded > 0 ? ` • مسترد ${refunded} ج • صافي الربح: ${netProfit} ج` : ` • ربح: +${sale.profit} ج`}</p>
                   </div>
-                  <span className={`font-black text-sm font-mono shrink-0 mr-3 ${sale.status === 'voided' ? 'text-slate-500 line-through' : 'text-[#D97706]'}`}>{sale.status === 'voided' ? sale.totalAmount : netAmount} ج</span>
+                  <span className={`font-black text-sm font-mono shrink-0 mr-3 ${sale.status === 'voided' ? 'text-slate-500 line-through' : 'text-[#2DD4BF]'}`}>{sale.status === 'voided' ? sale.totalAmount : netAmount} ج</span>
                 </div>
               );})}
             </div>

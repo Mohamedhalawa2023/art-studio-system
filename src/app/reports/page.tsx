@@ -105,9 +105,11 @@ export default function FinancialReportsPage() {
   };
 
   const handleDeleteExpense = (expense: (typeof expenses)[number]) => {
-    if (!window.confirm('حذف المصروف «' + expense.description + '» بقيمة ' + expense.amount.toLocaleString() + ' ج؟')) return;
+    if (!window.confirm('إلغاء المصروف «' + expense.description + '» بقيمة ' + expense.amount.toLocaleString() + ' ج؟ سيظل ظاهرًا في السجل لكنه لن يدخل في التقارير.')) return;
+    const reason = window.prompt('اكتب سبب إلغاء المصروف (3 أحرف على الأقل):');
+    if (reason === null) return;
     try {
-      deleteOperatingExpense(expense.id, currentUser?.id || undefined);
+      deleteOperatingExpense(expense.id, reason, currentUser?.id || undefined);
       if (editingExpenseId === expense.id) resetExpenseForm();
     } catch {
       // The store already displays the validation error.
@@ -193,13 +195,17 @@ export default function FinancialReportsPage() {
     }).sort((a, b) => (parseReportDate(b.returnedAt)?.getTime() || 0) - (parseReportDate(a.returnedAt)?.getTime() || 0));
   }, [supplyReturns, filterDateRange]);
 
-  const filteredExpenses = useMemo(() => {
+  const filteredExpenseHistory = useMemo(() => {
     if (!filterDateRange) return [];
     return expenses.filter(expense => {
       const date = parseReportDate(expense.date);
       return date !== null && date >= filterDateRange.startDate && date <= filterDateRange.endDate;
     }).sort((a, b) => (parseReportDate(b.date)?.getTime() || 0) - (parseReportDate(a.date)?.getTime() || 0));
   }, [expenses, filterDateRange]);
+  const filteredExpenses = useMemo(
+    () => filteredExpenseHistory.filter(expense => !expense.voidedAt),
+    [filteredExpenseHistory],
+  );
 
   // Financial Metrics
   const courseRevenue = useMemo(() => {
@@ -280,7 +286,7 @@ export default function FinancialReportsPage() {
   const revenueSourcesPie = useMemo(() => {
     return [
       { name: 'رسوم واشتراكات الكورسات', value: courseRevenue, color: '#0D9488' },
-      { name: 'مبيعات متجر الأدوات والخامات', value: suppliesRevenue, color: '#3B82F6' }
+      { name: 'مبيعات متجر الأدوات والخامات', value: suppliesRevenue, color: '#2DD4BF' }
     ].filter(i => i.value > 0);
   }, [courseRevenue, suppliesRevenue]);
 
@@ -527,7 +533,7 @@ export default function FinancialReportsPage() {
           <div>
             <div className="flex items-center justify-between pb-1">
               <span className="text-xs font-bold text-[#94A3B8]">مجمل ربح متجر الأدوات</span>
-              <div className="w-8 h-8 rounded-xl bg-[#111827] border border-[#2A3B56] text-blue-400 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#2DD4BF] flex items-center justify-center">
                 <ShoppingBag size={16} />
               </div>
             </div>
@@ -626,7 +632,7 @@ export default function FinancialReportsPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-[#94A3B8]">مبيعات الأدوات:</span>
-              <strong className="font-mono text-blue-400">{suppliesRevenue.toLocaleString()} ج</strong>
+              <strong className="font-mono text-[#2DD4BF]">{suppliesRevenue.toLocaleString()} ج</strong>
             </div>
           </div>
         </div>
@@ -793,7 +799,7 @@ export default function FinancialReportsPage() {
                             ? 'bg-[#111827] border border-[#334155] text-[#94A3B8]'
                             : row.type === 'مرتجع متجر'
                             ? 'bg-[#78350F] text-[#D97706]'
-                            : 'bg-blue-950/40 border border-blue-900/60 text-blue-400'
+                            : 'bg-[#0D9488]/15 border border-[#0D9488]/40 text-[#2DD4BF]'
                         }`}>
                           {row.type}
                         </span>
@@ -1039,33 +1045,42 @@ export default function FinancialReportsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2A3B56]">
-                  {filteredExpenses.map(expense => (
-                    <tr key={expense.id} className="hover:bg-[#111827]/40">
+                  {filteredExpenseHistory.map(expense => (
+                    <tr key={expense.id} className={`hover:bg-[#111827]/40 ${expense.voidedAt ? 'opacity-60' : ''}`}>
                       <td className="p-3 text-[#94A3B8]">{expense.date}</td>
                       <td className="p-3 font-semibold text-[#F8FAFC]">{EXPENSE_CATEGORY_LABELS[expense.category]}</td>
                       <td className="p-3 text-[#CBD5E1]">
                         <span>{expense.description}</span>
                         {expense.updatedAt && <span className="block mt-0.5 text-[10px] text-[#94A3B8]">آخر تعديل: {expense.updatedAt}</span>}
+                        {expense.changeHistory && expense.changeHistory.length > 0 && <details className="mt-1 text-[10px] text-[#94A3B8]">
+                          <summary className="cursor-pointer">سجل التعديلات ({expense.changeHistory.length})</summary>
+                          <ul className="mt-1 space-y-1 pr-3">
+                            {expense.changeHistory.map((revision, index) => <li key={`${expense.id}-revision-${index}`}>
+                              {revision.changedAt} • {revision.description} • {revision.amount.toLocaleString()} ج • {PAYMENT_METHOD_LABELS[revision.paymentMethod] || revision.paymentMethod}
+                            </li>)}
+                          </ul>
+                        </details>}
+                        {expense.voidedAt && <span className="mt-1 block text-[10px] font-bold text-red-400">ملغى بواسطة {expense.voidedBy}: {expense.voidReason} • {expense.voidedAt}</span>}
                       </td>
                       <td className="p-3">
                         <span className="px-2.5 py-0.5 rounded-md text-[10px] bg-[#111827] border border-[#2A3B56] text-[#94A3B8]">
                           {PAYMENT_METHOD_LABELS[expense.paymentMethod] || expense.paymentMethod}
                         </span>
                       </td>
-                      <td className="p-3 text-left font-black font-mono text-red-400">−{expense.amount.toLocaleString()} ج</td>
+                      <td className={`p-3 text-left font-black font-mono ${expense.voidedAt ? 'text-[#94A3B8] line-through' : 'text-red-400'}`}>{expense.voidedAt ? '' : '−'}{expense.amount.toLocaleString()} ج</td>
                       <td className="p-3">
-                        <div className="flex items-center justify-center gap-2">
+                        {!expense.voidedAt && <div className="flex items-center justify-center gap-2">
                           <button type="button" onClick={() => startEditingExpense(expense)} className="text-[#2DD4BF] hover:text-teal-300 transition-colors" title="تعديل المصروف" aria-label={'تعديل المصروف ' + expense.description}>
                             <Pencil size={15} />
                           </button>
-                          <button type="button" onClick={() => handleDeleteExpense(expense)} className="text-red-400 hover:text-red-300 transition-colors" title="حذف المصروف" aria-label={'حذف المصروف ' + expense.description}>
+                          <button type="button" onClick={() => handleDeleteExpense(expense)} className="text-red-400 hover:text-red-300 transition-colors" title="إلغاء المصروف" aria-label={'إلغاء المصروف ' + expense.description}>
                             <Trash2 size={15} />
                           </button>
-                        </div>
+                        </div>}
                       </td>
                     </tr>
                   ))}
-                  {filteredExpenses.length === 0 && (
+                  {filteredExpenseHistory.length === 0 && (
                     <tr><td colSpan={6} className="p-8 text-center text-[#94A3B8]">لا توجد مصروفات مسجلة في الفترة المحددة.</td></tr>
                   )}
                 </tbody>

@@ -160,7 +160,7 @@ export default function PaymentsPage() {
         {/* 4. إجمالي رسوم الكورسات المحصلة (Leftmost) */}
         <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm text-right">
           <p className="text-xs text-[#94A3B8] font-bold">إجمالي رسوم الكورسات المحصلة</p>
-          <p className="text-2xl font-black text-[#D97706] mt-1 font-mono">{totalCollected.toLocaleString()} ج</p>
+          <p className="text-2xl font-black text-[#2DD4BF] mt-1 font-mono">{totalCollected.toLocaleString()} ج</p>
           <p className="text-xs text-[#94A3B8] mt-1">ترقيم CRS-2026</p>
         </div>
       </div>
@@ -289,9 +289,9 @@ export default function PaymentsPage() {
                             method: pay.method,
                             notes: pay.notes
                           })}
-                          className="text-[#D97706] hover:text-[#F59E0B] flex items-center gap-1 font-bold"
+                          className="text-[#2DD4BF] hover:text-teal-200 flex items-center gap-1 font-bold"
                         >
-                          <Printer size={12} className="text-[#D97706]" /> طباعة الإيصال
+                          <Printer size={12} className="text-[#2DD4BF]" /> طباعة الإيصال
                         </button>
                         <button
                           onClick={() => { setReversalTarget(pay); setReversalReason(''); }}
@@ -322,12 +322,12 @@ export default function PaymentsPage() {
       {showAddPayment && (
         <div className="fixed inset-0 bg-[#0E1629]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#1B2537] border border-[#2A3B56] text-[#F8FAFC] shadow-2xl p-6 rounded-2xl max-w-md w-full space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3B56]">
               <h3 className="font-bold text-lg text-[#F8FAFC] flex items-center gap-2">
                 <CreditCard size={20} className="text-teal-400" />
                 تسجيل دفعة رسوم دورة تدريبية
               </h3>
-              <button onClick={() => setShowAddPayment(false)} className="text-[#94A3B8] hover:text-slate-700">
+              <button onClick={() => setShowAddPayment(false)} className="text-[#94A3B8] hover:text-white">
                 <X size={18} />
               </button>
             </div>

@@ -4,7 +4,7 @@
  */
 
 import type { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
-import type { Enrollment, Installment, OperatingExpense, OperatingExpenseCategory, Payment } from '@/lib/mockData';
+import type { Enrollment, Installment, OperatingExpense, OperatingExpenseCategory, OperatingExpenseRevision, Payment } from '@/lib/mockData';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
 import { formatLocalDate, formatLocalDateTime } from '@/lib/dates';
@@ -292,12 +292,25 @@ export class FinanceService {
       if (expenseIndex < 0) throw new Error('المصروف المطلوب تعديله غير موجود.');
 
       const existing = draft.expenses[expenseIndex];
+      if (existing.voidedAt) throw new Error('لا يمكن تعديل مصروف ملغى. أضف مصروفًا جديدًا إذا لزم الأمر.');
       const values = validateExpenseInput(dto);
       const updatedExpense: OperatingExpense = {
         ...existing,
         ...values,
         recordedBy: existing.recordedBy,
         recordedAt: existing.recordedAt,
+        changeHistory: [
+          ...(existing.changeHistory || []),
+          {
+            date: existing.date,
+            category: existing.category,
+            description: existing.description,
+            amount: existing.amount,
+            paymentMethod: existing.paymentMethod,
+            changedBy: dto.updatedBy || dto.recordedBy || 'u1',
+            changedAt: formatLocalDateTime(new Date()),
+          } satisfies OperatingExpenseRevision,
+        ],
         updatedBy: dto.updatedBy || dto.recordedBy || 'u1',
         updatedAt: formatLocalDateTime(new Date())
       };
@@ -307,14 +320,17 @@ export class FinanceService {
     }, onStateCommit);
   }
 
-  /** Removes an expense from reports and records the deletion in the transaction log. */
-  public deleteOperatingExpense(id: string, deletedBy?: string, onStateCommit?: (state: DatabaseState) => void): void {
-    this.db.executeTransaction('DELETE_OPERATING_EXPENSE', draft => {
-      const expenseIndex = draft.expenses.findIndex(expense => expense.id === id);
-      if (expenseIndex < 0) throw new Error('المصروف المطلوب حذفه غير موجود.');
+  /** Voids an expense without erasing its financial history. */
+  public deleteOperatingExpense(id: string, reason: string, deletedBy?: string, onStateCommit?: (state: DatabaseState) => void): void {
+    this.db.executeTransaction('VOID_OPERATING_EXPENSE', draft => {
+      const expense = draft.expenses.find(item => item.id === id);
+      if (!expense) throw new Error('المصروف المطلوب إلغاؤه غير موجود.');
+      if (expense.voidedAt) throw new Error('هذا المصروف ملغى بالفعل.');
 
-      const [deletedExpense] = draft.expenses.splice(expenseIndex, 1);
-      logger.info('FinanceService', `Operating expense deleted: ${deletedExpense.id} (${deletedBy || 'u1'})`);
+      expense.voidedAt = formatLocalDateTime(new Date());
+      expense.voidedBy = deletedBy || 'u1';
+      expense.voidReason = Validators.requireText(reason, 'سبب إلغاء المصروف', 3, 200);
+      logger.info('FinanceService', `Operating expense voided: ${expense.id} (${expense.voidedBy})`);
     }, onStateCommit);
   }
 }

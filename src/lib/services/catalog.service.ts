@@ -144,7 +144,9 @@ export class CatalogService {
         }
         date.setDate(date.getDate() + 1);
       }
-      if (generated === 0) throw new Error('النطاق المحدد لا يحتوي على يوم من أيام المجموعة.');
+      if (generated < course.sessionsCount) {
+        throw new Error(`نطاق التواريخ ينتج ${generated} حصة فقط، بينما الكورس يحتاج ${course.sessionsCount} حصة. وسّع النطاق أو عدّل أيام المجموعة.`);
+      }
       return group;
     }, onCommit);
   }

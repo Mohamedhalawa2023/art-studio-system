@@ -116,6 +116,20 @@ export interface OperatingExpense {
   recordedAt: string;
   updatedBy?: string;
   updatedAt?: string;
+  changeHistory?: OperatingExpenseRevision[];
+  voidedAt?: string;
+  voidedBy?: string;
+  voidReason?: string;
+}
+
+export interface OperatingExpenseRevision {
+  date: string;
+  category: OperatingExpenseCategory;
+  description: string;
+  amount: number;
+  paymentMethod: Payment['method'];
+  changedBy: string;
+  changedAt: string;
 }
 
 export interface Attendance {
