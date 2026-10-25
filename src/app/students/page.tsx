@@ -427,31 +427,47 @@ export default function StudentsPage() {
                 ) :
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Student ID Card (Printable) */}
-                  <div className="p-6 rounded-2xl border border-[#2A3B56] flex flex-col items-center justify-between text-center relative overflow-hidden bg-[#111827] border-[#2A3B56] text-[#F8FAFC] shadow-sm">
-                    <div className="w-full pb-3 border-b border-[#2A3B56] flex items-center justify-between text-xs text-[#94A3B8]">
+                  <div
+                    id="printable-student-id"
+                    className="p-6 rounded-2xl border border-[#2A3B56] flex flex-col items-center justify-between text-center relative overflow-hidden bg-[#111827] text-[#F8FAFC] shadow-sm"
+                  >
+                    <div className="id-print-header w-full pb-3 border-b border-[#2A3B56] flex items-center justify-between text-xs text-[#94A3B8]">
                       <span className="font-bold text-[#2DD4BF]">🎨 {settings.name}</span>
                       <span className="font-medium text-[#94A3B8]">بطاقة عضوية المرسم الرسمية</span>
                     </div>
 
-                    <div className="my-5 space-y-2">
-                      <div className="w-20 h-20 rounded-full mx-auto bg-teal-600 border-4 border-blue-100 flex items-center justify-center text-3xl font-black text-white shadow-md">
+                    <div className="my-4 space-y-2">
+                      <div className="id-print-avatar w-20 h-20 rounded-full mx-auto bg-[#0D9488] border-4 border-[#2A3B56] flex items-center justify-center text-3xl font-black text-[#F8FAFC] shadow-md">
                         {selectedStudent.name.charAt(0)}
                       </div>
                       <h3 className="font-black text-lg text-[#F8FAFC]">{selectedStudent.name}</h3>
-                      <p className="text-xs font-bold text-[#2DD4BF]">{primaryCourse?.name}</p>
+                      <p className="text-xs font-bold text-[#2DD4BF]">{primaryCourse?.name || 'فنون تشكيلية'}</p>
+                      <p className="text-[11px] text-[#94A3B8]">المستوى: {selectedStudent.level || 'مبتدئ'}</p>
                     </div>
 
                     {/* Barcode Display */}
-                    <div className="bg-[#0E1629] p-3 rounded-xl border border-[#2A3B56] shadow-sm my-2 w-full max-w-[220px]">
+                    <div className="id-print-codebox bg-[#0E1629] p-3 rounded-xl border border-[#2A3B56] shadow-sm my-2 w-full max-w-[220px]">
                       <div className="flex justify-center items-center py-1">
-                        <QrCode size={56} className="text-[#2DD4BF]" />
+                        <QrCode size={52} className="text-[#2DD4BF]" />
                       </div>
                       <p className="font-mono text-[#2DD4BF] font-black text-xs tracking-wider mt-1">{selectedStudent.qrToken}</p>
                     </div>
 
+                    <p className="text-[10px] text-[#94A3B8] mt-1">طوارئ: {selectedGuardian?.phone || settings.phone}</p>
+
                     <button
-                      onClick={() => window.print()}
-                      className="btn btn-primary bg-teal-600 hover:bg-teal-700 text-white btn-sm w-full mt-4 flex items-center justify-center gap-1.5 shadow-sm"
+                      type="button"
+                      onClick={() => {
+                        document.documentElement.classList.add('student-id-printing');
+                        const cleanup = () => {
+                          document.documentElement.classList.remove('student-id-printing');
+                          window.removeEventListener('afterprint', cleanup);
+                        };
+                        window.addEventListener('afterprint', cleanup);
+                        window.print();
+                        setTimeout(cleanup, 2500);
+                      }}
+                      className="id-no-print w-full mt-4 bg-[#0D9488] hover:bg-[#0f766e] text-[#F8FAFC] text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all border-0 cursor-pointer"
                     >
                       <Printer size={14} /> طباعة بطاقة الطالب (ID)
                     </button>

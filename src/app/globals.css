@@ -453,4 +453,82 @@ body {
     padding-top: 16px !important;
   }
 
+
+  /* Student ID Card Printing Isolation */
+  html.student-id-printing {
+    background: #ffffff !important;
+  }
+  html.student-id-printing body * {
+    visibility: hidden !important;
+  }
+  html.student-id-printing body *:has(#printable-student-id) {
+    display: contents !important;
+  }
+  html.student-id-printing #printable-student-id,
+  html.student-id-printing #printable-student-id * {
+    visibility: visible !important;
+  }
+  html.student-id-printing #printable-student-id {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 86mm !important;
+    height: 125mm !important;
+    max-width: 86mm !important;
+    max-height: 125mm !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    padding: 6mm 8mm !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 2px solid #0f172a !important;
+    border-radius: 6mm !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: center !important;
+    font-family: 'Cairo', Arial, sans-serif !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    z-index: 999999 !important;
+  }
+  html.student-id-printing #printable-student-id * {
+    color: #0f172a !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html.student-id-printing #printable-student-id .id-no-print {
+    display: none !important;
+  }
+  html.student-id-printing #printable-student-id .id-print-header {
+    border-bottom: 1.5px solid #0f172a !important;
+    width: 100% !important;
+    padding-bottom: 4px !important;
+  }
+  html.student-id-printing #printable-student-id .id-print-header span {
+    color: #0f172a !important;
+  }
+  html.student-id-printing #printable-student-id .id-print-avatar {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border: 2px solid #94a3b8 !important;
+  }
+  html.student-id-printing #printable-student-id .id-print-codebox {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 6px !important;
+    width: 100% !important;
+    max-width: 65mm !important;
+  }
+  html.student-id-printing #printable-student-id .id-print-codebox svg {
+    color: #0f172a !important;
+  }
+  html.student-id-printing #printable-student-id .id-print-codebox p {
+    color: #0f172a !important;
+  }
+
 }
