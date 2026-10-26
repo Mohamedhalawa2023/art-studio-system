@@ -86,11 +86,15 @@ function isPortAvailable(port) {
 async function selectAppPort() {
   for (let port = 3000; port <= 3010; port += 1) {
     const candidateUrl = `http://${HOST}:${port}`;
-    if (await pingServer(`${candidateUrl}/api/health`)) {
+    const existingMarsamServer = await pingServer(`${candidateUrl}/api/health`);
+    if (existingMarsamServer && !app.isPackaged) {
       PORT = port;
       APP_URL = candidateUrl;
       logMessage(`Reusing an existing Marsam server on ${APP_URL}`);
       return false;
+    }
+    if (existingMarsamServer) {
+      logMessage(`Found an existing Marsam server on ${candidateUrl}; the packaged app will use its bundled server to keep assets matched.`);
     }
     if (await isPortAvailable(port)) {
       PORT = port;
