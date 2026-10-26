@@ -182,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [localAuthUsername, setLocalAuthUsername] = useState<string | null>(null);
   const [authStage, setAuthStage] = useState<LocalAuthStage>('checking');
   const [authError, setAuthError] = useState('');
+  const [recoveryCodeNotice, setRecoveryCodeNotice] = useState('');
   const [persistenceStatus, setPersistenceStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'conflict'>(
     () => hasConflictBackup() ? 'conflict' : 'idle',
   );
@@ -292,6 +293,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (payload.success && payload.data) {
           diskState = normalizeDatabaseState(payload.data);
           diskRevisionRef.current = typeof payload.revision === 'string' ? payload.revision : 'missing';
+          // The encrypted on-disk database is authoritative; drop the old plaintext browser mirror.
+          try { localStorage.removeItem(STORAGE_KEY); }
+          catch { logger.warn('AuthProvider', 'تعذر مسح نسخة بيانات المتصفح القديمة.'); }
         } else {
           diskRevisionRef.current = typeof payload.revision === 'string' ? payload.revision : 'missing';
         }
@@ -386,6 +390,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const payload = await response.json();
     if (!response.ok || !payload.success) throw new Error(payload.error || 'تعذر تسجيل الدخول.');
+    if (action === 'recover-password' && typeof payload.recoveryCode === 'string') {
+      setRecoveryCodeNotice(payload.recoveryCode);
+    }
     if ((payload.role !== 'manager' && payload.role !== 'employee') || typeof payload.username !== 'string') {
       throw new Error('لم تُرسل خدمة الدخول صلاحية الحساب. أعد المحاولة.');
     }
@@ -483,13 +490,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           if (!response.ok || !result.success) throw new Error(result.error || 'تعذر حفظ البيانات على القرص.');
           diskRevisionRef.current = String(result.revision || 'missing');
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
-            localStorage.removeItem(CONFLICT_BACKUP_KEY);
-            setConflictBackupAvailable(false);
-          } catch {
-            logger.warn('AuthProvider', 'تعذر تحديث نسخة المتصفح، لكن حفظ القرص نجح.');
-          }
+          try { localStorage.removeItem(STORAGE_KEY); }
+          catch { logger.warn('AuthProvider', 'تعذر مسح نسخة بيانات المتصفح القديمة.'); }
+          localStorage.removeItem(CONFLICT_BACKUP_KEY);
+          setConflictBackupAvailable(false);
           setPersistenceStatus('saved');
         } catch (error) {
           logger.error('AuthProvider', 'تعذر حفظ التغييرات على القرص.', error);
@@ -967,11 +971,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || 'تعذر حفظ البيانات المستوردة على القرص.');
       diskRevisionRef.current = String(result.revision || 'missing');
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData));
-      } catch (storageError) {
-        logger.warn('AuthProvider', 'تعذر تحديث نسخة المتصفح، لكن قاعدة البيانات المستوردة حُفظت على القرص.', { error: String(storageError) });
-      }
+      try { localStorage.removeItem(STORAGE_KEY); }
+      catch { logger.warn('AuthProvider', 'تعذر مسح نسخة بيانات المتصفح القديمة.'); }
       try {
         localStorage.removeItem(CONFLICT_BACKUP_KEY);
         setConflictBackupAvailable(false);
@@ -1019,9 +1020,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       saveStudentDiploma,
       updateSettings, exportDatabase, importDatabase, resetDatabase
     }}>
-      {authStage === 'authenticated' && isHydrated
-        ? children
-        : <LocalAuthScreen stage={authStage} error={authError} onSubmit={authenticate} onRetry={() => void checkAuthStatus()} />}
+      <>
+        {authStage === 'authenticated' && isHydrated
+          ? children
+          : <LocalAuthScreen stage={authStage} error={authError} onSubmit={authenticate} onRetry={() => void checkAuthStatus()} />}
+        {recoveryCodeNotice && <div role="alertdialog" aria-modal="true" aria-labelledby="recovery-code-title" dir="rtl" className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4">
+          <section className="w-full max-w-lg space-y-4 rounded-2xl border border-amber-400/30 bg-[#151F31] p-6 text-[#F8FAFC] shadow-2xl">
+            <h2 id="recovery-code-title" className="text-lg font-black">احفظ رمز الاستعادة الجديد</h2>
+            <p className="text-sm leading-6 text-[#CBD5E1]">تم استبدال الرمز السابق. انسخ الرمز واحفظه خارج هذا الجهاز؛ لن يظهر مرة أخرى بعد إغلاق هذه الرسالة.</p>
+            <code dir="ltr" className="block select-all break-all rounded-xl bg-[#0B1220] p-4 text-center font-mono text-base text-amber-200">{recoveryCodeNotice}</code>
+            <button type="button" onClick={() => setRecoveryCodeNotice('')} className="w-full rounded-xl bg-[#0D9488] px-4 py-3 font-bold text-white">حفظت الرمز</button>
+          </section>
+        </div>}
+      </>
     </MarsamContext.Provider>
   );
 }

@@ -11,7 +11,7 @@ import { formatLocalDate } from '@/lib/dates';
 
 export default function Dashboard() {
   const {
-    students, enrollments, installments, payments, supplySales, supplyReturns, supplyItems,
+    students, enrollments, installments, payments, supplySales, supplyReturns,
     settings, exportDatabase
   } = useMarsam();
   const [today, setToday] = useState<string | null>(null);

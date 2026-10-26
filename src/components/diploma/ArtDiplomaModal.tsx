@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
+import Image from 'next/image';
 import {
-  Award, X, Printer, Palette, Sparkles, Feather,
-  CheckCircle, Sliders, Edit3, ShieldCheck, Undo2
+  Award, X, Printer, Palette, Feather,
+  Edit3, ShieldCheck
 } from 'lucide-react';
 import type { Student } from '@/lib/store';
 import { printArtDiploma } from '@/lib/printing';
@@ -52,47 +53,41 @@ export default function ArtDiplomaModal({
   const [showEditor, setShowEditor] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-  const [diploma, setDiploma] = useState<ArtDiplomaData>({
-    certificateNumber: 'ART-CERT-2026-001',
-    issueDate: '18 أكتوبر 2026',
+  const [diploma, setDiploma] = useState<ArtDiplomaData>(() => {
+    const now = new Date();
+    const certificateNumber = student ? `ART-CERT-${now.getFullYear()}-${student.id.toUpperCase()}` : '';
+    return {
+    certificateNumber,
+    issueDate: now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }),
     academyName: 'أكاديمية ومرسم الفنون التشكيلية',
     academySubtitle: 'المرسم الأكاديمي للدراسات الحرة والفنون الجميلة',
-    studentName: student?.name || 'اسم الطالب',
-    courseTitle: courseTitle,
-    branchName: branchName,
-    gradeLevel: 'مرتبة الشرف الفنية (Master Grade A+)',
+    studentName: student?.name || '',
+    courseTitle,
+    branchName,
+    gradeLevel: 'شهادة إتمام البرنامج',
     theme: 'sapphire',
-    showSkills: true,
+    showSkills: false,
     showSeal: true,
     showQr: true,
-    critiqueText: `أظهر الفنان نضجاً تشكيلياً ملموساً في التعامل مع الخامة والسطح التصويري، حيث برز تمكنه من تأسيس الأرضيات وتوزيع الكتل اللونية بجرأة وثقة، وتطبيق قواعد التظليل والدمج وبناء طبقات اللون بدقة واقتدار وحس جمالي رفيع.`,
-    instructorName: 'الفنان أستاذ الورشة',
-    directorName: 'المدير الأكاديمي للمرسم',
+    critiqueText: '',
+    instructorName: '',
+    directorName: '',
     skills: {
-      brushwork: 95,
-      composition: 92,
-      chiaroscuro: 96,
-      colorHarmony: 91
+      brushwork: 0,
+      composition: 0,
+      chiaroscuro: 0,
+      colorHarmony: 0
     }
+  };
   });
 
   // Sync with selected student
   useEffect(() => {
     if (student) {
       const now = new Date();
-      const formattedDate = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
       const certNo = `ART-CERT-${now.getFullYear()}-${student.id.toUpperCase()}`;
-      setDiploma(prev => ({
-        ...prev,
-        certificateNumber: certNo,
-        issueDate: formattedDate,
-        studentName: student.name,
-        courseTitle: courseTitle,
-        branchName: branchName
-      }));
-
       // Generate verification QR
-      const qrPayload = `ATELIER-CERT:${student.id}:${certNo}:MASTER-A+`;
+      const qrPayload = `MARSAM-CERT:${student.id}:${certNo}`;
       QRCode.toDataURL(qrPayload, { width: 160, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } })
         .then(url => setQrDataUrl(url))
         .catch(err => console.error('QR error', err));
@@ -602,8 +597,8 @@ export default function ArtDiplomaModal({
             <div className="flex items-center gap-3">
               {diploma.showQr && qrDataUrl && (
                 <div className={`w-16 h-16 bg-white p-1 rounded-xl border ${st.accentBorder} shadow-2xs flex flex-col items-center justify-center`}>
-                  <img src={qrDataUrl} alt="QR Verification" className="w-11 h-11 object-contain" />
-                  <span className="text-[6px] text-slate-500 font-bold mt-0.5">تحقق الكتروني</span>
+                  <Image src={qrDataUrl} alt="بيانات الشهادة" width={44} height={44} unoptimized className="w-11 h-11 object-contain" />
+                  <span className="text-[6px] text-slate-500 font-bold mt-0.5">بيانات الشهادة</span>
                 </div>
               )}
               <div className="text-center space-y-1">

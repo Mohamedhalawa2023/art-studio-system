@@ -1015,6 +1015,7 @@ export default function StudentsPage() {
 
       {/* ================= A4 LUXURY ART DIPLOMA MODAL ================= */}
       <ArtDiplomaModal
+        key={`${diplomaStudent?.id || selectedStudent?.id || 'none'}:${primaryCourse?.name || ''}:${settings.address || ''}`}
         isOpen={showDiplomaModal}
         onClose={() => {
           setShowDiplomaModal(false);

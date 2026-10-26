@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-require-imports -- Electron's main entry is CommonJS. */
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, safeStorage } = require('electron');
 const path = require('path');
 const http = require('http');
 const net = require('net');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -109,7 +108,45 @@ function getStandaloneDir() {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'standalone');
   }
-  return path.join(__dirname, '..', '.next', 'standalone');
+  const outputDirs = [...new Set([process.env.MARSAM_NEXT_DIST_DIR, '.next-release-build', '.next'].filter(Boolean))];
+  const existingBuild = outputDirs
+    .map(outputDir => path.join(__dirname, '..', outputDir, 'standalone'))
+    .find(standaloneDir => fs.existsSync(path.join(standaloneDir, 'server.js')));
+  return existingBuild || path.join(__dirname, '..', outputDirs[0], 'standalone');
+}
+
+function getDatabaseEncryptionKey() {
+  if (process.platform !== 'win32') return null;
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('تعذر تفعيل تشفير Windows لبيانات مرسم. أعد تشغيل Windows ثم حاول مرة أخرى.');
+  }
+
+  const storageDir = path.join(app.getPath('appData'), 'MarsamArtStudio');
+  const keyPath = path.join(storageDir, 'database-key.dpapi');
+  fs.mkdirSync(storageDir, { recursive: true });
+
+  if (fs.existsSync(keyPath)) {
+    try {
+      const key = safeStorage.decryptString(fs.readFileSync(keyPath)).trim();
+      if (/^[a-f0-9]{64}$/i.test(key)) return key;
+    } catch (error) {
+      logMessage(`ERROR: Could not decrypt local database key: ${error.message}`);
+    }
+    throw new Error('تعذر قراءة مفتاح حماية البيانات على حساب Windows الحالي. لا تحذف مجلد بيانات مرسم؛ تواصل مع الدعم.');
+  }
+
+  const key = require('crypto').randomBytes(32).toString('hex');
+  const temporaryPath = `${keyPath}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(temporaryPath, safeStorage.encryptString(key), { flag: 'wx', mode: 0o600 });
+    fs.renameSync(temporaryPath, keyPath);
+  } catch (error) {
+    try { fs.unlinkSync(temporaryPath); } catch {}
+    // A second app instance can win the first-run race; use its persisted key.
+    if (fs.existsSync(keyPath)) return safeStorage.decryptString(fs.readFileSync(keyPath)).trim();
+    throw new Error(`تعذر إنشاء مفتاح حماية بيانات مرسم: ${error.message}`);
+  }
+  return key;
 }
 
 async function startStandaloneServer() {
@@ -134,6 +171,8 @@ async function startStandaloneServer() {
   const nextModule = path.join(standaloneDir, 'node_modules', 'next');
   logMessage(`Next.js module path: ${nextModule} (Exists: ${fs.existsSync(nextModule)})`);
 
+  const databaseEncryptionKey = getDatabaseEncryptionKey();
+
   logMessage(`Spawning standalone server process via ${process.execPath}...`);
 
   const env = Object.assign({}, process.env, {
@@ -141,6 +180,7 @@ async function startStandaloneServer() {
     HOSTNAME: HOST,
     NODE_ENV: 'production',
     MARSAM_DESKTOP: '1',
+    ...(databaseEncryptionKey ? { MARSAM_DB_ENCRYPTION_KEY: databaseEncryptionKey } : {}),
     ELECTRON_RUN_AS_NODE: '1'
   });
 
@@ -173,15 +213,30 @@ async function startStandaloneServer() {
 }
 
 function stopServer() {
-  if (serverProcess) {
-    logMessage('Terminating embedded Next.js server...');
-    try {
-      serverProcess.kill('SIGTERM');
-      if (process.platform === 'win32' && serverProcess.pid) {
-        spawn('taskkill', ['/pid', String(serverProcess.pid), '/f', '/t']);
+  const child = serverProcess;
+  if (!child) return;
+
+  serverProcess = null;
+  logMessage(`Terminating embedded Next.js server${child.pid ? ` (PID ${child.pid})` : ''}...`);
+  try {
+    if (process.platform === 'win32' && child.pid) {
+      // The packaged server is started with this same executable in Electron-as-Node mode.
+      // Wait for taskkill to finish so NSIS cannot see a leftover Marsam.exe during upgrades.
+      const result = spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
+        windowsHide: true,
+        stdio: 'ignore',
+        timeout: 8_000,
+      });
+      if (result.error || result.status !== 0) {
+        logMessage(`WARNING: taskkill did not confirm server shutdown: ${result.error?.message || result.status}`);
+        child.kill();
       }
-    } catch {}
-    serverProcess = null;
+    } else {
+      child.kill('SIGTERM');
+    }
+  } catch (error) {
+    logMessage(`WARNING: Could not terminate embedded server cleanly: ${String(error)}`);
+    try { child.kill(); } catch {}
   }
 }
 

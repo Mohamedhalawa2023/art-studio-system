@@ -1,12 +1,12 @@
 'use client';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useMarsam } from '@/lib/store';
+import type { BarcodeScanResult } from '@/lib/services/attendance.service';
 import { useAsyncAction } from '@/hooks/useAsyncAction';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
 import { Pagination } from '@/components/common/Pagination';
 import {
-  QrCode, Search, CheckCircle, XCircle, Clock, Camera,
-  UserCheck, AlertTriangle, Barcode, BookOpen, Volume2, Sparkles, Trash2
+  QrCode, XCircle, UserCheck, AlertTriangle, Barcode, BookOpen, Trash2
 } from 'lucide-react';
 
 export default function AttendancePage() {
@@ -19,24 +19,21 @@ export default function AttendancePage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string>('ses1');
   const [barcodeInput, setBarcodeInput] = useState('');
   const [selectedLessonTopic, setSelectedLessonTopic] = useState('');
-  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanResult, setScanResult] = useState<BarcodeScanResult | null>(null);
   const [attendancePage, setAttendancePage] = useState(1);
   const ATTENDANCE_PER_PAGE = 15;
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
-  const { isSubmitting: isScanning, execute: executeScan } = useAsyncAction({ cooldownMs: 400 });
+  const { execute: executeScan } = useAsyncAction({ cooldownMs: 400 });
   const { isSubmitting: isMarking, execute: executeManualMark } = useAsyncAction({ cooldownMs: 300 });
 
   const session = sessions.find(s => s.id === selectedSessionId) || sessions[0];
   const group = session ? groups.find(g => g.id === session.groupId) : null;
   const course = group ? courses.find(c => c.id === group.courseId) : null;
 
-  // Set default lesson topic from syllabus
-  useEffect(() => {
-    if (course?.syllabus && course.syllabus.length > 0 && !selectedLessonTopic) {
-      setSelectedLessonTopic(course.syllabus[0]);
-    }
-  }, [course, selectedLessonTopic]);
+  const activeLessonTopic = course?.syllabus?.includes(selectedLessonTopic)
+    ? selectedLessonTopic
+    : course?.syllabus?.[0] || '';
 
   // Keep barcode input focused for physical USB scanner
   useEffect(() => {
@@ -70,17 +67,17 @@ export default function AttendancePage() {
         setScanResult(result);
         setBarcodeInput('');
 
-        if (result.success && result.student && selectedLessonTopic) {
+        if (result.success && result.student && activeLessonTopic) {
           recordStudentAttendance({
             studentId: result.student.id,
             sessionId: session.id,
             status: 'present',
-            lessonTopic: selectedLessonTopic
+            lessonTopic: activeLessonTopic
           });
         }
 
         setTimeout(() => {
-          setScanResult((prev: any) => (prev?.student?.id === result.student?.id ? null : prev));
+          setScanResult(prev => (prev?.student?.id === result.student?.id ? null : prev));
         }, 6000);
       });
     },
@@ -98,18 +95,18 @@ export default function AttendancePage() {
       setBarcodeInput('');
 
       // If lesson topic is active and student is present, record progress topic too
-      if (result.success && result.student && selectedLessonTopic) {
+      if (result.success && result.student && activeLessonTopic) {
         recordStudentAttendance({
           studentId: result.student.id,
           sessionId: session.id,
           status: 'present',
-          lessonTopic: selectedLessonTopic
+          lessonTopic: activeLessonTopic
         });
       }
 
       // Auto clear result after 6s
       setTimeout(() => {
-        setScanResult((prev: any) => (prev?.student?.id === result.student?.id ? null : prev));
+        setScanResult(prev => (prev?.student?.id === result.student?.id ? null : prev));
       }, 6000);
     });
   };
@@ -120,7 +117,7 @@ export default function AttendancePage() {
         studentId,
         sessionId: session.id,
         status,
-        lessonTopic: status === 'present' ? selectedLessonTopic : undefined
+        lessonTopic: status === 'present' ? activeLessonTopic : undefined
       });
     });
   };
@@ -195,7 +192,7 @@ export default function AttendancePage() {
             </div>
             <select
               className="text-xs flex-1 max-w-md bg-[#111827] border border-[#2A3B56] text-[#F8FAFC] rounded-xl py-2 px-3 focus:outline-none focus:border-[#0D9488]"
-              value={selectedLessonTopic}
+              value={activeLessonTopic}
               onChange={e => setSelectedLessonTopic(e.target.value)}
             >
               {course.syllabus?.map((topic: string, i: number) => (
@@ -247,12 +244,12 @@ export default function AttendancePage() {
                       setBarcodeInput(student.qrToken);
                       const result = processBarcodeScan(student.qrToken, session.id);
                       setScanResult(result);
-                      if (result.success && selectedLessonTopic) {
+                      if (result.success && activeLessonTopic) {
                         recordStudentAttendance({
                           studentId: student.id,
                           sessionId: session.id,
                           status: 'present',
-                          lessonTopic: selectedLessonTopic
+                          lessonTopic: activeLessonTopic
                         });
                       }
                     }}
@@ -281,15 +278,15 @@ export default function AttendancePage() {
                       </span>
                       <h3 className="text-xl font-black text-[#F8FAFC] mt-2">{scanResult.student?.name}</h3>
                       <p className="text-xs text-[#2DD4BF] font-mono mt-0.5">{scanResult.student?.qrToken}</p>
-                      {selectedLessonTopic && (
+                      {activeLessonTopic && (
                         <p className="text-xs text-teal-400 mt-1">
-                          الدرس المنجز: <strong>{selectedLessonTopic}</strong>
+                          الدرس المنجز: <strong>{activeLessonTopic}</strong>
                         </p>
                       )}
                     </div>
 
                     {/* OVERDUE FINANCIAL ALERT (Crucial Feature) */}
-                    {scanResult.remainingBalance > 0 ? (
+                    {typeof scanResult.remainingBalance === 'number' && scanResult.remainingBalance > 0 ? (
                       <div className="p-3.5 rounded-xl bg-[#450A0A] border border-[#7F1D1D] text-right space-y-1">
                         <div className="flex items-center gap-2 text-[#EF4444] font-bold text-xs">
                           <AlertTriangle size={15} />

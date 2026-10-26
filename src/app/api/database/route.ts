@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { getBackupDir, getDbPath, getDbTmpPath, getLogFilePath } from '@/lib/config/paths';
 import { isAuthenticatedLocalRequest, isSameOriginRequest } from '@/lib/auth/local-auth';
 import { getDatabaseIntegrityError } from '@/lib/db/schema';
+import { decryptStoredJson, encryptStoredJson, isEncryptedStoredJson } from '@/lib/db/local-storage';
 
 const MAX_DATABASE_SIZE_BYTES = 50 * 1024 * 1024;
 
@@ -119,7 +120,7 @@ function tryRecoverFromLatestBackup(backupDir: string): { data: unknown; backupF
     try {
       const fullPath = path.join(backupDir, file);
       const raw = fs.readFileSync(fullPath, 'utf-8');
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(decryptStoredJson(raw));
       if (validateDatabaseIntegrity(parsed)) {
         return { data: parsed, backupFilename: file };
       }
@@ -128,6 +129,33 @@ function tryRecoverFromLatestBackup(backupDir: string): { data: unknown; backupF
     }
   }
   return null;
+}
+
+function encryptLegacyBackupFiles(backupDir: string): void {
+  if (!process.env.MARSAM_DB_ENCRYPTION_KEY || !fs.existsSync(backupDir)) return;
+  const files = fs.readdirSync(backupDir).filter(file => file.startsWith('backup-') && file.endsWith('.json'));
+  for (const file of files) {
+    const targetPath = path.join(backupDir, file);
+    let temporaryPath = '';
+    try {
+      const contents = fs.readFileSync(targetPath, 'utf-8');
+      if (isEncryptedStoredJson(contents)) continue;
+      temporaryPath = `${targetPath}.${randomUUID()}.tmp`;
+      const descriptor = fs.openSync(temporaryPath, 'wx');
+      try {
+        fs.writeFileSync(descriptor, encryptStoredJson(contents), 'utf-8');
+        fs.fsyncSync(descriptor);
+      } finally {
+        fs.closeSync(descriptor);
+      }
+      fs.renameSync(temporaryPath, targetPath);
+    } catch (error) {
+      if (temporaryPath) {
+        try { fs.unlinkSync(temporaryPath); } catch {}
+      }
+      appendIncidentLog(`Could not encrypt legacy backup ${file}; original backup was preserved: ${String(error)}`);
+    }
+  }
 }
 
 function appendIncidentLog(message: string) {
@@ -152,6 +180,7 @@ export async function GET(request: Request) {
     const dbFile = getDbPath();
     const dbTmpFile = getDbTmpPath();
     const backupDir = getBackupDir();
+    encryptLegacyBackupFiles(backupDir);
 
     let needsRecovery = false;
     let loadedData: unknown = null;
@@ -159,9 +188,13 @@ export async function GET(request: Request) {
     if (fs.existsSync(dbFile)) {
       try {
         const raw = fs.readFileSync(dbFile, 'utf-8');
-        const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(decryptStoredJson(raw));
         if (validateDatabaseIntegrity(parsed)) {
           loadedData = parsed;
+          // Convert databases created by earlier versions once, after successful validation.
+          if (process.env.MARSAM_DB_ENCRYPTION_KEY && !isEncryptedStoredJson(raw)) {
+            atomicFsyncWrite(dbFile, dbTmpFile, encryptStoredJson(raw));
+          }
         } else {
           needsRecovery = true;
           appendIncidentLog(`Database schema integrity check failed: ${getDatabaseIntegrityError(parsed) || 'unknown integrity error'}`);
@@ -177,7 +210,7 @@ export async function GET(request: Request) {
     if (needsRecovery) {
       const recovered = tryRecoverFromLatestBackup(backupDir);
       if (recovered) {
-        atomicFsyncWrite(dbFile, dbTmpFile, JSON.stringify(recovered.data, null, 2));
+        atomicFsyncWrite(dbFile, dbTmpFile, encryptStoredJson(JSON.stringify(recovered.data, null, 2)));
         appendIncidentLog(`CRITICAL AUTO-RECOVERY: Restored database from healthy backup: ${recovered.backupFilename}`);
         return NextResponse.json({
           success: true,
@@ -264,21 +297,22 @@ export async function POST(request: Request) {
     const dbTmpFile = getDbTmpPath();
     const backupDir = getBackupDir();
     const jsonString = JSON.stringify(body, null, 2);
+    const storedString = encryptStoredJson(jsonString);
 
     // 1. Atomic write with fsync
-    atomicFsyncWrite(dbFile, dbTmpFile, jsonString);
+    atomicFsyncWrite(dbFile, dbTmpFile, storedString);
 
     // 2. Automated Daily Snapshot
     const dateStr = new Date().toISOString().slice(0, 10);
     const backupFile = path.join(backupDir, `backup-${dateStr}.json`);
     if (!fs.existsSync(backupFile)) {
-      atomicFsyncWrite(backupFile, path.join(backupDir, `backup-${dateStr}.tmp.json`), jsonString);
+      atomicFsyncWrite(backupFile, path.join(backupDir, `backup-${dateStr}.tmp.json`), storedString);
     }
 
     return NextResponse.json({
       success: true,
       savedAt: fs.statSync(dbFile).mtimeMs,
-      revision: createHash('sha256').update(jsonString).digest('hex'),
+      revision: createHash('sha256').update(storedString).digest('hex'),
       message: 'Database saved atomically with fsync'
     });
   } catch (error) {

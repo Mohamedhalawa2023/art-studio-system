@@ -5,7 +5,7 @@
   "description": "نظام سطح مكتب لإدارة المرسم والكورسات والحضور والمدفوعات والمخزون",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/copy-standalone.js",
+    "build": "node scripts/build-next.js",
     "start": "node .next/standalone/server.js",
     "lint": "eslint",
     "test": "node --test scripts/enrollment.service.test.cjs",

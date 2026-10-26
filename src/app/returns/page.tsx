@@ -163,9 +163,9 @@ export default function ReturnsPage() {
   const totalRefund = supplyReturns.reduce((sum, item) => sum + item.totalRefund, 0);
   const restockedUnits = supplyReturns.reduce((sum, item) =>
     sum + item.items.reduce((itemSum, line) => itemSum + line.restockQuantity, 0), 0);
-  const filteredReturns = useMemo(() => supplyReturns
+  const filteredReturns = supplyReturns
     .filter(item => `${item.returnNumber} ${item.invoiceNumber} ${item.customerName}`.toLocaleLowerCase('ar').includes(search.trim().toLocaleLowerCase('ar')))
-    .sort((left, right) => right.returnedAt.localeCompare(left.returnedAt)), [supplyReturns, search]);
+    .sort((left, right) => right.returnedAt.localeCompare(left.returnedAt));
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports -- Node script uses the installed sharp dependency to generate the Windows icon from its SVG source. */
 const fs = require('node:fs');
 const path = require('node:path');
 const sharp = require('sharp');

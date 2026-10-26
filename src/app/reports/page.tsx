@@ -713,15 +713,15 @@ export default function FinancialReportsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A3B56] pb-3">
           <div className="flex gap-2 flex-wrap">
             {[
-              { id: 'overview', label: `كشف حركة الخزينة العام (${filteredPayments.length + filteredSales.length + filteredExpenses.length})` },
-              { id: 'supplies', label: `فواتير متجر الأدوات (${filteredSales.length})` },
-              { id: 'courses', label: `إيصالات الكورسات (${filteredPayments.length})` },
-              { id: 'receivables', label: 'المتبقيات والأقساط المستحقة' },
-              { id: 'expenses', label: `المصروفات (${filteredExpenses.length})` },
+              { id: 'overview' as const, label: `كشف حركة الخزينة العام (${filteredPayments.length + filteredSales.length + filteredExpenses.length})` },
+              { id: 'supplies' as const, label: `فواتير متجر الأدوات (${filteredSales.length})` },
+              { id: 'courses' as const, label: `إيصالات الكورسات (${filteredPayments.length})` },
+              { id: 'receivables' as const, label: 'المتبقيات والأقساط المستحقة' },
+              { id: 'expenses' as const, label: `المصروفات (${filteredExpenses.length})` },
             ].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveReportTab(tab.id as any)}
+                onClick={() => setActiveReportTab(tab.id)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   activeReportTab === tab.id
                     ? 'bg-[#0D9488] text-[#F8FAFC] shadow-md shadow-teal-900/30'

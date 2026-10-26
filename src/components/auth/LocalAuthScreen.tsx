@@ -4,13 +4,15 @@ import { FormEvent, useState } from 'react';
 import { Eye, EyeOff, KeyRound, LockKeyhole, Palette, ShieldCheck } from 'lucide-react';
 
 export type LocalAuthStage = 'checking' | 'setup' | 'upgrade' | 'login' | 'error' | 'authenticated';
-export type LocalAuthAction = 'setup' | 'upgrade' | 'login';
+export type LocalAuthAction = 'setup' | 'upgrade' | 'login' | 'recover-password';
 
 export interface LocalAuthCredentials {
   username?: string;
   password?: string;
   currentEmail?: string;
   currentPassword?: string;
+  recoveryCode?: string;
+  newPassword?: string;
   accounts?: Array<{ username: string; password: string; role?: 'manager' | 'employee' }>;
 }
 
@@ -33,6 +35,9 @@ export default function LocalAuthScreen({ stage, error, onSubmit, onRetry }: Loc
   const [localError, setLocalError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
+  const [recoveringPassword, setRecoveringPassword] = useState(false);
+  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const isSetup = stage === 'setup';
   const isUpgrade = stage === 'upgrade';
   const isCredentialSetup = isSetup || isUpgrade;
@@ -82,6 +87,21 @@ export default function LocalAuthScreen({ stage, error, onSubmit, onRetry }: Loc
         setLocalError('أدخل كلمة المرور القديمة لتأكيد التحديث.');
         return;
       }
+    } else if (recoveringPassword) {
+      if (recoveryCode.trim().replace(/[\s-]/g, '').length !== 40) {
+        setLocalError('أدخل رمز الاستعادة المكوّن من 40 حرفًا.');
+        return;
+      }
+      if (password.length < 10 || password.length > 256) {
+        setLocalError('كلمة المرور الجديدة يجب أن تكون من 10 أحرف على الأقل.');
+        return;
+      }
+      if (password !== newPasswordConfirmation) {
+        setLocalError('تأكيد كلمة المرور الجديدة غير مطابق.');
+        return;
+      }
+      action = 'recover-password';
+      credentials = { recoveryCode, newPassword: password };
     } else {
       if (!/^[\p{L}\p{N}._-]{3,32}$/u.test(username.trim())) {
         setLocalError('اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا أو رقمًا، دون مسافات.');
@@ -106,6 +126,8 @@ export default function LocalAuthScreen({ stage, error, onSubmit, onRetry }: Loc
       setSecondConfirmation('');
       setCurrentEmail('');
       setCurrentPassword('');
+      setNewPasswordConfirmation('');
+      setRecoveryCode('');
     } catch (submitError) {
       setLocalError(submitError instanceof Error ? submitError.message : 'تعذر إتمام الدخول.');
     } finally {
@@ -153,7 +175,7 @@ export default function LocalAuthScreen({ stage, error, onSubmit, onRetry }: Loc
           <>
             <div className="mb-6 flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#0D9488]/15 text-[#4DE0CC]">
-                {isCredentialSetup ? <KeyRound size={20} /> : <LockKeyhole size={20} />}
+                {isCredentialSetup || recoveringPassword ? <KeyRound size={20} /> : <LockKeyhole size={20} />}
               </span>
               <div>
                 <h1 className="text-xl font-black tracking-tight sm:text-2xl">{isSetup ? 'إعداد حسابَي الدخول' : isUpgrade ? 'تحديث حسابَي الدخول' : 'أهلًا بعودتك'}</h1>
@@ -162,13 +184,30 @@ export default function LocalAuthScreen({ stage, error, onSubmit, onRetry }: Loc
                     ? 'أنشئ حساب المدير وحساب الموظف. صلاحية كل حساب ثابتة، وستظهر شاشة الدخول المعتادة بعد الحفظ.'
                     : isUpgrade
                       ? 'أدخل بيانات الدخول القديمة، ثم حدّد الحسابين المسموح لهما بفتح البرنامج.'
+                    : recoveringPassword
+                      ? 'استخدم رمز الاستعادة الذي حفظه مدير المرسم مسبقًا لتعيين كلمة مرور جديدة.'
                       : 'سجّل الدخول باسم أحد المستخدمين المصرّح لهم.'}
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
-              {isCredentialSetup ? (
+              {recoveringPassword ? (
+                <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-[#10192A]/70 p-5">
+                  <label className="block text-xs font-bold text-[#CBD5E1]">
+                    رمز استعادة المدير
+                    <input name="recovery-code" autoComplete="off" spellCheck={false} value={recoveryCode} onChange={event => setRecoveryCode(event.target.value)} maxLength={48} required className={`${inputClass} font-mono`} />
+                  </label>
+                  <label className="block text-xs font-bold text-[#CBD5E1]">
+                    كلمة المرور الجديدة
+                    <input name="recovery-new-password" autoComplete="new-password" type={showPasswords ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} minLength={10} maxLength={256} required className={inputClass} />
+                  </label>
+                  <label className="block text-xs font-bold text-[#CBD5E1]">
+                    تأكيد كلمة المرور الجديدة
+                    <input name="recovery-confirm-password" autoComplete="new-password" type={showPasswords ? 'text' : 'password'} value={newPasswordConfirmation} onChange={event => setNewPasswordConfirmation(event.target.value)} minLength={10} maxLength={256} required className={inputClass} />
+                  </label>
+                </div>
+              ) : isCredentialSetup ? (
                 <>
                   {isUpgrade && <div className="grid gap-4 rounded-2xl border border-white/[0.08] bg-[#10192A]/70 p-4 sm:grid-cols-2">
                     <label className="block text-xs font-bold text-[#CBD5E1]">
@@ -235,8 +274,11 @@ export default function LocalAuthScreen({ stage, error, onSubmit, onRetry }: Loc
               {(localError || error) && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/[0.07] px-4 py-3 text-xs font-bold leading-5 text-red-200">{localError || error}</p>}
 
               <button type="submit" disabled={submitting} className="w-full rounded-xl bg-gradient-to-l from-[#0D9488] to-[#0F766E] px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-[#0D9488]/15 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2DD4BF]/20 disabled:cursor-wait disabled:opacity-60">
-                {submitting ? 'جارٍ التحقق…' : isSetup ? 'حفظ الحسابين وفتح البرنامج' : isUpgrade ? 'تحديث الحسابين وفتح البرنامج' : 'دخول إلى البرنامج'}
+                {submitting ? 'جارٍ التحقق…' : recoveringPassword ? 'تغيير كلمة مرور المدير' : isSetup ? 'حفظ الحسابين وفتح البرنامج' : isUpgrade ? 'تحديث الحسابين وفتح البرنامج' : 'دخول إلى البرنامج'}
               </button>
+              {!isCredentialSetup && <button type="button" onClick={() => { setRecoveringPassword(value => !value); setLocalError(''); setPassword(''); setNewPasswordConfirmation(''); setRecoveryCode(''); }} className="w-full rounded-lg py-1 text-xs font-bold text-[#4DE0CC] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2DD4BF]">
+                {recoveringPassword ? 'العودة إلى تسجيل الدخول' : 'نسيت كلمة مرور المدير؟'}
+              </button>}
             </form>
 
             <p className="mt-5 border-t border-white/[0.07] pt-4 text-center text-[11px] leading-5 text-[#8292A9]">يسمح البرنامج بحسابين فقط. تُحفظ كلمات المرور بصيغة مشفّرة على هذا الجهاز.</p>

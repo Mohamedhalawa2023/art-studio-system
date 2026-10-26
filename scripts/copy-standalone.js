@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 
 const projectDir = path.resolve(__dirname, '..');
-const srcStatic = path.join(projectDir, '.next', 'static');
-const destStatic = path.join(projectDir, '.next', 'standalone', '.next', 'static');
+const nextOutputDir = process.env.MARSAM_NEXT_DIST_DIR || '.next-release-build';
+const nextOutputPath = path.join(projectDir, nextOutputDir);
+const srcStatic = path.join(nextOutputPath, 'static');
+const destStatic = path.join(nextOutputPath, 'standalone', '.next', 'static');
 
 const srcPublic = path.join(projectDir, 'public');
-const destPublic = path.join(projectDir, '.next', 'standalone', 'public');
+const destPublic = path.join(nextOutputPath, 'standalone', 'public');
 
 console.log('[copy-standalone] Copying static assets to standalone folder...');
 

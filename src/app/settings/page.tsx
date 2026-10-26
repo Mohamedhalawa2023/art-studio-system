@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useMarsam } from '@/lib/store';
 import type { User } from '@/lib/mockData';
 import {
-  Settings, FileText, Palette,
+  Settings, FileText, Palette, KeyRound,
   Download, Upload, CheckCircle, Save, HardDrive, RotateCcw, RefreshCw, UserPlus, Pencil, Trash2
 } from 'lucide-react';
 
@@ -32,6 +32,53 @@ export default function SettingsPage() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [userError, setUserError] = useState('');
   const [userDraft, setUserDraft] = useState({ name: '', email: '', phone: '', role: 'supervisor' as User['role'] });
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');
+  const [recoveryPassword, setRecoveryPassword] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [securityBusy, setSecurityBusy] = useState(false);
+  const [securityStatus, setSecurityStatus] = useState('');
+
+  const submitSecurityAction = async (action: 'change-password' | 'set-recovery-code', body: Record<string, string>) => {
+    setSecurityBusy(true);
+    setSecurityStatus('');
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...body }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'تعذر تحديث إعداد الحماية.');
+      if (action === 'set-recovery-code' && typeof result.recoveryCode === 'string') {
+        setRecoveryCode(result.recoveryCode);
+        setSecurityStatus('احفظ الرمز في مكان آمن. لن يظهر مرة أخرى بعد مغادرة هذه الصفحة.');
+        setRecoveryPassword('');
+      } else {
+        setSecurityStatus('تم تغيير كلمة المرور. استخدم كلمة المرور الجديدة في تسجيل الدخول القادم.');
+        setCurrentPassword('');
+        setNewPassword('');
+        setNewPasswordConfirmation('');
+      }
+    } catch (error) {
+      setSecurityStatus(error instanceof Error ? error.message : 'تعذر تحديث إعداد الحماية.');
+    } finally {
+      setSecurityBusy(false);
+    }
+  };
+
+  const handlePasswordChange = () => {
+    if (newPassword !== newPasswordConfirmation) {
+      setSecurityStatus('تأكيد كلمة المرور الجديدة غير مطابق.');
+      return;
+    }
+    void submitSecurityAction('change-password', { currentPassword, newPassword });
+  };
+
+  const handleRecoveryCodeSetup = () => {
+    void submitSecurityAction('set-recovery-code', { currentPassword: recoveryPassword });
+  };
 
   const loadBackups = useCallback(async (preserveStatus = false): Promise<boolean> => {
     setBackupLoading(true);
@@ -57,15 +104,18 @@ export default function SettingsPage() {
   useEffect(() => {
     let retryTimer: number | undefined;
     let cancelled = false;
-    void loadBackups().then(hasBackups => {
-      if (!hasBackups) {
-        retryTimer = window.setTimeout(() => {
-          if (!cancelled) void loadBackups();
-        }, 1500);
-      }
-    });
+    const initialLoadTimer = window.setTimeout(() => {
+      void loadBackups().then(hasBackups => {
+        if (!hasBackups) {
+          retryTimer = window.setTimeout(() => {
+            if (!cancelled) void loadBackups();
+          }, 1500);
+        }
+      });
+    }, 0);
     return () => {
       cancelled = true;
+      window.clearTimeout(initialLoadTimer);
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
     };
   }, [loadBackups]);
@@ -210,6 +260,30 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-4">
+          <h3 className="font-bold text-sm text-[#F8FAFC] flex items-center gap-2 pb-2.5 border-b border-[#2A3B56]">
+            <KeyRound size={18} className="text-[#2DD4BF]" />
+            حماية حساب الدخول
+          </h3>
+          <div className="space-y-3 text-xs text-[#94A3B8]">
+            <p>غيّر كلمة مرور الحساب الحالي هنا. لا يحتاج الحساب إلا كلمة المرور الحالية والجديدة.</p>
+            <input type="password" autoComplete="current-password" aria-label="كلمة المرور الحالية" placeholder="كلمة المرور الحالية" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC]" />
+            <input type="password" autoComplete="new-password" aria-label="كلمة المرور الجديدة" placeholder="كلمة المرور الجديدة (١٠ أحرف على الأقل)" minLength={10} maxLength={256} value={newPassword} onChange={event => setNewPassword(event.target.value)} className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC]" />
+            <input type="password" autoComplete="new-password" aria-label="تأكيد كلمة المرور الجديدة" placeholder="تأكيد كلمة المرور الجديدة" minLength={10} maxLength={256} value={newPasswordConfirmation} onChange={event => setNewPasswordConfirmation(event.target.value)} className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC]" />
+            <button type="button" onClick={handlePasswordChange} disabled={securityBusy || !currentPassword || !newPassword || !newPasswordConfirmation} className="w-full rounded-xl bg-[#0D9488] px-4 py-2.5 font-bold text-white disabled:opacity-50">تغيير كلمة المرور</button>
+          </div>
+          {currentUser?.role === 'admin' && <div className="space-y-3 border-t border-[#2A3B56] pt-4 text-xs text-[#94A3B8]">
+            <p>أنشئ رمز استعادة مرة واحدة واحفظه خارج الجهاز. يتيح الرمز إعادة تعيين كلمة مرور المدير.</p>
+            <input type="password" autoComplete="current-password" aria-label="كلمة مرور المدير لإعداد الاستعادة" placeholder="كلمة مرور المدير الحالية" value={recoveryPassword} onChange={event => setRecoveryPassword(event.target.value)} className="w-full p-2.5 rounded-xl bg-[#111827] border border-[#2A3B56] text-[#F8FAFC]" />
+            <button type="button" onClick={handleRecoveryCodeSetup} disabled={securityBusy || !recoveryPassword} className="w-full rounded-xl border border-[#2A3B56] px-4 py-2.5 font-bold text-[#2DD4BF] disabled:opacity-50">إنشاء رمز استعادة جديد</button>
+            {recoveryCode && <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-amber-100">
+              <p className="mb-2 font-bold">انسخ الرمز واحفظه الآن:</p>
+              <code dir="ltr" className="block break-all rounded-lg bg-[#111827] p-3 font-mono text-sm select-all">{recoveryCode}</code>
+            </div>}
+          </div>}
+          {securityStatus && <p role="status" className="rounded-lg bg-[#111827] p-3 leading-5 text-[#CBD5E1]">{securityStatus}</p>}
+        </div>
+
         {/* Database & Backup Card */}
         <div className="p-5 rounded-2xl border border-[#2A3B56] bg-[#1B2537] shadow-sm space-y-4">
           <h3 className="font-bold text-sm text-[#F8FAFC] flex items-center gap-2 pb-2.5 border-b border-[#2A3B56]">
@@ -218,7 +292,7 @@ export default function SettingsPage() {
           </h3>
           <div className="space-y-3.5 text-xs text-[#F8FAFC]">
             <p className="leading-relaxed text-[#94A3B8]">
-              جميع بياناتك (الطلاب، الشهادات، العقود، الدفعات، المصروفات، مبيعات الأدوات، وتقييمات الحصص) مخزنة ومحمية محلياً في ملف <code className="bg-[#111827] border border-[#2A3B56] px-2 py-0.5 rounded text-[#2DD4BF] font-mono">data/data_store.json</code> على جهازك، وتعمل 100% بدون إنترنت.
+              تُحفظ البيانات والنسخ التلقائية محليًا ومشفرة على جهاز Windows داخل مجلد بيانات المستخدم. ملف التصدير JSON غير مشفر؛ احتفظ به في مكان آمن عند نقله.
             </p>
 
             <div className="p-3.5 rounded-xl border border-[#2A3B56] bg-[#111827] space-y-2.5">

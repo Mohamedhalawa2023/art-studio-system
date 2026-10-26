@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-require-imports -- Node's CommonJS extension hook is required to load the TypeScript services in this test harness. */
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const Module = require('node:module');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
@@ -36,6 +37,72 @@ const { BackupService } = require('../src/lib/services/backup.service.ts');
 const { ValidationError, Validators } = require('@/lib/validators');
 const { isSameOriginRequest } = require('../src/lib/auth/local-auth.ts');
 const { getDatabaseIntegrityError } = require('../src/lib/db/schema.ts');
+const { decryptStoredJson, encryptStoredJson, isEncryptedStoredJson } = require('../src/lib/db/local-storage.ts');
+const {
+  authenticateLocalAccount,
+  changeLocalPassword,
+  createLocalSessionCookie,
+  recoverLocalManagerPassword,
+  setLocalManagerRecoveryCode,
+  setupLocalAdminAccounts,
+} = require('../src/lib/auth/local-auth.ts');
+
+test('desktop database encryption protects content and detects tampering', () => {
+  const previousKey = process.env.MARSAM_DB_ENCRYPTION_KEY;
+  process.env.MARSAM_DB_ENCRYPTION_KEY = '0123456789abcdef'.repeat(4);
+  try {
+    const database = JSON.stringify({ students: [{ name: 'بيانات سرية' }] });
+    const encrypted = encryptStoredJson(database);
+    assert.equal(isEncryptedStoredJson(encrypted), true);
+    assert.equal(encrypted.includes('بيانات سرية'), false);
+    assert.equal(decryptStoredJson(encrypted), database);
+    assert.equal(decryptStoredJson(database), database, 'legacy plaintext remains readable for migration');
+    const tampered = `${encrypted.slice(0, -2)}AA`;
+    assert.throws(() => decryptStoredJson(tampered), /تعذر فك تشفير قاعدة البيانات/);
+  } finally {
+    if (previousKey === undefined) delete process.env.MARSAM_DB_ENCRYPTION_KEY;
+    else process.env.MARSAM_DB_ENCRYPTION_KEY = previousKey;
+  }
+});
+
+test('manager recovery code resets password and password changes invalidate old sessions', () => {
+  const tempAppData = fs.mkdtempSync(path.join(os.tmpdir(), 'marsam-auth-test-'));
+  const previous = {
+    desktop: process.env.MARSAM_DESKTOP,
+    appData: process.env.APPDATA,
+  };
+  process.env.MARSAM_DESKTOP = '1';
+  process.env.APPDATA = tempAppData;
+
+  try {
+    const manager = { username: 'manager', password: 'ManagerStrongPass123' };
+    const employee = { username: 'employee', password: 'EmployeeStrongPass123' };
+    const managerIdentity = setupLocalAdminAccounts([manager, employee]);
+    const managerCookie = createLocalSessionCookie(new Request('http://127.0.0.1/api/auth'), managerIdentity).split(';')[0];
+    const managerRequest = () => new Request('http://127.0.0.1/api/auth', { headers: { cookie: managerCookie } });
+
+    const { recoveryCode } = setLocalManagerRecoveryCode(managerRequest(), manager.password);
+    const recovery = recoverLocalManagerPassword(recoveryCode, 'NewManagerStrongPass456');
+    assert.deepEqual(recovery?.identity, managerIdentity);
+    assert.equal(recovery?.recoveryCode.length, 40);
+    assert.notEqual(recovery?.recoveryCode, recoveryCode, 'recovery rotates the code after use');
+    assert.equal(recoverLocalManagerPassword(recoveryCode, 'AnotherManagerStrongPass789'), null);
+    assert.deepEqual(authenticateLocalAccount(manager.username, 'NewManagerStrongPass456'), managerIdentity);
+    assert.deepEqual(authenticateLocalAccount(employee.username, employee.password), { username: employee.username, role: 'employee' });
+
+    const currentCookie = createLocalSessionCookie(new Request('http://127.0.0.1/api/auth'), managerIdentity).split(';')[0];
+    const authenticatedRequest = new Request('http://127.0.0.1/api/auth', { headers: { cookie: currentCookie } });
+    changeLocalPassword(authenticatedRequest, 'NewManagerStrongPass456', 'FinalManagerStrongPass789');
+    assert.equal(authenticateLocalAccount(manager.username, 'NewManagerStrongPass456'), null);
+    assert.deepEqual(authenticateLocalAccount(manager.username, 'FinalManagerStrongPass789'), managerIdentity);
+  } finally {
+    if (previous.desktop === undefined) delete process.env.MARSAM_DESKTOP;
+    else process.env.MARSAM_DESKTOP = previous.desktop;
+    if (previous.appData === undefined) delete process.env.APPDATA;
+    else process.env.APPDATA = previous.appData;
+    fs.rmSync(tempAppData, { recursive: true, force: true });
+  }
+});
 
 test('database integrity accepts optional empty email and phone fields for app users', () => {
   const data = {

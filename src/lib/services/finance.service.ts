@@ -4,7 +4,7 @@
  */
 
 import type { DatabaseEngine, DatabaseState } from '@/lib/db/transactionManager';
-import type { Enrollment, Installment, OperatingExpense, OperatingExpenseCategory, OperatingExpenseRevision, Payment } from '@/lib/mockData';
+import type { Enrollment, OperatingExpense, OperatingExpenseCategory, OperatingExpenseRevision, Payment } from '@/lib/mockData';
 import { Validators } from '@/lib/validators';
 import { logger } from '@/lib/logger/logger';
 import { formatLocalDate, formatLocalDateTime } from '@/lib/dates';

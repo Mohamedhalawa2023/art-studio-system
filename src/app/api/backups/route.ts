@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { getBackupDir, getDbPath } from '@/lib/config/paths';
 import { isLocalAdminRequest, isSameOriginRequest } from '@/lib/auth/local-auth';
 import { getDatabaseIntegrityError } from '@/lib/db/schema';
+import { decryptStoredJson, encryptStoredJson } from '@/lib/db/local-storage';
 
 const BACKUP_FILENAME = /^backup-\d{4}-\d{2}-\d{2}(?:T\d{2}-\d{2}-\d{2}(?:-\d+)?-pre-restore)?\.json$/;
 
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, safetyBackup: null });
       }
 
-      const currentData = JSON.parse(fs.readFileSync(currentDatabasePath, 'utf-8')) as unknown;
+      const currentData = JSON.parse(decryptStoredJson(fs.readFileSync(currentDatabasePath, 'utf-8'))) as unknown;
       const currentDataError = getDatabaseIntegrityError(currentData);
       if (currentDataError) {
         return NextResponse.json({ success: false, error: `البيانات الحالية غير سليمة: ${currentDataError}` }, { status: 422 });
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
         filename = `backup-${timestamp}-${sequence}-pre-restore.json`;
         sequence += 1;
       }
-      atomicBackupWrite(path.join(backupDir, filename), JSON.stringify(currentData, null, 2));
+      atomicBackupWrite(path.join(backupDir, filename), encryptStoredJson(JSON.stringify(currentData, null, 2)));
       return NextResponse.json({ success: true, safetyBackup: filename });
     }
 
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'ملف النسخة الاحتياطية غير صالح.' }, { status: 400 });
     }
 
-    const parsedBackup = JSON.parse(fs.readFileSync(targetPath, 'utf-8')) as unknown;
+    const parsedBackup = JSON.parse(decryptStoredJson(fs.readFileSync(targetPath, 'utf-8'))) as unknown;
     const backupError = getDatabaseIntegrityError(parsedBackup);
     if (backupError) {
       return NextResponse.json({ success: false, error: `النسخة الاحتياطية تالفة أو غير متوافقة: ${backupError}` }, { status: 422 });
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
     const currentDatabasePath = getDbPath();
     if (fs.existsSync(currentDatabasePath)) {
       try {
-        const currentRaw = fs.readFileSync(currentDatabasePath, 'utf-8');
+        const currentRaw = decryptStoredJson(fs.readFileSync(currentDatabasePath, 'utf-8'));
         let currentData: unknown = null;
         try {
           currentData = JSON.parse(currentRaw) as unknown;
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
             filename = `backup-${timestamp}-${sequence}-pre-restore.json`;
             sequence += 1;
           }
-          atomicBackupWrite(path.join(backupDir, filename), JSON.stringify(currentData, null, 2));
+          atomicBackupWrite(path.join(backupDir, filename), encryptStoredJson(JSON.stringify(currentData, null, 2)));
           safetyBackup = filename;
         }
       } catch {

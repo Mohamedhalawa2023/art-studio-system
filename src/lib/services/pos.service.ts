@@ -285,7 +285,7 @@ export class PosService {
         const discountShareCents = grossSubtotalCents > 0
           ? Math.round(discountCents * grossAmountCents / grossSubtotalCents)
           : 0;
-        let refundAmountCents = Math.max(0, grossAmountCents - discountShareCents);
+        const refundAmountCents = Math.max(0, grossAmountCents - discountShareCents);
 
         if (requestedItem.restockQuantity > 0) {
           const product = draft.supplyItems.find(item => item.id === productId);

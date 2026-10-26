@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# مرسم — نظام إدارة المرسم
 
-## Getting Started
+تطبيق سطح مكتب يعمل دون إنترنت لإدارة الطلاب والكورسات والمجموعات والحضور والمدفوعات والمخزون والمرتجعات والتقارير.
 
-First, run the development server:
+## تسليم نسخة Windows
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+بعد نجاح `npm run build:exe`:
+
+- أرسل للعميل `dist/Marsam-Setup.exe` للتثبيت المعتاد.
+- استخدم `dist/Marsam-Portable.exe` كنسخة محمولة أو عند تعذر التثبيت. النسختان تحفظان البيانات في ملف المستخدم نفسه.
+- لا ترسل ملفات `.blockmap` أو `.yml`؛ هذه ملفات بناء وتحديث وليست ملفات تشغيل للعميل.
+
+أغلق مرسم قبل تحديثه. إذا ظهرت رسالة أن البرنامج لا يمكن إغلاقه، افتح «إدارة المهام» ثم أنهِ عمليات مرسم الظاهرة ضمن تبويب «التفاصيل»، وبعدها اضغط Retry. لا تحذف مجلد البيانات لإعادة التثبيت.
+
+## التثبيت لأول مرة
+
+1. شغّل `Marsam-Setup.exe`، واختر مجلد التثبيت عند الطلب.
+2. افتح «مرسم للفنون» من اختصار سطح المكتب.
+3. في أول تشغيل أنشئ اسم مستخدم وكلمة مرور للمدير وحسابًا للموظف.
+4. من الإعدادات، غيّر كلمة المرور الافتراضية إن كانت مشتركة، وأنشئ رمز استعادة للمدير واحفظه خارج الجهاز.
+
+كلمة المرور 10 أحرف على الأقل. تغيير كلمة المرور متاح من «الإعدادات»، واستعادة كلمة مرور المدير تتطلب رمز الاستعادة الذي أُنشئ مسبقًا. رمز الاستعادة لا يظهر إلا لحظة إنشائه. إذا فُقدت كلمة المرور والرمز معًا، فلن يمكن استرجاع الحساب من داخل البرنامج.
+
+## البيانات والنسخ الاحتياطية
+
+يحفظ إصدار Windows قاعدة البيانات والنسخ اليومية داخل:
+
+```text
+%APPDATA%\MarsamArtStudio\data\
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+تُشفّر قاعدة البيانات والنسخ التلقائية على القرص بمفتاح يحميه Windows لحساب المستخدم نفسه. لا تحذف الملف التالي أو مجلد `MarsamArtStudio`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+%APPDATA%\MarsamArtStudio\database-key.dpapi
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+تظهر النسخ اليومية في «الإعدادات ← النسخ الاحتياطي». للاستعادة اختر نسخة من القائمة. وللنقل إلى جهاز آخر استخدم «تصدير نسخة احتياطية» ثم استورد ملف JSON على الجهاز الجديد؛ ملف التصدير يحتوي بيانات غير مشفرة، لذا خزّنه وانقله بأمان. لا تنقل ملف قاعدة البيانات المشفر أو ملف المفتاح إلى جهاز آخر.
 
-## Learn More
+إعادة تثبيت البرنامج لا تمسح بيانات المستخدم. نسخ ملف المفتاح وحده إلى مستخدم Windows أو جهاز مختلف لا ينقل القدرة على فك التشفير.
 
-To learn more about Next.js, take a look at the following resources:
+## بناء التطبيق من المصدر
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+المتطلبات: Windows، وNode.js، وnpm. بعد استنساخ المستودع:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```powershell
+npm ci
+npm test
+npm run lint
+npm run build
+npm run build:exe
+```
 
-## Deploy on Vercel
+ينتج `dist/Marsam-Setup.exe` و`dist/Marsam-Portable.exe`. شغّل المثبّت وجرّب فتح التطبيق بعد البناء قبل تسليم النسخة.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## بيانات الدعم
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+سجلات التشغيل المحلية موجودة في `%APPDATA%\MarsamArtStudio\logs\`. عند طلب الدعم أرسل السجل بعد مراجعة محتواه وإزالة أي بيانات عميل لا يلزم مشاركتها.

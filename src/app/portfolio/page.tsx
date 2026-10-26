@@ -1,21 +1,22 @@
 'use client';
 import { useState, useRef } from 'react';
 import { useMarsam } from '@/lib/store';
+import type { PortfolioItem } from '@/lib/mockData';
 import {
   Sparkles, CheckCircle, Clock, X, Upload, Palette,
-  Eye, Filter, Plus, Trash2, ShieldCheck, Image as ImageIcon, Pencil
+  Eye, Trash2, ShieldCheck, Image as ImageIcon, Pencil
 } from 'lucide-react';
 
 export default function PortfolioPage() {
   const {
-    portfolio, users, currentUser,
+    portfolio, users,
     addPortfolioItem, updatePortfolioStatus, updatePortfolioItem, deletePortfolioItem
   } = useMarsam();
 
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [selectedArtwork, setSelectedArtwork] = useState<any | null>(null);
+  const [selectedArtwork, setSelectedArtwork] = useState<PortfolioItem | null>(null);
   const [editingArtwork, setEditingArtwork] = useState<(typeof portfolio)[number] | null>(null);
 
   // Form State
@@ -148,13 +149,13 @@ export default function PortfolioPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex gap-2 p-1 rounded-xl bg-[#111827] border border-[#2A3B56]">
           {[
-            { id: 'all', label: `جميع الأعمال (${portfolio.length})` },
-            { id: 'approved', label: `المعتمدة (${portfolio.filter(p => p.status === 'approved').length})` },
-            { id: 'pending', label: `في الانتظار (${portfolio.filter(p => p.status === 'pending').length})` },
+            { id: 'all' as const, label: `جميع الأعمال (${portfolio.length})` },
+            { id: 'approved' as const, label: `المعتمدة (${portfolio.filter(p => p.status === 'approved').length})` },
+            { id: 'pending' as const, label: `في الانتظار (${portfolio.filter(p => p.status === 'pending').length})` },
           ].map(f => (
             <button
               key={f.id}
-              onClick={() => setFilter(f.id as any)}
+              onClick={() => setFilter(f.id)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 filter === f.id
                   ? 'bg-[#0D9488] text-[#F8FAFC] shadow-md shadow-teal-900/30'

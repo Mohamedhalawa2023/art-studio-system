@@ -4,11 +4,12 @@
  */
 
 let audioCtx: AudioContext | null = null;
+type WindowWithWebkitAudioContext = Window & { webkitAudioContext?: typeof AudioContext };
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
     if (AudioContextClass) {
       audioCtx = new AudioContextClass();
     }
@@ -38,7 +39,9 @@ export function playScanSuccessBeep() {
 
     osc.start();
     osc.stop(ctx.currentTime + 0.08);
-  } catch (e) {}
+  } catch {
+    // Audio feedback is optional when the browser blocks audio playback.
+  }
 }
 
 export function playScanErrorBeep() {
@@ -60,5 +63,7 @@ export function playScanErrorBeep() {
 
     osc.start();
     osc.stop(ctx.currentTime + 0.2);
-  } catch (e) {}
+  } catch {
+    // Audio feedback is optional when the browser blocks audio playback.
+  }
 }

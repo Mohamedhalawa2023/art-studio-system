@@ -109,10 +109,6 @@ export default function SuppliesPage() {
     return () => clearTimeout(timer);
   }, [scanToast]);
 
-  useEffect(() => {
-    if (cart.length === 0 && invoiceDiscountInput !== '') setInvoiceDiscountInput('');
-  }, [cart.length, invoiceDiscountInput]);
-
   // Central Barcode Processor (Works with USB Handheld Laser Scanners & Screen Input)
   const processScannedBarcode = (scanned: string) => {
     const code = scanned.trim();
@@ -193,6 +189,7 @@ export default function SuppliesPage() {
 
   const updateCartQty = (productId: string, delta: number) => {
     const product = supplyItems.find(p => p.id === productId);
+    const removesFinalItem = cart.length === 1 && cart[0].productId === productId && cart[0].quantity + delta <= 0;
     setCart(prev => {
       return prev.map(i => {
         if (i.productId === productId) {
@@ -204,10 +201,17 @@ export default function SuppliesPage() {
         return i;
       }).filter(Boolean) as Array<{ productId: string; quantity: number }>;
     });
+    if (removesFinalItem) setInvoiceDiscountInput('');
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setInvoiceDiscountInput('');
   };
 
   const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(i => i.productId !== productId));
+    if (cart.length === 1 && cart[0].productId === productId) setInvoiceDiscountInput('');
   };
 
   const handleBarcodeSubmit = (e: React.FormEvent) => {
@@ -246,6 +250,7 @@ export default function SuppliesPage() {
     executeDeleteProduct(() => {
       deleteSupplyItem(deletingProduct.id);
       setCart(prev => prev.filter(c => c.productId !== deletingProduct.id));
+      if (cart.length === 1 && cart[0].productId === deletingProduct.id) setInvoiceDiscountInput('');
       setDeletingProduct(null);
     });
   };
@@ -556,7 +561,7 @@ export default function SuppliesPage() {
                   فاتورة البيع الحالية
                 </h3>
                 {cart.length > 0 && (
-                  <button onClick={() => setCart([])} className="text-xs text-red-400 hover:text-red-300 hover:underline">
+                  <button onClick={clearCart} className="text-xs text-red-400 hover:text-red-300 hover:underline">
                     مسح السلة
                   </button>
                 )}

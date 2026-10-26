@@ -10,7 +10,7 @@ export interface LogEntry {
   level: LogLevel;
   context: string;
   message: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   error?: {
     name?: string;
     message?: string;
@@ -64,7 +64,7 @@ class Logger {
   /**
    * Informational runtime event
    */
-  public info(context: string, message: string, metadata?: Record<string, any>) {
+  public info(context: string, message: string, metadata?: Record<string, unknown>) {
     this.dispatchLog({
       timestamp: this.getTimestamp(),
       level: 'INFO',
@@ -77,7 +77,7 @@ class Logger {
   /**
    * Warning event (non-fatal unexpected condition)
    */
-  public warn(context: string, message: string, metadata?: Record<string, any>) {
+  public warn(context: string, message: string, metadata?: Record<string, unknown>) {
     this.dispatchLog({
       timestamp: this.getTimestamp(),
       level: 'WARN',
@@ -90,7 +90,7 @@ class Logger {
   /**
    * Error event with stack trace capturing
    */
-  public error(context: string, message: string, err?: unknown, metadata?: Record<string, any>) {
+  public error(context: string, message: string, err?: unknown, metadata?: Record<string, unknown>) {
     const errorDetails = err instanceof Error ? {
       name: err.name,
       message: err.message,
@@ -110,7 +110,7 @@ class Logger {
   /**
    * ACID Transaction lifecycle event
    */
-  public transaction(txName: string, status: 'START' | 'COMMIT' | 'ROLLBACK', metadata?: Record<string, any>) {
+  public transaction(txName: string, status: 'START' | 'COMMIT' | 'ROLLBACK', metadata?: Record<string, unknown>) {
     this.dispatchLog({
       timestamp: this.getTimestamp(),
       level: 'TRANSACTION',

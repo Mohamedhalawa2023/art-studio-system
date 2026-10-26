@@ -4,7 +4,9 @@ const path = require('path');
 exports.default = async function (context) {
   const appOutDir = context.appOutDir;
   const projectDir = (context.packager && context.packager.projectDir) || process.cwd();
-  const srcStandalone = path.join(projectDir, '.next', 'standalone');
+  const nextOutputDir = process.env.MARSAM_NEXT_DIST_DIR || '.next-release-build';
+  const nextOutputPath = path.join(projectDir, nextOutputDir);
+  const srcStandalone = path.join(nextOutputPath, 'standalone');
   const destStandalone = path.join(appOutDir, 'resources', 'standalone');
   const sourceIcon = path.join(projectDir, 'public', 'icon.ico');
   
@@ -21,7 +23,7 @@ exports.default = async function (context) {
   console.log('[afterPack] Standalone directory copied successfully with all dependencies.');
     
   // Copy .next/static into destination
-  const srcStatic = path.join(projectDir, '.next', 'static');
+  const srcStatic = path.join(nextOutputPath, 'static');
   const destStatic = path.join(destStandalone, '.next', 'static');
   if (fs.existsSync(srcStatic)) {
     fs.mkdirSync(path.dirname(destStatic), { recursive: true });

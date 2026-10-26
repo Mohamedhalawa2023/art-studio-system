@@ -35,6 +35,8 @@ interface LocalAuthConfig {
   accounts: [LocalAuthAccount, LocalAuthAccount];
   sessionSecret: string;
   createdAt: string;
+  recoverySalt?: string;
+  recoveryHash?: string;
 }
 
 type AnyLocalAuthConfig = LegacyLocalAuthConfig | TwoAccountLocalAuthConfig | LocalAuthConfig;
@@ -136,7 +138,10 @@ function readAuthConfig(): AnyLocalAuthConfig | null {
     );
     if (
       validAccounts && accounts[0].username !== accounts[1].username &&
-      accounts[0].role === 'manager' && accounts[1].role === 'employee'
+      accounts[0].role === 'manager' && accounts[1].role === 'employee' &&
+      ((parsed.recoverySalt === undefined && parsed.recoveryHash === undefined) ||
+        (typeof parsed.recoverySalt === 'string' && /^[a-f0-9]{32}$/i.test(parsed.recoverySalt) &&
+          typeof parsed.recoveryHash === 'string' && /^[a-f0-9]{128}$/i.test(parsed.recoveryHash)))
     ) {
       return parsed as unknown as LocalAuthConfig;
     }
@@ -270,6 +275,83 @@ export function authenticateLocalAccount(username: unknown, password: unknown): 
   const valid = validPasswordInput && matched !== null;
   recordLoginAttempt(valid);
   return valid ? matched : null;
+}
+
+function verifyAccountPassword(account: LocalAuthAccount, password: unknown): boolean {
+  const validInput = typeof password === 'string' && password.length > 0 && password.length <= 256;
+  const supplied = Buffer.from(derivePasswordHash(validInput ? password : '', account.passwordSalt), 'hex');
+  const expected = Buffer.from(account.passwordHash, 'hex');
+  return validInput && supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
+
+function validateNewPassword(password: unknown): asserts password is string {
+  if (typeof password !== 'string' || password.length < PASSWORD_MIN_LENGTH || password.length > 256) {
+    throw new Error(`كلمة المرور يجب أن تكون ${PASSWORD_MIN_LENGTH} أحرف على الأقل.`);
+  }
+}
+
+export function changeLocalPassword(request: Request, currentPassword: unknown, newPassword: unknown): LocalAuthIdentity {
+  const identity = getLocalSessionIdentity(request);
+  const config = readAuthConfig();
+  if (!identity || !config || config.version !== 3) throw new Error('انتهت جلسة الدخول. سجّل الدخول مرة أخرى.');
+  validateNewPassword(newPassword);
+  const account = config.accounts.find(item => item.username === identity.username && item.role === identity.role);
+  if (!account || !verifyAccountPassword(account, currentPassword)) throw new Error('كلمة المرور الحالية غير صحيحة.');
+
+  const salt = randomBytes(16).toString('hex');
+  account.passwordSalt = salt;
+  account.passwordHash = derivePasswordHash(newPassword, salt);
+  config.sessionSecret = randomBytes(32).toString('hex');
+  writeAuthConfig(config);
+  return identity;
+}
+
+export function setLocalManagerRecoveryCode(request: Request, currentPassword: unknown): { identity: LocalAuthIdentity; recoveryCode: string } {
+  const identity = getLocalSessionIdentity(request);
+  const config = readAuthConfig();
+  if (!identity || identity.role !== 'manager' || !config || config.version !== 3) {
+    throw new Error('يلزم تسجيل دخول المدير لإعداد رمز الاستعادة.');
+  }
+  const account = config.accounts[0];
+  if (!verifyAccountPassword(account, currentPassword)) throw new Error('كلمة مرور المدير غير صحيحة.');
+
+  const recoveryCode = randomBytes(20).toString('hex').toUpperCase();
+  const salt = randomBytes(16).toString('hex');
+  config.recoverySalt = salt;
+  config.recoveryHash = derivePasswordHash(recoveryCode, salt);
+  writeAuthConfig(config);
+  return { identity, recoveryCode };
+}
+
+export function recoverLocalManagerPassword(recoveryCode: unknown, newPassword: unknown): { identity: LocalAuthIdentity; recoveryCode: string } | null {
+  if (Date.now() < loginLockedUntil) return null;
+  const config = readAuthConfig();
+  if (!config || config.version !== 3 || !config.recoverySalt || !config.recoveryHash) return null;
+  validateNewPassword(newPassword);
+
+  const normalizedCode = typeof recoveryCode === 'string' ? recoveryCode.trim().replace(/[\s-]/g, '').toUpperCase() : '';
+  const supplied = Buffer.from(derivePasswordHash(normalizedCode, config.recoverySalt), 'hex');
+  const expected = Buffer.from(config.recoveryHash, 'hex');
+  const valid = normalizedCode.length === 40 && supplied.length === expected.length && timingSafeEqual(supplied, expected);
+  recordLoginAttempt(valid);
+  if (!valid) return null;
+
+  const manager = config.accounts[0];
+  const salt = randomBytes(16).toString('hex');
+  manager.passwordSalt = salt;
+  manager.passwordHash = derivePasswordHash(newPassword, salt);
+  const nextRecoveryCode = randomBytes(20).toString('hex').toUpperCase();
+  const nextRecoverySalt = randomBytes(16).toString('hex');
+  config.recoverySalt = nextRecoverySalt;
+  config.recoveryHash = derivePasswordHash(nextRecoveryCode, nextRecoverySalt);
+  config.sessionSecret = randomBytes(32).toString('hex');
+  writeAuthConfig(config);
+  return { identity: { username: manager.username, role: 'manager' }, recoveryCode: nextRecoveryCode };
+}
+
+export function isLocalRecoveryConfigured(): boolean {
+  const config = readAuthConfig();
+  return Boolean(config && config.version === 3 && config.recoverySalt && config.recoveryHash);
 }
 
 export function upgradeLocalAdminAccounts(

@@ -125,7 +125,7 @@ export function BarcodeStickerModal({ product, studioName = 'مرسم الإبد
             <span className="text-slate-500">حجم الملصق:</span>
             <select
               value={stickerSize}
-              onChange={e => setStickerSize(e.target.value as any)}
+              onChange={e => setStickerSize(e.target.value === 'compact' ? 'compact' : 'standard')}
               className="input text-xs py-1 px-2.5"
             >
               <option value="standard">قياسي (50x30 مم / ورق A4)</option>

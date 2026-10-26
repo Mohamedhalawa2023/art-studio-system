@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports -- This launcher runs as plain Node.js before the app starts. */
 const fs = require('fs');
 const http = require('http');
 const net = require('net');

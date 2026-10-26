@@ -32,7 +32,7 @@
 
 html {
   direction: rtl;
-  font-family: 'Cairo', 'Segoe UI', -apple-system, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
   color-scheme: dark;
 }
 
@@ -308,7 +308,7 @@ body {
     background: #ffffff !important;
     color: #111827 !important;
     box-shadow: none !important;
-    font-family: 'Cairo', Arial, sans-serif !important;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
     break-inside: avoid !important;
@@ -364,7 +364,7 @@ body {
     overflow: visible !important;
     background: #ffffff !important;
     color: #111827 !important;
-    font-family: 'Cairo', Arial, sans-serif !important;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
     font-size: 10pt !important;
     line-height: 1.55 !important;
     box-shadow: none !important;
@@ -454,7 +454,7 @@ body {
     border: 2px solid #0f172a !important;
     border-radius: 8px !important;
     box-shadow: none !important;
-    font-family: 'Cairo', Arial, sans-serif !important;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
@@ -559,7 +559,7 @@ body {
     justify-content: space-between !important;
     align-items: center !important;
     text-align: center !important;
-    font-family: 'Cairo', Arial, sans-serif !important;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     break-after: avoid !important;

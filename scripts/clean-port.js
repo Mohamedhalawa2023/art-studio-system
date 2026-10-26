@@ -11,8 +11,8 @@ try {
         try {
           execSync(`taskkill /F /PID ${pid}`);
           console.log(`[clean-port] Freed port 3000 from stale process PID ${pid}`);
-        } catch (e) {}
+        } catch {}
       }
     });
   }
-} catch (e) {}
+} catch {}

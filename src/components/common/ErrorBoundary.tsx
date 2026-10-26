@@ -1,5 +1,6 @@
 'use client';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { logger } from '@/lib/logger/logger';
 
@@ -32,11 +33,6 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
-  private handleGoHome = () => {
-    this.setState({ hasError: false });
-    window.location.href = '/';
-  };
-
   public render() {
     if (this.state.hasError) {
       return (
@@ -66,12 +62,13 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 <RefreshCw size={14} /> إعادة المحاولة
               </button>
-              <button
-                onClick={this.handleGoHome}
+              <Link
+                href="/"
+                onClick={() => this.setState({ hasError: false })}
                 className="btn btn-secondary flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 px-4"
               >
                 <Home size={14} /> الرئيسية
-              </button>
+              </Link>
             </div>
           </div>
         </div>
